@@ -1,8 +1,8 @@
 {
   "version": 1,
   "algorithm": "sha256",
-  "generatedAt": "2026-09-15T20:00:49.472Z",
-  "headCommit": "72e4f3f",
+  "generatedAt": "2026-09-15T20:15:46.106Z",
+  "headCommit": "9dbca26",
   "fileCount": 201,
   "files": {
     ".github/CODEOWNERS": "57e8796aaf9e0aac4c3cc2e0a6907ca5628e67b516b2158251b3b2cc9afcc98d",
@@ -74,7 +74,7 @@
     "src/app/api/vibe/video-config/route.ts": "94f8b4ac6823974148343a06b8f0a519ed3c8034cf8be95b52f4146c7f6eaea3",
     "src/app/api/vibe/wallet/transactions/route.ts": "01c89518a13c116957d86d83f6cd0e498c9f769f74b858ae4e62abafa960306c",
     "src/app/api/vibe/wallet/withdraw/route.ts": "b8bed0595da04dffd737d53172c2e5444f1aa32c4c9a10c0e35d3eff5f1ecd00",
-    "src/app/client-page.tsx": "8f3898f7261cbbff79fa4ce073481a599736ae712f62a404f4e1c3dddf0ee73e",
+    "src/app/client-page.tsx": "dfcaaeac3a029312110ac9fbe2713f46ef7baec1d783e68e0e96da6a07c6a2cf",
     "src/app/globals.css": "f3affb1d31ec0e40344f7663808d6d651a7ef3646f366f7eed27529e850bd76d",
     "src/app/layout.tsx": "d25d1897e238e17d3ad1c9dd2c6178e216d81f02716c55931bd2401350b4ce49",
     "src/app/page.tsx": "0e8b5afeee19e27f630aacb7f96ac8a123cb36fa82a3aaa7a58126cf3c2dc2e1",
