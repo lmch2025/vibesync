@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "algorithm": "sha256",
+  "description": "Configuration du périmètre protégé VibeSync. Tout fichier correspondant à un globs 'protectedGlobs' (et non exclu) est scellé dans protection/integrity.manifest.json. Toute modification/suppression d'un fichier scellé est bloquée par les hooks git et la CI sauf procédure de déblocage explicite (voir PROTECTION.md).",
+  "protectedGlobs": [
+    "src/**",
+    "prisma/**",
+    "public/**",
+    "scripts/**",
+    "package.json",
+    "next.config.ts",
+    "tsconfig.json",
+    "tailwind.config.ts",
+    "postcss.config.mjs",
+    "eslint.config.mjs",
+    "components.json",
+    "Caddyfile",
+    ".gitignore",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    "PROTECTION.md",
+    "docs/FEATURES.md",
+    "protection/config.json",
+    "protection/features.json",
+    "protection/typecheck-baseline.txt",
+    ".github/workflows/*.yml",
+    ".github/CODEOWNERS",
+    ".github/pull_request_template.md"
+  ],
+  "excludedGlobs": [
+    "public/verify-*.png",
+    "public/verify-*.webp"
+  ]
+}

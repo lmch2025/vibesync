@@ -1,0 +1,54 @@
+#!/bin/bash
+# ============================================================================
+# VibeSync Protection — hook pre-commit
+# ----------------------------------------------------------------------------
+# Bloque tout commit qui :
+#   ✏️  modifie ou 🗑️ supprime un fichier scellé, ou
+#   ➕  introduit un fichier NOUVEAU dans le périmètre protégé sans l'avoir scellé,
+# sauf déblocage explicite :
+#
+#   VIBESYNC_ALLOW_PROTECTED=1 git commit -m "[MODIF-PROTEGEE] justification"
+#
+# (le marqueur [MODIF-PROTEGEE] est ensuite exigé par le hook commit-msg)
+# ============================================================================
+set -u
+cd "$(git rev-parse --show-toplevel 2>/dev/null)" || exit 1
+
+BYPASS="${VIBESYNC_ALLOW_PROTECTED:-0}"
+
+echo "🛡️  VibeSync Protection — pre-commit"
+
+if [ -f protection/integrity.manifest.json ] && [ -f protection/verify.mjs ]; then
+  if ! node protection/verify.mjs --staged --quiet 2>/dev/null; then
+    if [ "$BYPASS" != "1" ]; then
+      node protection/verify.mjs --staged 1>&2 || true
+      echo ""
+      echo "❌ COMMIT BLOQUÉ : ce commit touche le périmètre des fonctionnalités protégées."
+      echo "   Si la modification est VOLONTAIRE et VALIDÉE par le propriétaire :"
+      echo "     VIBESYNC_ALLOW_PROTECTED=1 git commit -m \"[MODIF-PROTEGEE] <justification>\""
+      echo "   Sinon :  git restore --staged <fichiers>  puis  git checkout -- <fichiers>"
+      echo "   Documentation : PROTECTION.md"
+      exit 1
+    else
+      echo "⚠️  VIBESYNC_ALLOW_PROTECTED=1 — modification du périmètre protégé AUTORISÉE."
+      echo "   Le hook commit-msg exigera le marqueur [MODIF-PROTEGEE] dans le message."
+      node protection/verify.mjs --staged 2>/dev/null | head -25 || true
+    fi
+  fi
+fi
+
+# ---- ESLint sur les fichiers stagés (si disponible) --------------------------
+STAGED_TS=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.(ts|tsx|js|jsx|mjs|cjs)$' || true)
+if [ -n "$STAGED_TS" ] && [ -x node_modules/.bin/eslint ]; then
+  echo "🧹 ESLint (fichiers stagés)…"
+  # shellcheck disable=SC2086
+  if ! node_modules/.bin/eslint --no-warn-ignored $STAGED_TS; then
+    echo ""
+    echo "❌ COMMIT BLOQUÉ : erreurs ESLint détectées sur les fichiers stagés."
+    echo "   Corrigez-les (bun run lint) ou restaurez les fichiers."
+    exit 1
+  fi
+fi
+
+echo "✅ pre-commit OK"
+exit 0

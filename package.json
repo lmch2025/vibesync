@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000 --webpack",
+    "dev": "next dev -p 3000 --webpack 2>&1 | tee dev.log",
     "build": "next build --webpack && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
@@ -13,7 +13,11 @@
     "db:seed": "node prisma/seed.js",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "protection:install": "bash protection/install.sh",
+    "protection:verify": "node protection/verify.mjs",
+    "protection:lock": "node protection/lock.mjs",
+    "protection:status": "node protection/verify.mjs --status"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -1,0 +1,44 @@
+#!/bin/bash
+# ============================================================================
+# VibeSync Protection — hook commit-msg
+# ----------------------------------------------------------------------------
+# Si le commit en préparation touche le périmètre protégé (fichier scellé
+# modifié/supprimé, OU nouveau fichier sous un glob protégé), le message
+# DOIT contenir le marqueur [MODIF-PROTEGEE].
+#
+# Cela rend toute modification délibérée traçable dans l'historique git :
+#   git log --grep="MODIF-PROTEGEE"
+# et aligne le commit-time sur l'audit du pre-push et de la CI.
+# ============================================================================
+set -u
+MSG_FILE="${1:-}"
+cd "$(git rev-parse --show-toplevel 2>/dev/null)" || exit 1
+
+[ -n "$MSG_FILE" ] && [ -f "$MSG_FILE" ] || exit 0
+[ -f protection/verify.mjs ] || exit 0
+[ -d protection ] || exit 0
+
+# Le commit touche-t-il le périmètre protégé ?
+if node protection/verify.mjs --staged-paths --quiet 2>/dev/null; then
+  exit 0 # non — rien à exiger
+fi
+
+if ! grep -qE "\[MODIF-PROTEGEE\]" "$MSG_FILE"; then
+  echo ""
+  echo "❌ COMMIT BLOQUÉ PAR LA PROTECTION VIBESYNC"
+  echo ""
+  echo "   Ce commit touche des fichiers du périmètre des fonctionnalités protégées,"
+  echo "   mais son message ne porte pas le marqueur d'intention explicite."
+  echo ""
+  echo "   Réécrivez le message ainsi :"
+  echo "     [MODIF-PROTEGEE] <description claire de la modification volontaire>"
+  echo ""
+  echo "   Exemple :"
+  echo "     [MODIF-PROTEGEE] Ajout du filtre anti-nudité sur l'upload vidéo (demande du 12/09)"
+  echo ""
+  echo "   Pour abandonner :  git restore --staged . && git checkout -- ."
+  exit 1
+fi
+
+echo "🛡️  Modification du périmètre protégé confirmée par marqueur [MODIF-PROTEGEE] — commit autorisé."
+exit 0

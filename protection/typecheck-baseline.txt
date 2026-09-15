@@ -1,0 +1,13 @@
+3
+# ─────────────────────────────────────────────────────────────────────────────
+# BASELINE TYPECHECK VIBESYNC (ne pas modifier à la hausse sans décision)
+# ─────────────────────────────────────────────────────────────────────────────
+# Nombre d'erreurs TypeScript tolérées dans src/ (les 3 erreurs préexistantes
+# sont toutes dans src/app/api/vibe/gems/purchase/route.ts : « Property 'title'
+# does not exist on type 'GemPack' » — lignes 49, 69, 74).
+#
+# La CI et le hook pre-push BLOQUENT toute augmentation de ce chiffre.
+# Le faire baisser (correction volontaire d'une erreur existante) est une
+# amélioration : modifiez alors ce fichier À LA BAISSE uniquement, dans le
+# cadre d'un commit [MODIF-PROTEGEE] si src/ est touché.
+# ─────────────────────────────────────────────────────────────────────────────

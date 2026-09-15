@@ -1,0 +1,305 @@
+{
+  "version": 1,
+  "description": "Registre officiel des fonctionnalités VibeSync. Chaque entrée mappe des fichiers/route API à une fonctionnalité. Utilisé par protection/verify.mjs pour identifier les fonctionnalités impactées par une modification non autorisée. La version humaine et commentée est docs/FEATURES.md. Toute évolution de ce registre est une modification protégée (voir PROTECTION.md).",
+  "features": [
+    {
+      "id": "auth-tel-pin",
+      "nom": "Authentification téléphone + PIN 4 chiffres",
+      "statut": "implémentée",
+      "fichiers": [
+        "src/components/vibe/auth-modal.tsx",
+        "src/components/vibe/app/auth-screen.tsx",
+        "src/lib/vibe/session.ts",
+        "src/lib/vibe/country-codes.ts",
+        "src/app/api/vibe/auth/check-phone/route.ts",
+        "src/app/api/vibe/auth/register/route.ts",
+        "src/app/api/vibe/auth/login/route.ts",
+        "src/app/api/vibe/auth/logout/route.ts",
+        "src/app/api/vibe/me/route.ts"
+      ],
+      "routes_api": ["POST /api/vibe/auth/check-phone", "POST /api/vibe/auth/register", "POST /api/vibe/auth/login", "POST /api/vibe/auth/logout", "GET /api/vibe/me"]
+    },
+    {
+      "id": "demo-admin-login",
+      "nom": "Connexion admin démo (raccourci sandbox)",
+      "statut": "implémentée (sandbox-only)",
+      "fichiers": ["src/app/api/vibe/auth/demo-admin/route.ts"],
+      "routes_api": ["POST /api/vibe/auth/demo-admin"]
+    },
+    {
+      "id": "orchestration-vues",
+      "nom": "Routage des vues + hydratation session serveur",
+      "statut": "implémentée",
+      "fichiers": ["src/app/page.tsx", "src/app/client-page.tsx", "src/app/layout.tsx"],
+      "routes_api": []
+    },
+    {
+      "id": "onboarding-3-etapes",
+      "nom": "Onboarding en 4 étapes (pseudo, âge/ville, relation, vidéo)",
+      "statut": "implémentée",
+      "fichiers": ["src/components/vibe/app/onboarding-flow.tsx", "src/lib/vibe/cities.ts", "src/app/api/vibe/onboarding/route.ts", "src/app/api/vibe/cities/route.ts"],
+      "routes_api": ["POST /api/vibe/onboarding", "GET /api/vibe/cities"]
+    },
+    {
+      "id": "video-profil-15s",
+      "nom": "Vidéos de profil 15s (3 slots) — compression + upload Cloudinary",
+      "statut": "implémentée",
+      "fichiers": [
+        "src/components/vibe/app/profile-screen.tsx",
+        "src/components/vibe/app/video-player.tsx",
+        "src/components/vibe/app/upload-progress-ring.tsx",
+        "src/lib/vibe/video-compress.ts",
+        "src/lib/video-compress.ts",
+        "src/lib/cloudinary-client.ts",
+        "src/app/api/vibe/profile/video/route.ts",
+        "src/app/api/vibe/upload/route.ts",
+        "src/app/api/vibe/video-config/route.ts"
+      ],
+      "routes_api": ["POST /api/vibe/profile/video", "DELETE /api/vibe/profile/video", "POST /api/vibe/upload", "GET /api/vibe/video-config"]
+    },
+    {
+      "id": "swipe-deck",
+      "nom": "Deck de swipe façon Tinder (like/pass/superlike + rewind)",
+      "statut": "implémentée",
+      "fichiers": ["src/components/vibe/app/swipe-screen.tsx", "src/components/vibe/app/match-overlay.tsx", "src/app/api/vibe/profiles/deck/route.ts", "src/app/api/vibe/swipe/route.ts"],
+      "routes_api": ["GET /api/vibe/profiles/deck", "POST /api/vibe/swipe"]
+    },
+    {
+      "id": "vibe-check",
+      "nom": "Vibe Check (question de compatibilité binaire)",
+      "statut": "implémentée (affichage client uniquement)",
+      "fichiers": ["src/components/vibe/app/swipe-screen.tsx", "src/lib/vibe/constants.ts"],
+      "routes_api": []
+    },
+    {
+      "id": "messagerie-anti-spam",
+      "nom": "Messagerie match avec verrou anti-spam (3 messages max avant réponse)",
+      "statut": "implémentée",
+      "fichiers": ["src/components/vibe/app/chat-screen.tsx", "src/components/vibe/app/matches-screen.tsx", "src/app/api/vibe/matches/route.ts", "src/app/api/vibe/matches/[id]/messages/route.ts"],
+      "routes_api": ["GET /api/vibe/matches", "GET|POST|PATCH /api/vibe/matches/[id]/messages"]
+    },
+    {
+      "id": "messages-vocaux",
+      "nom": "Notes vocales dans le chat (+ sélecteur d'emojis)",
+      "statut": "implémentée",
+      "fichiers": ["src/components/vibe/app/voice-recorder.tsx", "src/components/vibe/app/voice-note-player.tsx", "src/components/vibe/app/emoji-picker.tsx"],
+      "routes_api": ["POST /api/vibe/matches/[id]/messages (type=voice)"]
+    },
+    {
+      "id": "cadeaux-virtuels",
+      "nom": "Cadeaux virtuels monétisables (commission plateforme + wallet €)",
+      "statut": "implémentée",
+      "fichiers": [
+        "src/components/vibe/app/chat-screen.tsx",
+        "src/components/vibe/app/gift-open-modal.tsx",
+        "src/app/api/vibe/matches/[id]/gift/route.ts",
+        "src/app/api/vibe/gifts/route.ts",
+        "src/app/api/vibe/gifts/[id]/open/route.ts",
+        "src/lib/vibe/constants.ts"
+      ],
+      "routes_api": ["POST /api/vibe/matches/[id]/gift", "GET /api/vibe/gifts", "POST /api/vibe/gifts/[id]/open"]
+    },
+    {
+      "id": "partage-social",
+      "nom": "Partage social post-cadeau + modale de parrainage",
+      "statut": "implémentée (UI uniquement)",
+      "fichiers": ["src/components/vibe/app/social-share.tsx"],
+      "routes_api": []
+    },
+    {
+      "id": "economie-vibes",
+      "nom": "Économie de Vibes (packs, achats simulés, double comptabilité free/purchased)",
+      "statut": "implémentée (paiement simulé)",
+      "fichiers": [
+        "src/components/vibe/app/wallet-screen.tsx",
+        "src/components/vibe/insufficient-vibes-modal.tsx",
+        "src/components/vibe/gem-badge.tsx",
+        "src/lib/vibe/store.ts",
+        "src/lib/vibe/constants.ts",
+        "src/lib/vibe/vibes-accounting.ts",
+        "src/app/api/vibe/gem-packs/route.ts",
+        "src/app/api/vibe/gems/purchase/route.ts",
+        "src/app/api/vibe/gems/spend/route.ts"
+      ],
+      "routes_api": ["GET /api/vibe/gem-packs", "POST /api/vibe/gems/purchase", "POST /api/vibe/gems/spend"]
+    },
+    {
+      "id": "actions-premium",
+      "nom": "17 actions premium à effet réel (super-like, boost, passport, icebreaker IA…)",
+      "statut": "implémentée (effets hétérogènes réels/simulés)",
+      "fichiers": [
+        "src/components/vibe/app/premium-actions-sheet.tsx",
+        "src/components/vibe/app/swipe-screen.tsx",
+        "src/components/vibe/app/chat-screen.tsx",
+        "src/components/vibe/app/profile-screen.tsx",
+        "src/lib/vibe/constants.ts",
+        "src/app/api/vibe/gems/spend/route.ts"
+      ],
+      "routes_api": ["POST /api/vibe/gems/spend"]
+    },
+    {
+      "id": "buffs-actifs",
+      "nom": "Suivi des buffs actifs (anneaux compte à rebours, polling 15s)",
+      "statut": "implémentée (section UI non branchée)",
+      "fichiers": ["src/app/api/vibe/active-buffs/route.ts", "src/lib/vibe/use-active-buffs.ts", "src/components/vibe/app/active-buffs-section.tsx", "src/components/vibe/app/countdown-ring.tsx", "src/components/vibe/app/action-success-modal.tsx"],
+      "routes_api": ["GET /api/vibe/active-buffs"]
+    },
+    {
+      "id": "wallet-retraits",
+      "nom": "Portefeuille gains € + demandes de retrait (escrow)",
+      "statut": "implémentée (partielle : traitement admin absent)",
+      "fichiers": ["src/components/vibe/app/wallet-screen.tsx", "src/components/vibe/app/withdraw-modal.tsx", "src/app/api/vibe/wallet/withdraw/route.ts", "src/app/api/vibe/wallet/transactions/route.ts"],
+      "routes_api": ["GET|POST /api/vibe/wallet/withdraw", "GET /api/vibe/wallet/transactions"]
+    },
+    {
+      "id": "streak-quotidien",
+      "nom": "Série quotidienne (streak) avec récompenses N×2 Vibes",
+      "statut": "implémentée",
+      "fichiers": ["src/components/vibe/app/streak-reward.tsx", "src/app/api/vibe/streak/route.ts"],
+      "routes_api": ["GET|POST /api/vibe/streak"]
+    },
+    {
+      "id": "notifications-inapp",
+      "nom": "Notifications in-app (cloche + centre, polling 30s)",
+      "statut": "implémentée",
+      "fichiers": ["src/components/vibe/app/notification-bell.tsx", "src/lib/vibe/notify.ts", "src/app/api/vibe/notifications/route.ts"],
+      "routes_api": ["GET|POST /api/vibe/notifications"]
+    },
+    {
+      "id": "parametres-notifications",
+      "nom": "Préférences de notifications par catégorie",
+      "statut": "implémentée (UI orpheline)",
+      "fichiers": ["src/components/vibe/app/notification-settings.tsx", "src/app/api/vibe/notification-settings/route.ts"],
+      "routes_api": ["GET|POST /api/vibe/notification-settings"]
+    },
+    {
+      "id": "push-web",
+      "nom": "Souscription Web Push (VAPID)",
+      "statut": "partielle (aucun envoi serveur)",
+      "fichiers": ["src/components/vibe/app/notification-permission-prompt.tsx", "src/app/api/vibe/push/vapid-key/route.ts", "src/app/api/vibe/push/subscribe/route.ts"],
+      "routes_api": ["GET /api/vibe/push/vapid-key", "POST|DELETE /api/vibe/push/subscribe"]
+    },
+    {
+      "id": "pwa",
+      "nom": "PWA (manifest, install prompt, métadonnées SEO/JSON-LD)",
+      "statut": "partielle (sw.js et icônes absents du repo)",
+      "fichiers": ["public/manifest.json", "src/components/vibe/app/pwa-install-prompt.tsx", "src/app/layout.tsx", "public/robots.txt"],
+      "routes_api": []
+    },
+    {
+      "id": "multidevise",
+      "nom": "Multi-devises (détection géo, taux, prix fixes par région)",
+      "statut": "implémentée",
+      "fichiers": [
+        "src/app/api/vibe/detect/route.ts",
+        "src/app/api/vibe/rates/route.ts",
+        "src/app/api/vibe/currency/route.ts",
+        "src/components/vibe/currency-switcher.tsx",
+        "src/lib/vibe/use-currency.ts",
+        "src/lib/vibe/currency.ts",
+        "src/lib/vibe/constants.ts"
+      ],
+      "routes_api": ["GET /api/vibe/detect", "GET /api/vibe/rates", "POST /api/vibe/currency"]
+    },
+    {
+      "id": "profil-completion",
+      "nom": "Complétion de profil (12 tâches, anneau animé)",
+      "statut": "implémentée",
+      "fichiers": ["src/app/api/vibe/completion-rate/route.ts", "src/components/vibe/app/completion-ring.tsx", "src/components/vibe/app/profile-screen.tsx", "src/app/api/vibe/profile/route.ts"],
+      "routes_api": ["GET /api/vibe/completion-rate", "GET|PATCH /api/vibe/profile"]
+    },
+    {
+      "id": "admin-dashboard",
+      "nom": "Dashboard admin (KPI, utilisateurs, modération, cadeaux CRUD, analytics, paramètres)",
+      "statut": "implémentée (séries synthétiques)",
+      "fichiers": [
+        "src/components/vibe/admin/admin-dashboard.tsx",
+        "src/components/vibe/admin/sidebar.tsx",
+        "src/components/vibe/admin/kpi-cards.tsx",
+        "src/components/vibe/admin/charts.tsx",
+        "src/components/vibe/admin/users-table.tsx",
+        "src/components/vibe/admin/moderation-queue.tsx",
+        "src/components/vibe/admin/gift-catalog.tsx",
+        "src/components/vibe/admin/analytics.tsx",
+        "src/components/vibe/admin/settings.tsx",
+        "src/components/vibe/admin/types.ts",
+        "src/app/api/vibe/admin/stats/route.ts",
+        "src/app/api/vibe/admin/users/route.ts",
+        "src/app/api/vibe/admin/reports/route.ts",
+        "src/app/api/vibe/admin/reports/[id]/route.ts",
+        "src/app/api/vibe/admin/gifts/route.ts",
+        "src/app/api/vibe/admin/gifts/[id]/route.ts",
+        "src/app/api/vibe/admin/settings/route.ts"
+      ],
+      "routes_api": ["GET /api/vibe/admin/stats", "GET /api/vibe/admin/users", "GET|POST /api/vibe/admin/reports", "GET|POST /api/vibe/admin/gifts", "PUT|DELETE /api/vibe/admin/gifts/[id]", "GET|PUT /api/vibe/admin/settings"]
+    },
+    {
+      "id": "landing-immersive",
+      "nom": "Landing immersive plein écran (vidéo de fond, CTA, modale auth)",
+      "statut": "implémentée",
+      "fichiers": ["src/components/vibe/landing/immersive-landing.tsx", "src/components/vibe/auth-modal.tsx", "src/components/vibe/vibe-logo.tsx"],
+      "routes_api": []
+    },
+    {
+      "id": "landing-marketing-legacy",
+      "nom": "Landing marketing scrollable (héritée, code mort conservé)",
+      "statut": "implémentée mais non routée",
+      "fichiers": [
+        "src/components/vibe/landing/landing-page.tsx",
+        "src/components/vibe/landing/nav.tsx",
+        "src/components/vibe/landing/hero.tsx",
+        "src/components/vibe/landing/hero-swipe-demo.tsx",
+        "src/components/vibe/landing/stats.tsx",
+        "src/components/vibe/landing/how-it-works.tsx",
+        "src/components/vibe/landing/features.tsx",
+        "src/components/vibe/landing/vibe-check.tsx",
+        "src/components/vibe/landing/pricing.tsx",
+        "src/components/vibe/landing/multi-currency.tsx",
+        "src/components/vibe/landing/faq.tsx",
+        "src/components/vibe/landing/final-cta.tsx",
+        "src/components/vibe/landing/footer.tsx",
+        "src/components/vibe/landing/typewriter.tsx",
+        "src/components/vibe/landing/primitives.tsx",
+        "src/components/vibe/phone-frame.tsx"
+      ],
+      "routes_api": []
+    },
+    {
+      "id": "animations-transverses",
+      "nom": "Bibliothèque d'animations réutilisables (motion, confetti, haptique)",
+      "statut": "implémentée",
+      "fichiers": ["src/components/vibe/app/interactive-animations.tsx"],
+      "routes_api": []
+    },
+    {
+      "id": "socle-transverse",
+      "nom": "Socle technique transverse (store Zustand, session, constants, settings, DB, UI shadcn)",
+      "statut": "implémentée",
+      "fichiers": [
+        "src/lib/vibe/store.ts",
+        "src/lib/vibe/session.ts",
+        "src/lib/vibe/constants.ts",
+        "src/lib/vibe/settings.ts",
+        "src/lib/vibe/notify.ts",
+        "src/lib/db.ts",
+        "src/lib/utils.ts",
+        "src/hooks/use-mobile.ts",
+        "src/hooks/use-toast.ts",
+        "src/app/globals.css",
+        "src/app/api/route.ts"
+      ],
+      "routes_api": ["GET /api"]
+    },
+    {
+      "id": "schema-donnees",
+      "nom": "Schéma de données Prisma (Neon PostgreSQL) + seeds",
+      "statut": "implémentée",
+      "fichiers": ["prisma/schema.prisma", "prisma/seed.js", "scripts/seed.ts", "scripts/connect-neon.js"],
+      "routes_api": []
+    }
+  ],
+  "fichiers_sans_feature": {
+    "src/components/ui/*": "Composants shadcn/ui génériques (socle-transverse)",
+    "src/components/vibe/*": "Composants VibeSync racine (voir features ci-dessus)"
+  }
+}

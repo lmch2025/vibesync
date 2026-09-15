@@ -1,0 +1,28 @@
+# ============================================================================
+# CODEOWNERS VibeSync
+# ----------------------------------------------------------------------------
+# Toute pull request touchant ces chemins exigera une review explicite de
+# lmch2025 (à condition d'activer « Require review from Code Owners » dans
+# les règles de protection de branche — voir PROTECTION.md §4).
+# ============================================================================
+
+# Propriétaire par défaut : tout le dépôt
+*                               @lmch2025
+
+# Périmètre applicatif protégé (fonctionnalités)
+/src/                           @lmch2025
+/prisma/                        @lmch2025
+/public/                        @lmch2025
+/scripts/                       @lmch2025
+
+# Infrastructure critique
+/package.json                   @lmch2025
+/next.config.ts                 @lmch2025
+/tsconfig.json                  @lmch2025
+
+# Système de protection lui-même
+/protection/                    @lmch2025
+/githooks/                      @lmch2025
+/.github/                       @lmch2025
+/PROTECTION.md                  @lmch2025
+/docs/                          @lmch2025

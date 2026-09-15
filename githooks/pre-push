@@ -1,0 +1,79 @@
+#!/bin/bash
+# ============================================================================
+# VibeSync Protection — hook pre-push
+# ----------------------------------------------------------------------------
+# Dernière garde locale avant publication :
+#   1. Audit des commits sortants : tout commit touchant un fichier protégé
+#      doit porter le marqueur [MODIF-PROTEGEE] (rattrape les --no-verify).
+#   2. Vérification d'intégrité du worktree (fichiers scellés intacts).
+#   3. Typecheck « ratchet » : le nombre d'erreurs TS dans src/ ne doit pas
+#      dépasser le baseline (protection/typecheck-baseline.txt).
+#
+# La CI GitHub (.github/workflows/guard.yml) rejoue ces contrôles côté serveur.
+# ============================================================================
+set -u
+cd "$(git rev-parse --show-toplevel 2>/dev/null)" || exit 1
+
+echo "🛡️  VibeSync Protection — pre-push"
+
+[ -f protection/integrity.manifest.json ] && [ -f protection/verify.mjs ] || {
+  echo "⚠️  Protection non initialisée — push autorisé sans vérification.";
+  exit 0;
+}
+
+# ---- 1. Audit des commits sortants ------------------------------------------
+AUDIT_RANGES=()
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -n "${local_sha:-}" ] || continue
+  if [ -z "${remote_sha:-}" ] || [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    # Nouvelle branche : auditer tout l'historique jusqu'à l'origine commune
+    BASE=$(git merge-base origin/main "$local_sha" 2>/dev/null || git rev-parse origin/main 2>/dev/null || echo "")
+    [ -n "$BASE" ] && AUDIT_RANGES+=("${BASE}..${local_sha}")
+  else
+    AUDIT_RANGES+=("${remote_sha}..${local_sha}")
+  fi
+done < /dev/stdin
+
+for RANGE in "${AUDIT_RANGES[@]:-}"; do
+  [ -n "$RANGE" ] || continue
+  if ! node protection/verify.mjs --audit "$RANGE" --quiet; then
+    echo ""
+    echo "❌ PUSH BLOQUÉ : des commits touchent des fichiers protégés SANS le marqueur [MODIF-PROTEGEE]."
+    node protection/verify.mjs --audit "$RANGE" 1>&2 || true
+    echo ""
+    echo "   Options :"
+    echo "   - Réécrire les messages :  git rebase -i et ajouter [MODIF-PROTEGEE]"
+    echo "   - Abandonner les commits : git reset --hard origin/main"
+    exit 1
+  fi
+done
+
+# ---- 2. Intégrité du worktree -----------------------------------------------
+if ! node protection/verify.mjs --quiet; then
+  echo ""
+  echo "❌ PUSH BLOQUÉ : des fichiers protégés scellés sont modifiés/supprimés dans le worktree."
+  echo "   Détail :"
+  node protection/verify.mjs 1>&2 || true
+  echo ""
+  echo "   Restaurez-les (git checkout -- <fichier>) ou validez la modification"
+  echo "   explicitement (voir PROTECTION.md)."
+  exit 1
+fi
+
+# ---- 3. Typecheck ratchet ----------------------------------------------------
+if [ -x node_modules/.bin/tsc ] && [ -f protection/typecheck-baseline.txt ]; then
+  BASELINE=$(grep -m1 -oE "^[0-9]+" protection/typecheck-baseline.txt | tr -d " ")
+  if [ -n "$BASELINE" ]; then
+    echo "🔬 Typecheck (baseline : $BASELINE erreurs tolérées dans src/)…"
+    ERRORS=$(node_modules/.bin/tsc --noEmit 2>&1 | grep -cE "^src/.*error TS" || true)
+    if [ "${ERRORS:-0}" -gt "$BASELINE" ]; then
+      echo ""
+      echo "❌ PUSH BLOQUÉ : régression TypeScript ($ERRORS erreurs dans src/ > baseline $BASELINE)."
+      echo "   Corrigez les nouvelles erreurs — le baseline ne peut pas augmenter."
+      exit 1
+    fi
+  fi
+fi
+
+echo "✅ pre-push OK — rien de protégé n'a été altéré sans validation explicite."
+exit 0
