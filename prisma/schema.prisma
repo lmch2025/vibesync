@@ -1,0 +1,248 @@
+// VibeSync — Prisma schema (Neon PostgreSQL)
+// Pooled URL for queries, unpooled URL for migrations (PgBouncer DDL limitation).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+/// A VibeSync user. Phone-number based auth, role-based access for admin.
+model User {
+  id            String   @id @default(cuid())
+  phone         String   @unique
+  pinHash       String?
+  name          String?
+  role          String   @default("user") // "user" | "admin"
+  currency      String   @default("EUR") // ISO 4217
+  country       String? // ISO 3166-1 alpha-2 (from x-vercel-ip-country)
+  gems          Int      @default(25) // total Vibes (purchased + free)
+  freeGems      Int      @default(25) // Vibes given for free (streak, welcome, referrals) — NOT usable for gifts
+  walletEurCents Int     @default(0) // accumulated gift value (base EUR, from purchased Vibes only)
+  verified      Boolean  @default(false) // blue badge
+  banned        Boolean  @default(false)
+  onboardingComplete Boolean @default(false)
+  // Streak system — addictive daily return loop
+  streak         Int     @default(0) // current consecutive days
+  streakMax      Int     @default(0) // best streak ever
+  lastStreakDay  String? // ISO date (YYYY-MM-DD) of last streak claim
+  streakRewardClaimed Boolean @default(false) // claimed today's reward
+  // Premium action effects (timestamps for active buffs)
+  ghostModeUntil DateTime?
+  spotlightUntil DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  profile       Profile?
+  swipesFrom    Swipe[]      @relation("SwipeFromUser")
+  matchesA      Match[]      @relation("MatchUserA")
+  matchesB      Match[]      @relation("MatchUserB")
+  messages      Message[]
+  giftsSent     GiftTx[]     @relation("GiftSender")
+  giftsReceived GiftTx[]     @relation("GiftReceiver")
+  gemTx         GemTx[]
+  boosts        Boost[]
+  reportsFiled  VideoReport[] @relation("ReportReporter")
+  withdrawals   Withdrawal[]
+  notifications Notification[]
+}
+
+/// Public dating profile with a 15s video. `videoUrl` stores the compressed
+/// video as a base64 data URL (for sandbox). `posterUrl` stores a JPEG frame
+/// used as a thumbnail/fallback while the video loads. In production these
+/// would be Cloudinary CDN URLs.
+model Profile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName  String
+  age          Int
+  city         String
+  bio          String
+  videoUrl     String   @default("") // primary video (CDN URL)
+  posterUrl    String   @default("") // JPEG thumbnail (CDN URL)
+  videoDuration Int     @default(0) // seconds
+  videoUrl2    String   @default("") // 2nd video (CDN URL)
+  posterUrl2   String   @default("")
+  videoUrl3    String   @default("") // 3rd video (CDN URL)
+  posterUrl3   String   @default("")
+  gender       String // "f" | "m" | "nb"
+  lookingFor   String // "f" | "m" | "nb" | "all"
+  relationshipType String @default("serious") // "serious" | "casual" | "friendship"
+  lat          Float
+  lng          Float
+  vibeQuestion String   @default("Plage ou Montagne ?")
+  vibeAnswer   String   @default("plage") // shared answer required to see each other
+  modStatus    String   @default("approved") // "pending" | "approved" | "rejected"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  swipesTo     Swipe[]      @relation("SwipeToProfile")
+  reports      VideoReport[]
+}
+
+/// A directional swipe action. direction: "pass" | "like" | "superlike"
+model Swipe {
+  id           String   @id @default(cuid())
+  fromUserId   String
+  toProfileId  String
+  direction    String
+  costGems     Int      @default(0) // super-like = 5
+  createdAt    DateTime @default(now())
+
+  fromUser     User     @relation("SwipeFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toProfile    Profile  @relation("SwipeToProfile", fields: [toProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toProfileId])
+  @@index([toProfileId])
+}
+
+/// A mutual match. Unlocked messaging once the receiver replies.
+model Match {
+  id           String   @id @default(cuid())
+  userAId      String
+  userBId      String
+  initiatedById String // the one who triggered the match (last swiper)
+  unlocked     Boolean  @default(false) // true once the receiver replied
+  createdAt    DateTime @default(now())
+
+  userA        User     @relation("MatchUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB        User     @relation("MatchUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  messages     Message[]
+  gifts        GiftTx[]
+
+  @@unique([userAId, userBId])
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  matchId       String
+  match         Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  senderId      String
+  sender        User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  text          String   @default("")
+  type          String   @default("text") // "text" | "voice"
+  voiceData     String?  // base64-encoded audio for voice notes
+  voiceDuration Int?     // duration in seconds
+  voiceListened Boolean  @default(false) // recipient listened to the voice note
+  boosted       Boolean  @default(false) // 10 gems — push to top of inbox
+  status        String   @default("sent") // "sent" | "delivered" | "read"
+  createdAt     DateTime @default(now())
+}
+
+/// Catalog of virtual gifts. eurValueCents is the base EUR real-money value.
+model Gift {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  name         String
+  emoji        String
+  gemCost      Int
+  eurValueCents Int
+  popular      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  transactions GiftTx[]
+}
+
+/// A gift sent in a match conversation. `opened=false` keeps the gift wrapped
+/// (suspense) until the recipient taps to reveal it with a satisfying animation.
+model GiftTx {
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  giftId      String
+  matchId     String?
+  sender      User     @relation("GiftSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("GiftReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  gift        Gift     @relation(fields: [giftId], references: [id])
+  match       Match?   @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  opened      Boolean  @default(false)
+  openedAt    DateTime?
+  messageText String? // optional note attached by the sender
+  createdAt   DateTime @default(now())
+}
+
+/// Gem economy transactions: purchase, spend, refund.
+model GemTx {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  delta       Int // +purchase, -spend
+  reason      String // "purchase" | "superlike" | "boost" | "gift" | "rewind" | "passport" | "icebreaker" | "see_likes" | "message_boost" | "welcome"
+  eurPaidCents Int? // for purchases
+  createdAt   DateTime @default(now())
+}
+
+/// Profile boost: top of queue for 20 local users for 30 minutes.
+model Boost {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+/// AI / user reported video moderation queue.
+model VideoReport {
+  id          String   @id @default(cuid())
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  reporterId  String?
+  reporter    User?    @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  reason      String
+  source      String   @default("ai") // "ai" | "user"
+  status      String   @default("pending") // "pending" | "approved" | "removed"
+  createdAt   DateTime @default(now())
+}
+
+/// Daily-cached exchange rates from Open Exchange Rates (EUR base).
+model ExchangeRate {
+  id        String   @id @default(cuid())
+  currency  String   @unique // ISO 4217
+  rate      Float // 1 EUR = rate currency
+  fetchedAt DateTime @default(now())
+}
+
+/// Global app settings (admin-configurable). Key-value store.
+/// Keys: defaultRadiusKm, maxMessagesBeforeReply, platformCommission,
+///       withdrawalThresholdEur, welcomeGems
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+/// Withdrawal request: user asks to cash out their gift wallet (€) via
+/// Stripe Connect. Status flows: pending → processing → completed | rejected.
+model Withdrawal {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountCents  Int // amount in EUR cents (base currency)
+  status       String   @default("pending") // "pending" | "processing" | "completed" | "rejected"
+  method       String   @default("stripe") // "stripe" | "mobile_money"
+  accountInfo  String?  // Stripe Connect account ID or mobile money number
+  processedAt  DateTime?
+  createdAt    DateTime @default(now())
+}
+
+/// In-app notifications for all events: matches, gifts, messages, likes,
+/// streaks, marketing. Each has a type, title, body, icon, optional actionUrl.
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // "match" | "gift" | "message" | "like" | "superlike" | "streak" | "boost_expired" | "marketing" | "system"
+  title     String
+  body      String
+  icon      String   @default("🔔") // emoji or icon name
+  read      Boolean  @default(false)
+  actionUrl String?  // e.g. "/chat/matchId" or "/wallet"
+  metadata  String?  // JSON string with extra context (matchId, giftKey, etc.)
+  createdAt DateTime @default(now())
+}
+

@@ -1,0 +1,26 @@
+{
+  "name": "Vivilov — Rencontre Vidéo Authentique",
+  "short_name": "Vivilov",
+  "description": "La PWA de rencontre par vidéo de 15s. Authentique, fluide, sans abonnement.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#6b32c4",
+  "theme_color": "#6b32c4",
+  "categories": ["lifestyle", "social", "dating"],
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

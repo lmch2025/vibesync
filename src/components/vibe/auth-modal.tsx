@@ -1,0 +1,338 @@
+"use client";
+// AuthModal — elegant, modern authentication dialog.
+// Flow: country-code selector + phone → OTP → (new) PIN create+confirm / (existing) PIN login.
+// All inside a shadcn Dialog with smooth Framer Motion step transitions.
+import { useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ChevronDown,
+  Phone,
+  Search,
+  ShieldCheck,
+  KeyRound,
+  Star,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { VibeLogo } from "@/components/vibe/vibe-logo";
+import { useVibe } from "@/lib/vibe/store";
+import { COUNTRY_CODES, type Country } from "@/lib/vibe/country-codes";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
+type Step = "phone" | "pin-create" | "pin-confirm" | "pin-login";
+
+export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; onOpenChange: (o: boolean) => void; onSuccess: () => void }) {
+  const setMe = useVibe((s) => s.setMe);
+  const [step, setStep] = useState<Step>("phone");
+  const [country, setCountry] = useState<Country>(
+    () => COUNTRY_CODES.find((c) => c.iso === "FR") ?? COUNTRY_CODES[0]
+  );
+  const [phone, setPhone] = useState("");
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [userExists, setUserExists] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Reset state on close so the modal is fresh for the next open.
+  // Intercepting onOpenChange (an event handler) is the lint-compliant way
+  // to reset state: no useEffect, no ref access during render.
+  function handleOpenChange(o: boolean) {
+    if (!o) {
+      setStep("phone");
+      setPhone("");
+      setPin("");
+      setConfirmPin("");
+      setUserExists(false);
+      setLoading(false);
+    }
+    onOpenChange(o);
+  }
+
+  const fullPhone = useMemo(() => `${country.dial}${phone.replace(/\s/g, "")}`, [country, phone]);
+
+  async function checkPhone() {
+    if (phone.replace(/\s/g, "").length < 6) {
+      toast.error("Numéro invalide");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/vibe/auth/check-phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: fullPhone }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setUserExists(!!data.exists);
+      setStep(data.exists ? "pin-login" : "pin-create");
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function register() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/vibe/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: fullPhone, pin }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (data.user) {
+        setMe(data.user);
+        useVibe.getState().setRates(data.rates ?? {});
+      }
+      toast.success("Bienvenue sur Vivilov ! +25 Vibes offertes 🎁");
+      onOpenChange(false);
+      onSuccess();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+      setStep("pin-create");
+      setPin("");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function login() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/vibe/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: fullPhone, pin }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (data.user) {
+        setMe(data.user);
+        useVibe.getState().setRates(data.rates ?? {});
+      }
+      toast.success("Content de te revoir 👋");
+      onOpenChange(false);
+      onSuccess();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+      setPin("");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-[420px] p-0 gap-0 overflow-hidden rounded-3xl border-border/60">
+        {/* Gradient header */}
+        <div className="relative vibe-gradient px-6 pt-6 pb-7 overflow-hidden">
+          <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
+          <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-black/10 blur-2xl" />
+          <div className="relative flex items-center justify-between">
+            <VibeLogo className="[&_span]:text-white" />
+            <span className="text-[11px] font-semibold text-white/80 bg-white/15 rounded-full px-2.5 py-1 backdrop-blur">
+              {step === "phone" && "Étape 1/3"}
+              {(step === "pin-create" || step === "pin-confirm" || step === "pin-login") && "Sécurité"}
+            </span>
+          </div>
+          <div className="relative mt-3 text-white">
+            <DialogTitle className="font-display text-xl font-bold">
+              {step === "phone" && "Ton numéro, ta vibe."}
+              {step === "pin-create" && "Crée ton code PIN"}
+              {step === "pin-confirm" && "Confirme ton PIN"}
+              {step === "pin-login" && "Heureux de te revoir"}
+            </DialogTitle>
+            <DialogDescription className="text-white/80 text-sm mt-0.5">
+              {step === "phone" && "Aucun compte à créer — juste ton numéro et un code."}
+              {step === "pin-create" && "4 chiffres pour te reconnecter vite. Hashé, jamais partagé."}
+              {step === "pin-confirm" && "Retape les 4 chiffres pour confirmer."}
+              {step === "pin-login" && "Entre ton PIN à 4 chiffres."}
+            </DialogDescription>
+          </div>
+        </div>
+
+        {/* Step body */}
+        <div className="bg-card px-6 py-7 min-h-[260px] flex flex-col">
+          <AnimatePresence mode="wait">
+            {step === "phone" && (
+              <motion.div key="phone" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col">
+                <label className="text-xs font-semibold text-muted-foreground mb-2">Téléphone</label>
+                <div className="flex gap-2">
+                  <CountryCodeSelect value={country} onChange={setCountry} />
+                  <Input
+                    type="tel"
+                    inputMode="tel"
+                    placeholder="6 12 34 56 78"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="flex-1 h-12 rounded-2xl text-base"
+                    onKeyDown={(e) => e.key === "Enter" && checkPhone()}
+                  />
+                </div>
+                <button
+                  onClick={checkPhone}
+                  disabled={loading}
+                  className="mt-5 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-60"
+                >
+                  {loading ? "Vérification…" : "Continuer"}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <p className="text-[11px] text-muted-foreground text-center mt-5 leading-relaxed">
+                  En continuant, tu acceptes nos CGU et notre Politique RGPD.<br />Ton numéro n&apos;est jamais affiché.
+                </p>
+              </motion.div>
+            )}
+
+            {step === "pin-create" && (
+              <motion.div key="pin-create" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="flex-1 flex flex-col items-center">
+                <BackBtn onClick={() => setStep("phone")} />
+                <ShieldCheck className="h-8 w-8 text-primary mb-2 mt-2" />
+                <InputOTP maxLength={4} value={pin} onChange={setPin}>
+                  <InputOTPGroup className="gap-2">
+                    <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-xl" />
+                  </InputOTPGroup>
+                </InputOTP>
+                <AnimatePresence>
+                  {pin.length === 4 && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={() => setStep("pin-confirm")}
+                      className="mt-5 h-11 px-5 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center gap-2 active:scale-95 transition"
+                    >
+                      Continuer <ArrowRight className="h-4 w-4" />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+
+            {step === "pin-confirm" && (
+              <motion.div key="pin-confirm" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col items-center">
+                <BackBtn onClick={() => setStep("pin-create")} />
+                <InputOTP
+                  maxLength={4}
+                  value={confirmPin}
+                  onChange={(v) => {
+                    setConfirmPin(v);
+                    if (v.length === 4 && v === pin) register();
+                    else if (v.length === 4 && v !== pin) toast.error("Les codes ne correspondent pas");
+                  }}
+                >
+                  <InputOTPGroup className="gap-2">
+                    <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-xl" />
+                  </InputOTPGroup>
+                </InputOTP>
+                {loading && <p className="text-sm text-muted-foreground mt-5">Création du compte…</p>}
+              </motion.div>
+            )}
+
+            {step === "pin-login" && (
+              <motion.div key="pin-login" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col items-center">
+                <BackBtn onClick={() => setStep("phone")} />
+                <KeyRound className="h-8 w-8 text-primary mb-2 mt-2" />
+                <InputOTP maxLength={4} value={pin} onChange={setPin}>
+                  <InputOTPGroup className="gap-2">
+                    <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-xl" />
+                  </InputOTPGroup>
+                </InputOTP>
+                <AnimatePresence>
+                  {pin.length === 4 && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={login}
+                      className="mt-5 h-11 px-5 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center gap-2 active:scale-95 transition"
+                    >
+                      {loading ? "…" : "Se connecter"}
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function BackBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="self-start mb-4 text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition">
+      <ArrowLeft className="h-4 w-4" /> Retour
+    </button>
+  );
+}
+
+function CountryCodeSelect({ value, onChange }: { value: Country; onChange: (c: Country) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 h-12 rounded-2xl border border-input bg-background px-3 text-sm font-medium hover:bg-accent/10 transition shrink-0"
+          aria-label="Choisir le code pays"
+        >
+          <span className="text-xl leading-none">{value.flag}</span>
+          <span className="tabular-nums">{value.dial}</span>
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[280px] p-0" align="start">
+        <Command>
+          <div className="flex items-center border-b px-3">
+            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+            <CommandInput placeholder="Rechercher un pays…" className="h-9" />
+          </div>
+          <CommandList className="max-h-[280px]">
+            <CommandEmpty>Aucun pays trouvé.</CommandEmpty>
+            <CommandGroup>
+              {COUNTRY_CODES.map((c) => (
+                <CommandItem
+                  key={c.iso}
+                  value={`${c.name} ${c.iso} ${c.dial}`}
+                  onSelect={() => {
+                    onChange(c);
+                    setOpen(false);
+                  }}
+                  className="gap-2.5"
+                >
+                  <span className="text-xl leading-none">{c.flag}</span>
+                  <span className="flex-1 truncate">{c.name}</span>
+                  <span className="text-muted-foreground tabular-nums text-sm">{c.dial}</span>
+                  {c.iso === value.iso && <Check className="h-4 w-4 text-primary" />}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
