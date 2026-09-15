@@ -24,6 +24,20 @@ echo "🛡️  VibeSync Protection — pre-push"
 # ---- 1. Audit des commits sortants ------------------------------------------
 AUDIT_RANGES=()
 while read -r local_ref local_sha remote_ref remote_sha; do
+  # Suppression de ref distante (local_sha = 0000…) : rien à auditer côté sortant,
+  # mais on bloque localement la suppression des refs protégées (défense en
+  # profondeur alignée sur les rulesets GitHub : Restrict deletions).
+  if [ -n "${local_sha:-}" ] && printf '%s' "$local_sha" | grep -qE '^0+$'; then
+    case "$remote_ref" in
+      refs/heads/main|refs/tags/*)
+        echo ""
+        echo "❌ PUSH BLOQUÉ : suppression de la ref protégée $remote_ref."
+        echo "   La suppression de main ou d'un tag de version est interdite (PROTECTION.md §4, « Restrict deletions »)."
+        exit 1
+        ;;
+    esac
+    continue
+  fi
   [ -n "${local_sha:-}" ] || continue
   if [ -z "${remote_sha:-}" ] || [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
     # Nouvelle branche : auditer tout l'historique jusqu'à l'origine commune
