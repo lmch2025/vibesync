@@ -30,8 +30,10 @@ export function ClientHome({ initialView, initialUser, initialRates }: { initial
   const setView = useVibe((s) => s.setView);
   const setMe = useVibe((s) => s.setMe);
 
-  const storeInitialized = useRef(false);
-  if (!storeInitialized.current) {
+  // Pattern « init once » conforme à react-hooks/refs : ref initialisée à null
+  // et testée avec == null (accès ref pendant le rendu autorisé par la règle).
+  const storeInitialized = useRef<boolean | null>(null);
+  if (storeInitialized.current == null) {
     storeInitialized.current = true;
     useVibe.setState({ view: initialView });
     if (initialUser) {
