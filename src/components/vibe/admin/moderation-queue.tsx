@@ -6,8 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, Bot, User, ShieldCheck, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SuccessBounce } from "@/components/vibe/app/interactive-animations";
+import { cn } from "@/lib/utils";
 import type { AdminReport } from "./types";
 
 function timeAgo(iso: string): string {
@@ -63,7 +65,12 @@ function ReportCard({
       layout
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.18 } }}
+      exit={{
+        opacity: 0,
+        x: 40,
+        scale: 0.95,
+        transition: { duration: 0.22, ease: "easeOut" },
+      }}
       transition={{ duration: 0.25 }}
       className="overflow-hidden rounded-2xl bg-card ring-1 ring-border shadow-sm flex flex-col sm:flex-row"
     >
@@ -123,25 +130,40 @@ function ReportCard({
         )}
 
         <div className="mt-auto flex items-center gap-2 pt-2">
-          <Button
-            size="sm"
+          <motion.button
+            type="button"
             onClick={() => onAction(report.id, "approve")}
             disabled={busy}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg gap-1.5"
+            whileTap={busy ? undefined : { scale: 0.95 }}
+            className={cn(
+              buttonVariants({
+                variant: "default",
+                size: "sm",
+                className:
+                  "bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg gap-1.5",
+              })
+            )}
           >
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
             Approuver
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
+          </motion.button>
+          <motion.button
+            type="button"
             onClick={() => onAction(report.id, "remove")}
             disabled={busy}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg gap-1.5"
+            whileTap={busy ? undefined : { scale: 0.95 }}
+            className={cn(
+              buttonVariants({
+                variant: "outline",
+                size: "sm",
+                className:
+                  "text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg gap-1.5",
+              })
+            )}
           >
             <X className="h-3.5 w-3.5" />
             Supprimer
-          </Button>
+          </motion.button>
         </div>
       </div>
     </motion.div>
@@ -219,10 +241,16 @@ export function ModerationQueue() {
             {loading ? "…" : count} en attente
           </Badge>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading} className="rounded-lg">
+        <motion.button
+          type="button"
+          onClick={load}
+          disabled={loading}
+          whileTap={loading ? undefined : { scale: 0.95 }}
+          className={cn(buttonVariants({ variant: "outline", size: "sm", className: "rounded-lg" }))}
+        >
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
           Rafraîchir
-        </Button>
+        </motion.button>
       </div>
 
       {error && (
@@ -252,7 +280,9 @@ export function ModerationQueue() {
       {!loading && count === 0 && !error && (
         <div className="rounded-2xl bg-card ring-1 ring-border p-12 text-center">
           <div className="mx-auto h-14 w-14 rounded-full bg-emerald-500/10 grid place-items-center mb-3">
-            <Check className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+            <SuccessBounce>
+              <Check className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+            </SuccessBounce>
           </div>
           <p className="font-display text-lg font-semibold">File vide — aucune vidéo signalée 🎉</p>
           <p className="text-sm text-muted-foreground mt-1">

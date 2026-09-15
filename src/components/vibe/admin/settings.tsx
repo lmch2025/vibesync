@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Save, MapPin, MessageSquare, Percent, Wallet, Gift, Video } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Save, MapPin, MessageSquare, Percent, Wallet, Gift, Video, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
+import { SuccessBounce } from "@/components/vibe/app/interactive-animations";
+import { cn } from "@/lib/utils";
 import {
   WITHDRAWAL_THRESHOLD_EUR,
   MAX_MESSAGES_BEFORE_REPLY,
@@ -55,6 +58,16 @@ export function Settings() {
   const [videoMaxSizeKb, setVideoMaxSizeKb] = useState(2048);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  // Brief "saved ✓" state on the submit button after a successful save.
+  const [saved, setSaved] = useState(false);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending "saved" reset when unmounting.
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
   // Load persisted settings from the DB on mount.
   useEffect(() => {
@@ -109,6 +122,10 @@ export function Settings() {
       toast.success("Paramètres enregistrés", {
         description: `Vidéo ${videoMaxDuration}s · ${videoMaxWidth}px · Q${videoQuality}% · ${videoMaxSizeKb}KB max`,
       });
+      // Brief "Sauvegardé ✓" swap on the button (1.5s), toast stays as is.
+      setSaved(true);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setSaved(false), 1500);
     } catch {
       toast.error("Erreur lors de l'enregistrement");
     } finally {
@@ -355,25 +372,62 @@ export function Settings() {
       <Separator />
 
       <div className="flex items-center justify-end gap-2 pb-4">
-        <Button type="button" variant="ghost" onClick={() => {
-          setRadius(50);
-          setMsgLimit(MAX_MESSAGES_BEFORE_REPLY);
-          setCommission(Math.round(PLATFORM_COMMISSION * 100));
-          setWithdrawal(WITHDRAWAL_THRESHOLD_EUR);
-          setWelcomeGems(WELCOME_GEMS);
-          setVideoMaxDuration(15);
-          setVideoMaxCount(3);
-          setVideoMaxWidth(480);
-          setVideoQuality(50);
-          setVideoMaxSizeKb(2048);
-          toast.info("Réinitialisé aux valeurs par défaut");
-        }}>
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.97 }}
+          onClick={() => {
+            setRadius(50);
+            setMsgLimit(MAX_MESSAGES_BEFORE_REPLY);
+            setCommission(Math.round(PLATFORM_COMMISSION * 100));
+            setWithdrawal(WITHDRAWAL_THRESHOLD_EUR);
+            setWelcomeGems(WELCOME_GEMS);
+            setVideoMaxDuration(15);
+            setVideoMaxCount(3);
+            setVideoMaxWidth(480);
+            setVideoQuality(50);
+            setVideoMaxSizeKb(2048);
+            toast.info("Réinitialisé aux valeurs par défaut");
+          }}
+          className={cn(buttonVariants({ variant: "ghost" }))}
+        >
           Réinitialiser
-        </Button>
-        <Button type="submit" disabled={saving} className="rounded-xl gap-1.5">
-          <Save className="h-4 w-4" />
-          {saving ? "Enregistrement…" : "Enregistrer"}
-        </Button>
+        </motion.button>
+        <motion.button
+          type="submit"
+          disabled={saving}
+          whileTap={saving ? undefined : { scale: 0.95 }}
+          className={cn(buttonVariants({ className: "rounded-xl gap-1.5" }))}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={saving ? "saving" : saved ? "saved" : "idle"}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="inline-flex items-center gap-1.5"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enregistrement…
+                </>
+              ) : saved ? (
+                <>
+                  <SuccessBounce>
+                    <Check className="h-4 w-4" />
+                  </SuccessBounce>
+                  Sauvegardé
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Enregistrer
+                </>
+              )}
+            </motion.span>
+          </AnimatePresence>
+        </motion.button>
       </div>
     </form>
   );

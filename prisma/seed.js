@@ -34,17 +34,17 @@ async function main() {
   console.log(`  ✅ ${settings.length} Settings upserted`);
 
   // ── Gifts catalog ────────────────────────────────────────────────────────
+  // DOIT rester aligné sur `GIFTS` dans src/lib/vibe/constants.ts
+  // (source de vérité du catalogue côté application).
   const gifts = [
-    { key: 'rose',        name: 'Rose',          emoji: '🌹', gemCost: 10,  eurValueCents: 50,  popular: true  },
-    { key: 'fire',        name: 'Feu',            emoji: '🔥', gemCost: 20,  eurValueCents: 100, popular: true  },
-    { key: 'diamond',     name: 'Diamant',        emoji: '💎', gemCost: 50,  eurValueCents: 250, popular: false },
-    { key: 'crown',       name: 'Couronne',       emoji: '👑', gemCost: 100, eurValueCents: 500, popular: false },
-    { key: 'star',        name: 'Étoile',         emoji: '⭐', gemCost: 15,  eurValueCents: 75,  popular: true  },
-    { key: 'heart',       name: 'Cœur',           emoji: '❤️', gemCost: 5,   eurValueCents: 25,  popular: true  },
-    { key: 'kiss',        name: 'Bisou',          emoji: '💋', gemCost: 8,   eurValueCents: 40,  popular: false },
-    { key: 'champagne',   name: 'Champagne',      emoji: '🍾', gemCost: 30,  eurValueCents: 150, popular: false },
-    { key: 'unicorn',     name: 'Licorne',        emoji: '🦄', gemCost: 75,  eurValueCents: 375, popular: false },
-    { key: 'trophy',      name: 'Trophée',        emoji: '🏆', gemCost: 200, eurValueCents: 1000,popular: false },
+    { key: 'rose',     name: 'Rose Virtuelle',    emoji: '🌹', gemCost: 10,  eurValueCents: 5,   popular: true  },
+    { key: 'cocktail', name: 'Cocktail',          emoji: '🍹', gemCost: 20,  eurValueCents: 10,  popular: false },
+    { key: 'chocolate',name: 'Chocolats',         emoji: '🍫', gemCost: 30,  eurValueCents: 15,  popular: false },
+    { key: 'cinema',   name: 'Ticket Cinéma',     emoji: '🎬', gemCost: 50,  eurValueCents: 25,  popular: true  },
+    { key: 'bouquet',  name: 'Bouquet de Fleurs', emoji: '💐', gemCost: 80,  eurValueCents: 40,  popular: false },
+    { key: 'dinner',   name: 'Dîner Romantique',  emoji: '🕯️', gemCost: 150, eurValueCents: 75,  popular: true  },
+    { key: 'perfume',  name: 'Parfum',            emoji: '🧴', gemCost: 250, eurValueCents: 125, popular: false },
+    { key: 'weekend',  name: 'Weekend Évasion',   emoji: '✈️', gemCost: 500, eurValueCents: 250, popular: false },
   ];
 
   for (const g of gifts) {

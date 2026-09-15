@@ -84,7 +84,7 @@ agent-ctx/
 /public/logo*.jpeg
 /public/logo*.jpg
 /public/logo-transparent.png
-/public/icon-*.png
+# /public/icon-*.png  # PWA icons ARE tracked (required by manifest.json)
 /public/icon-*.webp
 /public/profiles/
 

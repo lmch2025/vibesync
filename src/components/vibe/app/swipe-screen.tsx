@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import { RotateCcw, X, Star, Heart, Zap, BadgeCheck, Waves, MapPin } from "lucide-react";
 import { GemBadge } from "@/components/vibe/gem-badge";
+import { sfx, haptic, EmojiBurst, Shimmer, type SfxName } from "@/components/vibe/app/interactive-animations";
 import { VideoPlayer } from "./video-player";
 import { useVibe } from "@/lib/vibe/store";
 import { GEM_ACTIONS, VIBE_QUESTIONS } from "@/lib/vibe/constants";
@@ -46,6 +47,9 @@ export function SwipeScreen({
   const [deck, setDeck] = useState<Profile[]>([]);
   const [history, setHistory] = useState<{ profile: Profile; direction: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  // Burst d'emojis sur les boutons Like / Super-Like (incrémentés pour re-fire)
+  const [likeBurst, setLikeBurst] = useState(0);
+  const [superBurst, setSuperBurst] = useState(0);
   const [vibeIndex] = useState(() => Math.floor(Math.random() * VIBE_QUESTIONS.length));
   const vibeQ = VIBE_QUESTIONS[vibeIndex];
 
@@ -149,8 +153,28 @@ export function SwipeScreen({
       {/* deck */}
       <div className="absolute inset-0 pt-20 pb-44 px-4">
         {loading ? (
-          <div className="h-full grid place-items-center">
-            <div className="h-10 w-10 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+          <div className="relative h-full w-full" aria-busy="true" aria-label="Chargement des profils">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="absolute inset-0 rounded-3xl overflow-hidden ring-1 ring-white/10 bg-white/5"
+                style={{
+                  transform: `scale(${1 - i * 0.045}) translateY(${i * 12}px)`,
+                  opacity: 1 - i * 0.25,
+                }}
+              >
+                <Shimmer />
+                <div className="absolute inset-0 animate-pulse bg-gradient-to-t from-white/10 via-transparent to-white/5" />
+                {/* bloc vibe check factice */}
+                <div className="absolute top-16 inset-x-4 h-28 rounded-2xl bg-white/5 animate-pulse" />
+                {/* bloc infos factices */}
+                <div className="absolute bottom-0 inset-x-0 p-4 pb-5 space-y-2">
+                  <div className="h-5 w-36 rounded-lg bg-white/15 animate-pulse" />
+                  <div className="h-3 w-24 rounded bg-white/10 animate-pulse" />
+                  <div className="h-3 w-full rounded bg-white/10 animate-pulse" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : deck.length === 0 ? (
           <EmptyDeck onReload={loadDeck} />
@@ -183,12 +207,38 @@ export function SwipeScreen({
           <ActionButton onClick={() => top && swipe(top, "pass")} label="Pass" tone="red" big>
             <X className="h-7 w-7" />
           </ActionButton>
-          <ActionButton onClick={() => top && swipe(top, "superlike")} label="Super" cost={GEM_ACTIONS.superlike} tone="blue" big>
-            <Star className="h-6 w-6" />
-          </ActionButton>
-          <ActionButton onClick={() => top && swipe(top, "like")} label="Like" tone="green" big>
-            <Heart className="h-7 w-7" />
-          </ActionButton>
+          <div className="relative">
+            <ActionButton
+              onClick={() => {
+                if (!top) return;
+                setSuperBurst((k) => k + 1);
+                swipe(top, "superlike");
+              }}
+              label="Super"
+              cost={GEM_ACTIONS.superlike}
+              tone="blue"
+              big
+              sound="chime"
+            >
+              <Star className="h-6 w-6" />
+            </ActionButton>
+            <EmojiBurst trigger={superBurst} emojis={["⭐", "✨"]} />
+          </div>
+          <div className="relative">
+            <ActionButton
+              onClick={() => {
+                if (!top) return;
+                setLikeBurst((k) => k + 1);
+                swipe(top, "like");
+              }}
+              label="Like"
+              tone="green"
+              big
+            >
+              <Heart className="h-7 w-7" />
+            </ActionButton>
+            <EmojiBurst trigger={likeBurst} emojis={["❤️", "💜", "💖"]} />
+          </div>
           <ActionButton onClick={boost} label="Boost" cost={GEM_ACTIONS.boost} tone="purple">
             <Zap className="h-5 w-5" />
           </ActionButton>
@@ -219,9 +269,17 @@ function SwipeCard({
   const onDragEnd = (_e: any, info: PanInfo) => {
     const { offset, velocity } = info;
     const threshold = 90;
-    if (offset.y < -threshold || velocity.y < -500) onSwipe("superlike");
-    else if (offset.x > threshold || velocity.x > 500) onSwipe("like");
-    else if (offset.x < -threshold || velocity.x < -500) onSwipe("pass");
+    // Haptic léger au moment où la carte franchit le seuil de décision.
+    if (offset.y < -threshold || velocity.y < -500) {
+      haptic(10);
+      onSwipe("superlike");
+    } else if (offset.x > threshold || velocity.x > 500) {
+      haptic(10);
+      onSwipe("like");
+    } else if (offset.x < -threshold || velocity.x < -500) {
+      haptic(10);
+      onSwipe("pass");
+    }
   };
 
   const vibeMatch = profile.vibeAnswer === vibeQ.a ? "a" : profile.vibeAnswer === vibeQ.b ? "b" : null;
@@ -319,6 +377,7 @@ function ActionButton({
   cost,
   tone,
   big,
+  sound = "pop",
 }: {
   children: React.ReactNode;
   onClick: () => void;
@@ -326,6 +385,7 @@ function ActionButton({
   cost?: number;
   tone: "red" | "green" | "blue" | "amber" | "purple";
   big?: boolean;
+  sound?: SfxName;
 }) {
   const tones: Record<string, string> = {
     red: "text-red-400 ring-red-400/40 hover:bg-red-400/10",
@@ -335,16 +395,24 @@ function ActionButton({
     purple: "text-fuchsia-300 ring-fuchsia-300/40 hover:bg-fuchsia-300/10",
   };
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1 group">
+    <motion.button
+      onClick={() => {
+        sfx.play(sound);
+        haptic(12);
+        onClick();
+      }}
+      whileTap={{ scale: 0.82 }}
+      className="flex flex-col items-center gap-1 group"
+    >
       <span
-        className={`grid place-items-center rounded-full bg-zinc-900 ring-1 ${tones[tone]} transition active:scale-90 ${big ? "h-14 w-14" : "h-11 w-11"}`}
+        className={`grid place-items-center rounded-full bg-zinc-900 ring-1 ${tones[tone]} transition group-hover:bg-white/5 ${big ? "h-14 w-14" : "h-11 w-11"}`}
       >
         {children}
       </span>
       <span className="text-[9px] text-white/50 font-medium flex items-center gap-0.5">
         {label}{cost ? `·${cost}` : ""}
       </span>
-    </button>
+    </motion.button>
   );
 }
 

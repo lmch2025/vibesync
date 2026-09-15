@@ -3,11 +3,11 @@
 // Tab 1 "Vibes": balance + packs to recharge + what Vibes buy
 // Tab 2 "Gains": gift wallet (€) + withdrawal + progress to threshold
 // Tab 3 "Historique": merged transaction history (purchases, spends, gifts, withdrawals)
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ArrowDownLeft, ArrowUpRight, Banknote, Check, Clock, Gem,
-  Gift, History, Lock, Wand2, TrendingUp, Wallet as WalletIcon, Zap,
+  Gift, History, Loader2, Lock, Wand2, TrendingUp, Wallet as WalletIcon, Zap,
 } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { useVibe } from "@/lib/vibe/store";
@@ -15,6 +15,7 @@ import { useCurrency } from "@/lib/vibe/use-currency";
 import { formatIn } from "@/lib/vibe/currency";
 import { GEM_PACKS, GEM_ACTIONS, WITHDRAWAL_THRESHOLD_EUR, PLATFORM_COMMISSION } from "@/lib/vibe/constants";
 import { WithdrawModal } from "./withdraw-modal";
+import { AnimatedNumber, SuccessBounce, TabIndicator, celebrate, sfx } from "./interactive-animations";
 import { toast } from "sonner";
 
 type Tab = "vibes" | "gains" | "history";
@@ -36,6 +37,9 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
   const { moneyCents, currency } = useCurrency();
   const [tab, setTab] = useState<Tab>("vibes");
   const [buying, setBuying] = useState<string | null>(null);
+  // Pack that just got purchased — drives the 1.2s success flash (check + halo).
+  const [flashPack, setFlashPack] = useState<string | null>(null);
+  const flashTimerRef = useRef<number | null>(null);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [loadingTx, setLoadingTx] = useState(false);
@@ -55,6 +59,13 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
       if (!res.ok) throw new Error(data.error);
       patchMe({ gems: data.gems, freeGems: data.freeGems });
       toast.success(`+${data.added} Vibes ! 💎`);
+      // Immersive purchase feedback: coin sound, haptic pulse, confetti shower.
+      // Fired inside the success handler — exactly once per purchase.
+      celebrate({ sound: "coin", hapticPattern: [15, 40, 15], confettiCount: 120 });
+      // Brief success flash on the purchased pack (check overlay + emerald halo).
+      setFlashPack(packId);
+      if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = window.setTimeout(() => setFlashPack(null), 1200);
       loadTxs();
     } catch (e: any) { toast.error(e.message || "Erreur"); }
     finally { setBuying(null); }
@@ -70,6 +81,11 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
   }
 
   useEffect(() => { loadTxs(); }, []);
+
+  // Clear the pending pack-flash timer on unmount.
+  useEffect(() => () => {
+    if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
+  }, []);
 
   return (
     <div className="absolute inset-0 bg-zinc-950 text-white overflow-hidden flex flex-col">
@@ -90,15 +106,17 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
           { id: "gains", label: "Gains", icon: <TrendingUp className="h-3.5 w-3.5" /> },
           { id: "history", label: "Historique", icon: <History className="h-3.5 w-3.5" /> },
         ] as const).map((t) => (
-          <button
+          <motion.button
             key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-xs font-semibold transition ${
-              tab === t.id ? "vibe-gradient text-white" : "text-white/50 hover:text-white/80 bg-white/5"
+            onClick={() => { sfx.play("pop"); setTab(t.id); }}
+            whileTap={{ scale: 0.94 }}
+            className={`relative isolate flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-xs font-semibold transition-colors ${
+              tab === t.id ? "text-white" : "text-white/50 hover:text-white/80 bg-white/5"
             }`}
           >
+            {tab === t.id && <TabIndicator id="wallet-tab-indicator" />}
             {t.icon} {t.label}
-          </button>
+          </motion.button>
         ))}
       </div>
 
@@ -114,7 +132,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                 <p className="text-white/80 text-xs font-medium uppercase tracking-wide">Solde Vibes</p>
                 <div className="flex items-center gap-2 mt-1">
                   <GemIcon className="h-9 w-9" />
-                  <span className="font-display text-4xl font-black tabular-nums">{me?.gems ?? 0}</span>
+                  <AnimatedNumber value={me?.gems ?? 0} className="font-display text-4xl font-black" />
                 </div>
                 {/* Breakdown: purchased vs free — clear for non-digital users */}
                 <div className="mt-3 flex items-center gap-3 text-[10px]">
@@ -144,6 +162,19 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                       onClick={() => buy(pack.id)}
                       disabled={buying === pack.id}
                       whileTap={{ scale: 0.98 }}
+                      animate={
+                        flashPack === pack.id
+                          ? {
+                              // Success halo — brief emerald glow around the purchased pack.
+                              boxShadow: [
+                                "0 0 0px rgba(52, 211, 153, 0)",
+                                "0 0 34px rgba(52, 211, 153, 0.6)",
+                                "0 0 0px rgba(52, 211, 153, 0)",
+                              ],
+                              transition: { duration: 1.2, times: [0, 0.3, 1] },
+                            }
+                          : { boxShadow: "0 0 0px rgba(52, 211, 153, 0)" }
+                      }
                       className={`relative w-full rounded-2xl p-3.5 ring-1 flex items-center gap-3 transition disabled:opacity-60 ${
                         pack.popular ? "bg-accent/10 ring-accent/40"
                         : pack.bestValue ? "bg-fuchsia-500/10 ring-fuchsia-400/40"
@@ -155,8 +186,20 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                           {pack.popular ? "🔥 POPULAIRE" : "💎 MEILLEURE VALEUR"}
                         </span>
                       )}
+                      {/* Success flash — check pops in over the pack for 1.2s */}
+                      {flashPack === pack.id && (
+                        <div className="absolute inset-0 z-10 grid place-items-center rounded-2xl bg-emerald-400/15">
+                          <SuccessBounce>
+                            <span className="grid place-items-center h-10 w-10 rounded-full bg-emerald-400 text-zinc-950 shadow-lg">
+                              <Check className="h-6 w-6" strokeWidth={3} />
+                            </span>
+                          </SuccessBounce>
+                        </div>
+                      )}
                       <div className="grid place-items-center h-11 w-11 rounded-xl bg-white/10 shrink-0">
-                        <GemIcon className="h-6 w-6" />
+                        {buying === pack.id
+                          ? <Loader2 className="h-6 w-6 animate-spin" />
+                          : <GemIcon className="h-6 w-6" />}
                       </div>
                       <div className="flex-1 text-left">
                         <div className="flex items-baseline gap-1.5">
@@ -277,8 +320,8 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {txs.map((tx) => (
-                    <TxRow key={tx.id} tx={tx} />
+                  {txs.map((tx, i) => (
+                    <TxRow key={tx.id} tx={tx} index={i} />
                   ))}
                 </div>
               )}
@@ -300,7 +343,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
 }
 
 // ===== TRANSACTION ROW =====
-function TxRow({ tx }: { tx: Tx }) {
+function TxRow({ tx, index = 0 }: { tx: Tx; index?: number }) {
   const { moneyCents } = useCurrency();
   const time = new Date(tx.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -319,7 +362,12 @@ function TxRow({ tx }: { tx: Tx }) {
   };
 
   return (
-    <div className="flex items-center gap-3 py-2.5 px-2 rounded-xl hover:bg-white/[0.03] transition">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: Math.min(index * 0.03, 0.6), duration: 0.25 }}
+      className="flex items-center gap-3 py-2.5 px-2 rounded-xl hover:bg-white/[0.03] transition"
+    >
       {/* Icon */}
       <div className={`grid place-items-center h-9 w-9 rounded-full shrink-0 ${isIncoming ? "bg-emerald-500/15" : "bg-white/5"}`}>
         {tx.type === "withdrawal" ? (
@@ -350,6 +398,6 @@ function TxRow({ tx }: { tx: Tx }) {
           </p>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

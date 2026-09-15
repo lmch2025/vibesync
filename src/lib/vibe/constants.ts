@@ -74,6 +74,8 @@ export type PriceTier = { currency: string; amount: number };
 
 export type GemPack = {
   id: string;
+  /// Human-readable label (notifications, receipts, admin reports).
+  title: string;
   gems: number;
   bonus: number;
   popular?: boolean;
@@ -85,6 +87,7 @@ export type GemPack = {
 export const GEM_PACKS: GemPack[] = [
   {
     id: "decouverte",
+    title: "Pack Découverte",
     gems: 100,
     bonus: 0,
     tiers: [
@@ -99,6 +102,7 @@ export const GEM_PACKS: GemPack[] = [
   },
   {
     id: "populaire",
+    title: "Pack Populaire",
     gems: 600,
     bonus: 50,
     popular: true,
@@ -114,6 +118,7 @@ export const GEM_PACKS: GemPack[] = [
   },
   {
     id: "premium",
+    title: "Pack Premium",
     gems: 1500,
     bonus: 300,
     bestValue: true,

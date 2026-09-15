@@ -181,9 +181,9 @@
     },
     {
       "id": "pwa",
-      "nom": "PWA (manifest, install prompt, métadonnées SEO/JSON-LD)",
-      "statut": "partielle (sw.js et icônes absents du repo)",
-      "fichiers": ["public/manifest.json", "src/components/vibe/app/pwa-install-prompt.tsx", "src/app/layout.tsx", "public/robots.txt"],
+      "nom": "PWA (manifest, icônes, install prompt, métadonnées SEO/JSON-LD)",
+      "statut": "implémentée hors sw.js (icônes 192/512 générées et versionnées)",
+      "fichiers": ["public/manifest.json", "public/icon-192.png", "public/icon-512.png", "src/components/vibe/app/pwa-install-prompt.tsx", "src/app/layout.tsx", "public/robots.txt"],
       "routes_api": []
     },
     {

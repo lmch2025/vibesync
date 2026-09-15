@@ -3,7 +3,7 @@
 // Features: message bubbles with timestamps + checkmarks, voice notes (record/play),
 // read receipts (sent ✓ / delivered ✓✓ / read blue ✓✓ / listened blue ✓✓),
 // emoji picker, gift tray with note, anti-spam, icebreaker IA, message boost.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export const chatCache: Record<string, any> = {};
@@ -20,10 +20,11 @@ export function prefetchChat(matchId: string) {
 }
 
 import {
-  ArrowLeft, BadgeCheck, Check, CheckCheck, Gift, Lock, Mic,
+  ArrowLeft, BadgeCheck, Check, CheckCheck, Clock, Gift, Lock, Mic,
   Send, Smile, Wand2, Zap, X,
 } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
+import { sfx, haptic, TypingDots, useShake } from "@/components/vibe/app/interactive-animations";
 import { useVibe } from "@/lib/vibe/store";
 import { useCurrency } from "@/lib/vibe/use-currency";
 import { GIFTS, GEM_ACTIONS, MAX_MESSAGES_BEFORE_REPLY } from "@/lib/vibe/constants";
@@ -90,8 +91,50 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
   const [otherPoster, setOtherPoster] = useState<string | null>(initialPoster || null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Envoi optimiste : bulle locale affichée immédiatement, remplacée par les
+  // données serveur au load().
+  const [optimistic, setOptimistic] = useState<Extract<TimelineItem, { kind: "message" }> | null>(null);
+  // Indicateur « écrit… » simulé dans le header après chaque envoi.
+  const [partnerTyping, setPartnerTyping] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ids déjà rendus — évite de rejouer l'animation d'entrée des bulles quand
+  // load() rafraîchit la timeline (les bulles restent montées via key stable).
+  const [animatedIds, setAnimatedIds] = useState<Set<string>>(new Set());
+  // Shake d'erreur sur la zone de saisie.
+  const { controls: shakeControls, trigger: shakeTrigger } = useShake();
+
   const [openingGift, setOpeningGift] = useState<TimelineItem | null>(null);
   const [giftNote, setGiftNote] = useState("");
+
+  /// Affiche « écrit… » ~2-3 s dans le header (simulé localement, sans websocket).
+  /// Ne bloque rien — pur retour visuel après un envoi.
+  const simulatePartnerTyping = useCallback(() => {
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    setPartnerTyping(true);
+    typingTimer.current = setTimeout(() => setPartnerTyping(false), 2200 + Math.random() * 800);
+  }, []);
+
+  // Nettoie le timer de typing simulé au démontage.
+  useEffect(() => () => {
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+  }, []);
+
+  // Marque les ids rendus comme « vus » après leur premier affichage — les
+  // prochains rendus ne rejoueront donc pas l'animation d'entrée.
+  useEffect(() => {
+    if (!state) return;
+    setAnimatedIds((prev) => {
+      let changed = false;
+      const next = new Set(prev);
+      for (const t of state.timeline) {
+        if (!next.has(t.id)) {
+          next.add(t.id);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [state]);
 
   const load = async () => {
     // Show cached state immediately via useState initial value, but always fetch fresh in background
@@ -112,7 +155,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [state?.timeline.length]);
+  }, [state?.timeline.length, optimistic?.id]);
 
   async function send() {
     if (!text.trim() || !state) return;
@@ -120,7 +163,27 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
     const boostCost = boost ? GEM_ACTIONS.messageBoost : 0;
     const doSend = async () => {
       setSending(true);
-      const body: any = { text: text.trim(), boost, type: "text" };
+      const bodyText = text.trim();
+      const body: any = { text: bodyText, boost, type: "text" };
+      // Feedback immédiat : son + haptic + bulle optimiste locale.
+      const tempId = `local-${Date.now()}`;
+      setOptimistic({
+        kind: "message",
+        id: tempId,
+        senderId: me?.id ?? "",
+        mine: true,
+        text: bodyText,
+        type: "text",
+        boosted: boost,
+        status: "sending",
+        voiceData: null,
+        voiceDuration: null,
+        voiceListened: false,
+        createdAt: new Date().toISOString(),
+        senderName: me?.profile?.displayName ?? me?.name ?? "",
+      });
+      sfx.play("send");
+      haptic(10);
       setText("");
       const wasBoost = boost;
       setBoost(false);
@@ -130,7 +193,10 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         });
         const data = await res.json();
         if (!res.ok) {
-          setText(body.text);
+          setOptimistic(null);
+          setText(bodyText);
+          sfx.play("error");
+          shakeTrigger();
           if (data.locked) toast.error(data.error, { duration: 4000 });
           else toast.error(data.error);
           return;
@@ -142,7 +208,17 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
             duration: 3000,
           });
         }
+        // Remplace la bulle optimiste par les données serveur, puis simule
+        // le typing du partenaire (retour visuel élégant, non bloquant).
         await load();
+        setOptimistic(null);
+        simulatePartnerTyping();
+      } catch {
+        // Erreur réseau — retire la bulle optimiste et restaure le texte.
+        setOptimistic(null);
+        setText(bodyText);
+        sfx.play("error");
+        shakeTrigger();
       } finally { setSending(false); }
     };
     if (boostCost > 0) requireVibes(boostCost, "Booster ce message (10 Vibes)", doSend);
@@ -152,6 +228,8 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
   async function sendVoiceNote(base64: string, duration: number) {
     setSending(true);
     setVoiceMode(false);
+    sfx.play("send");
+    haptic(10);
     try {
       const res = await fetch(`/api/vibe/matches/${matchId}/messages`, {
         method: "POST",
@@ -162,7 +240,9 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
       if (!res.ok) throw new Error(data.error);
       if (data.gems !== undefined) patchMe({ gems: data.gems, freeGems: data.freeGems });
       await load();
+      simulatePartnerTyping();
     } catch (e: any) {
+      sfx.play("error");
       toast.error(e.message || "Erreur");
     } finally { setSending(false); }
   }
@@ -186,7 +266,23 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
           body: JSON.stringify({ giftKey, messageText: note || undefined }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        if (!res.ok) {
+          // Elegant fallback: when the server rejects because only free Vibes
+          // are available (gifts require purchased Vibes), open the refill
+          // modal instead of a bare error toast — the pending proceed lets the
+          // gift retry automatically after a successful pack purchase.
+          if (res.status === 402 && data.needPurchased) {
+            sfx.play("error");
+            useVibe.getState().openInsufficient(
+              gift.gemCost,
+              data.purchasedGems ?? 0,
+              `${gift.emoji} ${gift.name}`,
+              () => sendGift(giftKey),
+            );
+            return;
+          }
+          throw new Error(data.error);
+        }
         patchMe({ gems: data.gems, freeGems: data.freeGems });
         toast.success(`${gift.emoji} ${gift.name} envoyé ! Il/elle le découvrira en l'ouvrant. 🎁`);
         setGiftOpen(false);
@@ -230,7 +326,11 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
             <span className="font-semibold text-sm truncate">{otherName || "..."}</span>
             <BadgeCheck className="h-3.5 w-3.5 text-cyan-300 shrink-0" />
           </div>
-          <p className="text-[10px] text-emerald-400">en ligne</p>
+          {partnerTyping ? (
+            <TypingDots label="écrit…" className="text-[10px] text-emerald-400" dotClassName="bg-emerald-400" />
+          ) : (
+            <p className="text-[10px] text-emerald-400">en ligne</p>
+          )}
         </div>
         <button onClick={() => setGiftOpen(true)} className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 text-fuchsia-300 transition shrink-0" aria-label="Offrir un cadeau">
           <Gift className="h-5 w-5" />
@@ -254,17 +354,26 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         )}
 
         {state?.timeline.map((item) => {
+          // Les messages déjà rendus n'ont pas de nouvelle animation d'entrée
+          // quand load() rafraîchit la timeline.
+          const isNew = !animatedIds.has(item.id);
           if (item.kind === "gift") {
-            return <GiftBubble key={item.id} item={item} onOpen={() => item.kind === "gift" && !item.mine && !item.opened && setOpeningGift(item)} />;
+            return <GiftBubble key={item.id} item={item} animateIn={isNew} onOpen={() => item.kind === "gift" && !item.mine && !item.opened && setOpeningGift(item)} />;
           }
           return (
             <MessageBubble
               key={item.id}
               item={item}
+              animateIn={isNew}
               onListened={() => markVoiceListened(item.id)}
             />
           );
         })}
+
+        {/* Bulle optimiste — affichée immédiatement, statut « sending » */}
+        {optimistic && (
+          <MessageBubble key={optimistic.id} item={optimistic} animateIn onListened={() => {}} />
+        )}
       </div>
 
       {/* ===== ANTI-SPAM BANNER ===== */}
@@ -284,9 +393,16 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
       {/* ===== ICEBREAKER (empty chat) ===== */}
       {state && state.timeline.length === 0 && !locked && (
         <div className="mx-3 mb-2">
-          <button onClick={icebreaker} className="w-full h-9 rounded-xl bg-white/5 ring-1 ring-white/10 text-xs text-white/80 flex items-center justify-center gap-1.5 hover:bg-white/10">
+          <motion.button
+            onClick={() => {
+              sfx.play("pop");
+              icebreaker();
+            }}
+            whileTap={{ scale: 0.95 }}
+            className="w-full h-9 rounded-xl bg-white/5 ring-1 ring-white/10 text-xs text-white/80 flex items-center justify-center gap-1.5 hover:bg-white/10"
+          >
             <Wand2 className="h-3.5 w-3.5 text-accent" /> Icebreaker IA · 3 <GemIcon className="h-3 w-3" />
-          </button>
+          </motion.button>
         </div>
       )}
 
@@ -351,7 +467,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         {voiceMode ? (
           <VoiceRecorder onSend={sendVoiceNote} onCancel={() => setVoiceMode(false)} />
         ) : (
-          <div className="flex items-center gap-1.5">
+          <motion.div animate={shakeControls} className="flex items-center gap-1.5">
             {/* Emoji */}
             <button
               onClick={() => setEmojiOpen(true)}
@@ -452,7 +568,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
                 <Mic className="h-5 w-5" />
               </button>
             )}
-          </div>
+          </motion.div>
         )}
         {state && !state.unlocked && state.isInitiator && state.remainingBeforeLock > 0 && !voiceMode && (
           <p className="text-[10px] text-white/30 text-center mt-1">
@@ -515,13 +631,14 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
 }
 
 // ===== WHATSAPP-STYLE MESSAGE BUBBLE =====
-function MessageBubble({ item, onListened }: { item: Extract<TimelineItem, { kind: "message" }>; onListened: () => void }) {
+function MessageBubble({ item, onListened, animateIn = true }: { item: Extract<TimelineItem, { kind: "message" }>; onListened: () => void; animateIn?: boolean }) {
   const time = new Date(item.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   const isVoice = item.type === "voice";
+  const isSending = item.status === "sending";
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6, scale: 0.96 }}
+      initial={animateIn ? { opacity: 0, y: 6, scale: 0.96 } : false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.2 }}
       className={`flex ${item.mine ? "justify-end" : "justify-start"}`}
@@ -535,7 +652,7 @@ function MessageBubble({ item, onListened }: { item: Extract<TimelineItem, { kin
             : item.boosted
               ? "bg-gradient-to-br from-amber-600/40 to-orange-700/40 text-white rounded-bl-md ring-1 ring-amber-400/40"
               : "bg-white/10 text-white rounded-bl-md"
-        } ${item.boosted ? "ring-2 ring-amber-300/80" : ""}`}
+        } ${item.boosted ? "ring-2 ring-amber-300/80" : ""} ${isSending ? "opacity-70 animate-pulse" : ""}`}
       >
         {item.boosted && (
           <motion.span
@@ -587,11 +704,11 @@ function MessageBubble({ item, onListened }: { item: Extract<TimelineItem, { kin
 }
 
 // ===== GIFT BUBBLE =====
-function GiftBubble({ item, onOpen }: { item: Extract<TimelineItem, { kind: "gift" }>; onOpen: () => void }) {
+function GiftBubble({ item, onOpen, animateIn = true }: { item: Extract<TimelineItem, { kind: "gift" }>; onOpen: () => void; animateIn?: boolean }) {
   const time = new Date(item.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6, scale: 0.96 }}
+      initial={animateIn ? { opacity: 0, y: 6, scale: 0.96 } : false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       className={`flex ${item.mine ? "justify-end" : "justify-start"}`}
     >
@@ -629,6 +746,10 @@ function GiftBubble({ item, onOpen }: { item: Extract<TimelineItem, { kind: "gif
 
 // ===== WHATSAPP-STYLE STATUS CHECKMARKS =====
 function StatusCheckmarks({ status, listened, isVoice }: { status: string; listened: boolean; isVoice: boolean }) {
+  // Envoi en cours : petite horloge pulsée (bulle optimiste)
+  if (status === "sending") {
+    return <Clock className="h-3 w-3 text-white/50 animate-pulse" />;
+  }
   // For voice notes: blue ✓✓ when listened, gray ✓✓ when delivered, gray ✓ when sent
   // For text: blue ✓✓ when read, gray ✓✓ when delivered, gray ✓ when sent
   const isRead = status === "read" || (isVoice && listened);

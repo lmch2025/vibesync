@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Plus, Flame, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { useCurrency } from "@/lib/vibe/use-currency";
+import { cn } from "@/lib/utils";
 
 type Gift = {
   id: string;
@@ -31,7 +32,17 @@ type Gift = {
   popular?: boolean;
 };
 
-function GiftCard({ gift, index, onDelete }: { gift: Gift; index: number; onDelete: () => void }) {
+function GiftCard({
+  gift,
+  index,
+  flash,
+  onDelete,
+}: {
+  gift: Gift;
+  index: number;
+  flash?: boolean;
+  onDelete: () => void;
+}) {
   const { moneyCents } = useCurrency();
   const receiverShare = Math.round(gift.eurValueCents * 0.7);
   const platformShare = Math.round(gift.eurValueCents * 0.3);
@@ -40,8 +51,31 @@ function GiftCard({ gift, index, onDelete }: { gift: Gift; index: number; onDele
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3) }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        // Brief green pulse on the card that was just created/modified
+        // (same shadow structure across keyframes for clean interpolation).
+        ...(flash
+          ? {
+              boxShadow: [
+                "0 0 0 0px rgba(16,185,129,0), 0 0 0px rgba(16,185,129,0)",
+                "0 0 0 3px rgba(16,185,129,0.5), 0 0 20px rgba(16,185,129,0.3)",
+                "0 0 0 0px rgba(16,185,129,0), 0 0 0px rgba(16,185,129,0)",
+              ],
+            }
+          : {}),
+      }}
+      transition={{
+        duration: 0.3,
+        delay: Math.min(index * 0.04, 0.3),
+        // Per-value overrides so press feedback and the pulse aren't slowed
+        // by the entrance stagger delay.
+        y: { duration: 0.22, delay: 0, ease: "easeOut" },
+        scale: { duration: 0.12, delay: 0 },
+        boxShadow: { duration: 1.2, delay: 0, ease: "easeOut" },
+      }}
+      whileTap={{ scale: 0.98 }}
       className="relative overflow-hidden rounded-2xl bg-card ring-1 ring-border shadow-sm p-4 flex flex-col gap-3"
     >
       {gift.popular && (
@@ -88,14 +122,21 @@ function GiftCard({ gift, index, onDelete }: { gift: Gift; index: number; onDele
         </div>
       </div>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="w-full text-destructive hover:text-destructive hover:bg-destructive/5 mt-1"
+      <motion.button
+        type="button"
         onClick={() => setConfirming(true)}
+        whileTap={{ scale: 0.95 }}
+        className={cn(
+          buttonVariants({
+            variant: "ghost",
+            size: "sm",
+            className:
+              "w-full text-destructive hover:text-destructive hover:bg-destructive/5 mt-1",
+          })
+        )}
       >
         <Trash2 className="h-3.5 w-3.5" /> Supprimer
-      </Button>
+      </motion.button>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent className="rounded-2xl max-w-[360px]">
@@ -107,9 +148,22 @@ function GiftCard({ gift, index, onDelete }: { gift: Gift; index: number; onDele
           </DialogHeader>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="ghost">Annuler</Button>
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                className={cn(buttonVariants({ variant: "ghost" }))}
+              >
+                Annuler
+              </motion.button>
             </DialogClose>
-            <Button type="button" variant="destructive" onClick={onDelete}>Supprimer</Button>
+            <motion.button
+              type="button"
+              onClick={onDelete}
+              whileTap={{ scale: 0.95 }}
+              className={cn(buttonVariants({ variant: "destructive" }))}
+            >
+              Supprimer
+            </motion.button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -126,6 +180,15 @@ export function GiftCatalog() {
   const [gemCost, setGemCost] = useState("");
   const [eurValue, setEurValue] = useState("");
   const [creating, setCreating] = useState(false);
+  // id of the gift that was just created/modified — drives the green pulse.
+  const [flashId, setFlashId] = useState<string | null>(null);
+
+  // Clear the "just modified" highlight once the pulse has played.
+  useEffect(() => {
+    if (!flashId) return;
+    const t = setTimeout(() => setFlashId(null), 1800);
+    return () => clearTimeout(t);
+  }, [flashId]);
 
   const load = async () => {
     setLoading(true);
@@ -169,9 +232,10 @@ export function GiftCatalog() {
           eurValueCents: Math.round((Number(eurValue) || 0.5) * 100),
         }),
       });
-      const data = await res.json();
+      const data = (await res.json()) as { ok?: boolean; error?: string; gift?: Gift };
       if (!res.ok) throw new Error(data.error);
       toast.success(`${emoji} ${name} créé !`);
+      setFlashId(data.gift?.id ?? null);
       reset();
       setOpen(false);
       await load();
@@ -203,11 +267,15 @@ export function GiftCatalog() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl gap-1.5">
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              className={cn(buttonVariants({ className: "rounded-xl gap-1.5" }))}
+            >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Nouveau cadeau</span>
               <span className="sm:hidden">Nouveau</span>
-            </Button>
+            </motion.button>
           </DialogTrigger>
           <DialogContent className="rounded-2xl">
             <DialogHeader>
@@ -266,9 +334,22 @@ export function GiftCatalog() {
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button type="button" variant="ghost">Annuler</Button>
+                  <motion.button
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    className={cn(buttonVariants({ variant: "ghost" }))}
+                  >
+                    Annuler
+                  </motion.button>
                 </DialogClose>
-                <Button type="submit" disabled={creating}>{creating ? "Création…" : "Créer le cadeau"}</Button>
+                <motion.button
+                  type="submit"
+                  disabled={creating}
+                  whileTap={creating ? undefined : { scale: 0.95 }}
+                  className={cn(buttonVariants())}
+                >
+                  {creating ? "Création…" : "Créer le cadeau"}
+                </motion.button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -284,7 +365,13 @@ export function GiftCatalog() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
           {gifts.map((g, i) => (
-            <GiftCard key={g.id} gift={g} index={i} onDelete={() => onDelete(g.id)} />
+            <GiftCard
+              key={g.id}
+              gift={g}
+              index={i}
+              flash={g.id === flashId}
+              onDelete={() => onDelete(g.id)}
+            />
           ))}
         </div>
       )}

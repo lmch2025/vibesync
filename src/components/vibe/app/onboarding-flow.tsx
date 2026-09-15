@@ -10,6 +10,7 @@ import {
   Check,
   ChevronDown,
   Heart,
+  Loader2,
   MapPin,
   Search,
   Info,
@@ -24,6 +25,7 @@ import { searchCities, type City } from "@/lib/vibe/cities";
 import { compressVideo, fetchVideoConfig, formatDuration } from "@/lib/vibe/video-compress";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { celebrate } from "./interactive-animations";
 
 type Gender = "f" | "m" | "nb";
 type LookingFor = "f" | "m" | "nb" | "all";
@@ -60,6 +62,8 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [submitting, setSubmitting] = useState(false);
+  // Garde anti double-fire (StrictMode) — la célébration ne part qu'une fois.
+  const celebratedRef = useRef(false);
 
   // City predictive search
   useEffect(() => {
@@ -141,6 +145,10 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
         useVibe.getState().setRates(data.rates ?? {});
       }
       toast.success(videoUrl ? "Profil créé ! Bienvenue 🎉" : "Profil créé — ajoute ta vidéo plus tard pour débloquer tout.");
+      if (!celebratedRef.current) {
+        celebratedRef.current = true;
+        celebrate({ sound: "chime", hapticPattern: [10, 30, 10], confettiCount: 140 });
+      }
       onComplete();
     } catch (e: any) {
       toast.error(e.message || "Erreur");
@@ -208,7 +216,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                     onChange={(e) => setPseudo(e.target.value)}
                     placeholder="ex. Alex, Léa, Marco…"
                     maxLength={20}
-                    className="pl-10 h-12 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-vibe-purple"
+                    className="pl-10 h-12 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-vibe-purple focus-visible:ring-vibe-purple/40"
                     onKeyDown={(e) => e.key === "Enter" && canProceed() && setStep(1)}
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/30 tabular-nums">{pseudo.length}/20</span>
@@ -223,8 +231,9 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       { v: "m", label: "Homme", emoji: "♂" },
                       { v: "nb", label: "Non-binaire", emoji: "⚧" },
                     ].map((g) => (
-                      <button
+                      <motion.button
                         key={g.v}
+                        whileTap={{ scale: 0.94 }}
                         onClick={() => setGender(g.v as Gender)}
                         className={cn(
                           "rounded-2xl py-3 text-sm font-semibold transition ring-1",
@@ -235,7 +244,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       >
                         <span className="text-lg block mb-0.5">{g.emoji}</span>
                         {g.label}
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 </div>
@@ -250,8 +259,9 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       { v: "nb", label: "NB" },
                       { v: "all", label: "Tous" },
                     ].map((g) => (
-                      <button
+                      <motion.button
                         key={g.v}
+                        whileTap={{ scale: 0.94 }}
                         onClick={() => setLookingFor(g.v as LookingFor)}
                         className={cn(
                           "rounded-xl py-2.5 text-xs font-semibold transition ring-1",
@@ -261,7 +271,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                         )}
                       >
                         {g.label}
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 </div>
@@ -289,8 +299,9 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                 <div>
                   <label className="text-xs font-semibold text-white/60 mb-2 block">Âge</label>
                   <div className="relative">
-                    <button
+                    <motion.button
                       onClick={() => setAgeOpen((o) => !o)}
+                      whileTap={{ scale: 0.98 }}
                       className={cn(
                         "w-full h-12 rounded-2xl bg-white/5 border border-white/10 text-left px-4 flex items-center justify-between transition",
                         age !== null ? "text-white" : "text-white/30",
@@ -299,7 +310,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                     >
                       <span className="font-medium">{age !== null ? `${age} ans` : "Sélectionne ton âge"}</span>
                       <ChevronDown className={cn("h-4 w-4 text-white/40 transition", ageOpen && "rotate-180")} />
-                    </button>
+                    </motion.button>
                     <AnimatePresence>
                       {ageOpen && (
                         <motion.div
@@ -342,7 +353,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       onBlur={() => setTimeout(() => setCityFocused(false), 200)}
                       placeholder="Tape ta ville…"
                       className={cn(
-                        "pl-10 h-12 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/30",
+                        "pl-10 h-12 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-vibe-purple/40",
                         selectedCity && "border-emerald-400/50"
                       )}
                     />
@@ -490,9 +501,10 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   {!posterUrl ? (
-                    <button
+                    <motion.button
                       onClick={() => fileRef.current?.click()}
                       disabled={uploading}
+                      whileTap={uploading ? undefined : { scale: 0.98 }}
                       className="relative h-36 sm:h-44 rounded-2xl border-2 border-dashed border-white/15 hover:border-vibe-purple/50 bg-white/[0.02] hover:bg-white/[0.04] transition flex flex-col items-center justify-center gap-2 group"
                     >
                       {uploading ? (
@@ -511,7 +523,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                           </div>
                         </>
                       )}
-                    </button>
+                    </motion.button>
                   ) : (
                     <div className="relative h-36 sm:h-44 rounded-2xl overflow-hidden ring-1 ring-white/10">
                       <img src={posterUrl} alt="Aperçu vidéo" className="absolute inset-0 w-full h-full object-cover" />
@@ -519,18 +531,20 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       <div className="absolute top-2 left-2 glass-dark rounded-full px-2 py-0.5 text-[9px] font-semibold flex items-center gap-1">
                         <Video className="h-2.5 w-2.5 text-vibe-orange" /> 15s
                       </div>
-                      <button
+                      <motion.button
                         onClick={() => fileRef.current?.click()}
+                        whileTap={{ scale: 0.95 }}
                         className="absolute bottom-2 left-2 right-2 h-7 rounded-lg glass-dark text-[11px] font-semibold flex items-center justify-center gap-1 hover:bg-white/20 transition"
                       >
                         <Video className="h-3 w-3" /> Changer
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         onClick={() => { setPosterUrl(""); setVideoUrl(""); }}
+                        whileTap={{ scale: 0.85 }}
                         className="absolute top-2 right-2 h-6 w-6 grid place-items-center rounded-full bg-black/50 backdrop-blur hover:bg-black/70"
                       >
                         <X className="h-3 w-3" />
-                      </button>
+                      </motion.button>
                     </div>
                   )}
 
@@ -550,17 +564,20 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
 
                 <div className="flex gap-2.5 mt-auto">
                   <BackBtn onClick={() => setStep(2)} />
-                  <button
+                  <motion.button
                     onClick={submit}
                     disabled={submitting || uploading}
+                    whileTap={{ scale: 0.97 }}
                     className="flex-1 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-60"
                   >
-                    {submitting ? "Création…" : videoUrl ? (
+                    {submitting ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Création…</>
+                    ) : videoUrl ? (
                       <><Check className="h-4 w-4" /> Terminer</>
                     ) : (
                       <>Passer &amp; terminer <ArrowRight className="h-4 w-4" /></>
                     )}
-                  </button>
+                  </motion.button>
                 </div>
               </motion.div>
             )}
@@ -573,23 +590,25 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
 
 function NextBtn({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
       disabled={disabled}
+      whileTap={disabled ? undefined : { scale: 0.97 }}
       className="flex-1 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-40 disabled:cursor-not-allowed"
     >
       Continuer <ArrowRight className="h-4 w-4" />
-    </button>
+    </motion.button>
   );
 }
 
 function BackBtn({ onClick }: { onClick: () => void }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
+      whileTap={{ scale: 0.95 }}
       className="h-12 px-4 rounded-2xl bg-white/5 ring-1 ring-white/10 text-white/70 font-medium text-sm hover:bg-white/10 transition"
     >
       Retour
-    </button>
+    </motion.button>
   );
 }

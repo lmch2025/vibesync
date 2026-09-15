@@ -1,13 +1,14 @@
 "use client";
 // Auth flow: phone → OTP → (new user) PIN create+confirm / (existing user) PIN login.
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Phone, ShieldCheck, KeyRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Phone, ShieldCheck, KeyRound } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
 import { useVibe } from "@/lib/vibe/store";
 import { toast } from "sonner";
+import { celebrate, haptic, sfx, useShake } from "./interactive-animations";
 
 type Step = "phone" | "otp" | "pin-create" | "pin-confirm" | "pin-login";
 
@@ -22,9 +23,31 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [devOtp, setDevOtp] = useState("");
 
+  // Feedback immersif : shake de la carte sur erreur, célébration unique au succès.
+  const { controls: shakeControls, trigger: triggerShake } = useShake();
+  const celebratedRef = useRef(false);
+
+  function fireAuthCelebrate() {
+    if (celebratedRef.current) return; // garde anti double-fire (StrictMode)
+    celebratedRef.current = true;
+    celebrate({ sound: "chime", confettiCount: 90, hapticPattern: [10, 20, 10] });
+  }
+
+  function authError(message: string) {
+    sfx.play("error");
+    triggerShake();
+    toast.error(message);
+  }
+
+  // Chaque chiffre saisi → pop discret + micro-haptique.
+  function digitTap() {
+    sfx.play("pop");
+    haptic(6);
+  }
+
   async function requestOtp() {
     if (phone.replace(/\s/g, "").length < 8) {
-      toast.error("Numéro invalide");
+      authError("Numéro invalide");
       return;
     }
     setLoading(true);
@@ -41,7 +64,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
       setStep("otp");
       toast.success("Code envoyé par SMS (démo : " + data.otp + ")");
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      authError(e.message || "Erreur");
     } finally {
       setLoading(false);
     }
@@ -50,7 +73,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
   function verifyOtp(v: string) {
     if (v.length === 4) {
       if (v !== devOtp && v !== "4242") {
-        toast.error("Code incorrect");
+        authError("Code incorrect");
         return;
       }
       setStep(userExists ? "pin-login" : "pin-create");
@@ -75,9 +98,10 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
         useVibe.getState().setRates(data.rates ?? {});
       }
       toast.success("Bienvenue sur Vivilov ! +25 Vibes offertes 🎁");
+      fireAuthCelebrate();
       onSuccess();
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      authError(e.message || "Erreur");
       setStep("pin-create");
       setPin("");
     } finally {
@@ -102,9 +126,10 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
         useVibe.getState().setRates(data.rates ?? {});
       }
       toast.success("Content de te revoir 👋");
+      fireAuthCelebrate();
       onSuccess();
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      authError(e.message || "Erreur");
       setPin("");
     } finally {
       setLoading(false);
@@ -112,7 +137,10 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
   }
 
   return (
-    <div className="dark relative w-full max-w-md h-[600px] sm:h-[680px] rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10 bg-[#0a0612] text-white">
+    <motion.div
+      animate={shakeControls}
+      className="dark relative w-full max-w-md h-[600px] sm:h-[680px] rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10 bg-[#0a0612] text-white"
+    >
       <div className="absolute inset-0 vibe-gradient-soft" />
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-20 -left-20 h-64 w-64 rounded-full bg-primary/30 blur-3xl animate-float-slow" />
@@ -147,8 +175,11 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
                 disabled={loading}
                 className="mt-4 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-60"
               >
-                {loading ? "..." : "Recevoir le code"}
-                <ArrowRight className="h-4 w-4" />
+                {loading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Envoi du code…</>
+                ) : (
+                  <>Recevoir le code <ArrowRight className="h-4 w-4" /></>
+                )}
               </button>
               <p className="text-[11px] text-muted-foreground text-center mt-6 leading-relaxed">
                 En continuant, tu acceptes nos CGU et notre Politique RGPD.
@@ -167,7 +198,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
                 SMS envoyé au {phone}. <span className="text-primary font-medium">(Démo : 4242)</span>
               </p>
               <div className="flex justify-center">
-                <InputOTP maxLength={4} value={otp} onChange={(v) => { setOtp(v); verifyOtp(v); }}>
+                <InputOTP maxLength={4} value={otp} onChange={(v) => { if (v.length > otp.length) digitTap(); setOtp(v); verifyOtp(v); }}>
                   <InputOTPGroup>
                     <InputOTPSlot index={0} className="h-14 w-12 text-xl" />
                     <InputOTPSlot index={1} className="h-14 w-12 text-xl" />
@@ -187,7 +218,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
                 4 chiffres. Sert à te reconnecter vite. Hashé en base, jamais partagé.
               </p>
               <div className="flex justify-center">
-                <InputOTP maxLength={4} value={pin} onChange={setPin}>
+                <InputOTP maxLength={4} value={pin} onChange={(v) => { if (v.length > pin.length) digitTap(); setPin(v); }}>
                   <InputOTPGroup>
                     <InputOTPSlot index={0} className="h-14 w-12 text-xl" />
                     <InputOTPSlot index={1} className="h-14 w-12 text-xl" />
@@ -223,9 +254,10 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
                   maxLength={4}
                   value={confirmPin}
                   onChange={(v) => {
+                    if (v.length > confirmPin.length) digitTap();
                     setConfirmPin(v);
                     if (v.length === 4 && v === pin) register();
-                    else if (v.length === 4 && v !== pin) toast.error("Les codes ne correspondent pas");
+                    else if (v.length === 4 && v !== pin) authError("Les codes ne correspondent pas");
                   }}
                 >
                   <InputOTPGroup>
@@ -236,7 +268,11 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
                   </InputOTPGroup>
                 </InputOTP>
               </div>
-              {loading && <p className="text-center text-sm text-muted-foreground mt-6">Création du compte…</p>}
+              {loading && (
+                <p className="text-center text-sm text-muted-foreground mt-6 flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Création du compte…
+                </p>
+              )}
             </motion.div>
           )}
 
@@ -249,7 +285,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
               <h2 className="font-display text-2xl font-bold text-center mb-2">Ton code PIN</h2>
               <p className="text-sm text-muted-foreground text-center mb-8">Heureux de te revoir. Entre ton PIN à 4 chiffres.</p>
               <div className="flex justify-center">
-                <InputOTP maxLength={4} value={pin} onChange={setPin}>
+                <InputOTP maxLength={4} value={pin} onChange={(v) => { if (v.length > pin.length) digitTap(); setPin(v); }}>
                   <InputOTPGroup>
                     <InputOTPSlot index={0} className="h-14 w-12 text-xl" />
                     <InputOTPSlot index={1} className="h-14 w-12 text-xl" />
@@ -266,7 +302,11 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
                     onClick={login}
                     className="mt-6 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-95 transition"
                   >
-                    {loading ? "..." : "Se connecter"}
+                    {loading ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Connexion…</>
+                    ) : (
+                      "Se connecter"
+                    )}
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -274,6 +314,6 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

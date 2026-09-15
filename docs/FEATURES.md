@@ -156,7 +156,9 @@ Manifest « Vivilov » (standalone, portrait, icônes maskable, thème #6b32c4).
 Prompt d'installation (Chromium + instructions iOS/Android, max 3 rejets).
 Layout avec OpenGraph, Twitter card, JSON-LD (SoftwareApplication, Organization,
 FAQPage).
-- ⚠️ `icon-192/512.png` et `sw.js` absents du repo (trou connu).
+- ✅ `icon-192.png` / `icon-512.png` générées (gradient violet→rose + monogramme
+  VS) et versionnées — le manifest ne 404 plus.
+- ⚠️ `sw.js` reste absent de `public/` (trou connu).
 
 ### 21. Multi-devises (`multidevise`)
 Détection pays via `x-vercel-ip-country` (défaut CM→XAF), mapping pays→devise

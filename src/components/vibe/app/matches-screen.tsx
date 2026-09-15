@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Gift, Lock, MessageCircle, BadgeCheck, MapPin, Zap } from "lucide-react";
 import { useVibe } from "@/lib/vibe/store";
 import { prefetchChat } from "./chat-screen";
+import { Floating, sfx } from "./interactive-animations";
 
 type MatchRow = {
   id: string;
@@ -48,6 +49,20 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
 
   useEffect(() => { load(); }, []);
 
+  // The screen stays mounted (hidden/block tab strategy), so `load()` on mount
+  // alone leaves a stale list after a new match. Refresh when the matches tab
+  // is re-selected (custom event from the app shell) and when the window
+  // regains focus (user back from another app/tab).
+  useEffect(() => {
+    const refresh = () => load();
+    window.addEventListener("vivilov:refresh-matches", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener("vivilov:refresh-matches", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+
   const active = matches.filter((m) => m.other);
 
   useEffect(() => {
@@ -83,12 +98,26 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
 
       <div className="absolute inset-0 pt-20 pb-24 overflow-y-auto no-scrollbar px-4">
         {loading ? (
-          <div className="grid place-items-center py-20">
-            <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+          <div className="space-y-2.5" aria-busy="true" aria-label="Chargement des matchs">
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-2xl bg-white/5 ring-1 ring-white/10 p-2.5 animate-pulse"
+                style={{ animationDelay: `${i * 140}ms` }}
+              >
+                <div className="h-14 w-14 shrink-0 rounded-xl bg-white/10" />
+                <div className="min-w-0 flex-1 space-y-2 py-1">
+                  <div className="h-3 w-1/3 rounded-full bg-white/10" />
+                  <div className="h-2.5 w-1/4 rounded-full bg-white/10" />
+                  <div className="h-2.5 w-2/3 rounded-full bg-white/10" />
+                </div>
+                <div className="h-2.5 w-8 rounded-full bg-white/10 shrink-0" />
+              </div>
+            ))}
           </div>
         ) : active.length === 0 ? (
           <div className="grid place-items-center py-24 text-center px-6">
-            <div className="text-5xl mb-3">💭</div>
+            <Floating amplitude={10} duration={3.5} className="text-5xl mb-3">💭</Floating>
             <h3 className="font-display text-lg font-bold mb-1">Aucun match pour l&apos;instant</h3>
             <p className="text-sm text-white/60">Continue à swiper — ton premier match est tout proche.</p>
           </div>
@@ -107,8 +136,12 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(i * 0.04, 0.3) }}
                 >
-                  <button
-                    onClick={() => onOpenChat({ id: m.id, name: m.other!.displayName, poster: m.other!.posterUrl })}
+                  <motion.button
+                    onClick={() => {
+                      sfx.play("pop");
+                      onOpenChat({ id: m.id, name: m.other!.displayName, poster: m.other!.posterUrl });
+                    }}
+                    whileTap={{ scale: 0.97, opacity: 0.8 }}
                     className={`w-full flex items-center gap-3 rounded-2xl p-2.5 transition text-left ${
                       isBoosted
                         ? "bg-amber-400/10 ring-1 ring-amber-300/40 hover:bg-amber-400/15"
@@ -164,7 +197,7 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
                         <span className="text-[9px] text-amber-300/80">Anti-spam {m.myMessagesCount}/3</span>
                       )}
                     </div>
-                  </button>
+                  </motion.button>
                 </motion.li>
               );
             })}

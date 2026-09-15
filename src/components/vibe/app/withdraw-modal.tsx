@@ -15,6 +15,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Input } from "@/components/ui/input";
 import { useCurrency } from "@/lib/vibe/use-currency";
 import { toast } from "sonner";
+import { SuccessBounce, celebrate, haptic, sfx, useShake } from "./interactive-animations";
 
 export function WithdrawModal({
   open,
@@ -34,6 +35,10 @@ export function WithdrawModal({
   const [amountEur, setAmountEur] = useState<string>(String(thresholdEur));
   const [method, setMethod] = useState<"stripe" | "mobile_money">("stripe");
   const [accountInfo, setAccountInfo] = useState("");
+  // Error feedback — briefly flashes the amount input border red (300 ms CSS transition).
+  const [inputError, setInputError] = useState(false);
+  // Shake the modal body when the server refuses the withdrawal.
+  const { controls: shakeControls, trigger: triggerShake } = useShake();
 
   const availableEur = walletEurCents / 100;
   const requestedCents = Math.round(parseFloat(amountEur || "0") * 100);
@@ -44,6 +49,7 @@ export function WithdrawModal({
     setAmountEur(String(thresholdEur));
     setMethod("stripe");
     setAccountInfo("");
+    setInputError(false);
   }
 
   function close() {
@@ -66,9 +72,17 @@ export function WithdrawModal({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setStep("done");
+      // Withdrawal confirmed — success fanfare. Fired inside the success
+      // handler (not the render) so it triggers exactly once per withdrawal.
+      celebrate({ sound: "success", confettiCount: 100 });
       onSuccess(data.walletEurCents);
     } catch (e: any) {
       toast.error(e.message || "Erreur");
+      // Refused withdrawal — error sound + modal shake + red border flash.
+      sfx.play("error");
+      triggerShake();
+      setInputError(true);
+      window.setTimeout(() => setInputError(false), 1000);
       setStep("amount");
     }
   }
@@ -100,8 +114,8 @@ export function WithdrawModal({
           </div>
         </div>
 
-        {/* Body */}
-        <div className="bg-card px-5 py-5 min-h-[280px]">
+        {/* Body — shakes horizontally when the server refuses the withdrawal */}
+        <motion.div animate={shakeControls} className="bg-card px-5 py-5 min-h-[280px]">
           {step === "amount" && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <label className="text-xs font-semibold text-muted-foreground mb-2 block">Montant à retirer (€)</label>
@@ -112,7 +126,9 @@ export function WithdrawModal({
                 step="1"
                 value={amountEur}
                 onChange={(e) => setAmountEur(e.target.value)}
-                className="h-12 rounded-2xl text-lg font-bold tabular-nums"
+                className={`h-12 rounded-2xl text-lg font-bold tabular-nums transition-[border-color,box-shadow] duration-300 ${
+                  inputError ? "border-red-500 ring-2 ring-red-500/30" : ""
+                }`}
               />
               <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
                 <span className="flex items-center gap-1"><Lock className="h-3 w-3" /> Min: {thresholdEur}€</span>
@@ -132,8 +148,9 @@ export function WithdrawModal({
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <label className="text-xs font-semibold text-muted-foreground mb-3 block">Méthode de retrait</label>
               <div className="space-y-2">
-                <button
-                  onClick={() => setMethod("stripe")}
+                <motion.button
+                  onClick={() => { setMethod("stripe"); sfx.play("pop"); haptic(8); }}
+                  whileTap={{ scale: 0.97 }}
                   className={`w-full flex items-center gap-3 p-3 rounded-2xl ring-1 transition ${method === "stripe" ? "ring-emerald-500 bg-emerald-500/5" : "ring-border hover:bg-accent/5"}`}
                 >
                   <Banknote className={`h-5 w-5 ${method === "stripe" ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`} />
@@ -141,10 +158,15 @@ export function WithdrawModal({
                     <p className="text-sm font-semibold">Virement bancaire</p>
                     <p className="text-[11px] text-muted-foreground">Stripe Connect · 2-3 jours</p>
                   </div>
-                  {method === "stripe" && <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
-                </button>
-                <button
-                  onClick={() => setMethod("mobile_money")}
+                  {method === "stripe" && (
+                    <SuccessBounce>
+                      <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    </SuccessBounce>
+                  )}
+                </motion.button>
+                <motion.button
+                  onClick={() => { setMethod("mobile_money"); sfx.play("pop"); haptic(8); }}
+                  whileTap={{ scale: 0.97 }}
                   className={`w-full flex items-center gap-3 p-3 rounded-2xl ring-1 transition ${method === "mobile_money" ? "ring-emerald-500 bg-emerald-500/5" : "ring-border hover:bg-accent/5"}`}
                 >
                   <Smartphone className={`h-5 w-5 ${method === "mobile_money" ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`} />
@@ -152,8 +174,12 @@ export function WithdrawModal({
                     <p className="text-sm font-semibold">Mobile Money</p>
                     <p className="text-[11px] text-muted-foreground">MTN / Orange · Instantané</p>
                   </div>
-                  {method === "mobile_money" && <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
-                </button>
+                  {method === "mobile_money" && (
+                    <SuccessBounce>
+                      <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    </SuccessBounce>
+                  )}
+                </motion.button>
               </div>
 
               {method === "mobile_money" && (
@@ -236,7 +262,7 @@ export function WithdrawModal({
               </button>
             </motion.div>
           )}
-        </div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );

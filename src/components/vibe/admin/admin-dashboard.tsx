@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, ShieldAlert, Search, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 import { Sidebar, ADMIN_NAV } from "./sidebar";
 import { KpiCards, CommissionCard } from "./kpi-cards";
@@ -147,10 +148,20 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-xl border-b border-border">
           <div className="flex items-center gap-3 px-4 sm:px-6 py-3">
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden rounded-lg">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.9 }}
+                className={cn(
+                  buttonVariants({
+                    variant: "ghost",
+                    size: "icon",
+                    className: "lg:hidden rounded-lg",
+                  })
+                )}
+              >
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Ouvrir le menu</span>
-              </Button>
+              </motion.button>
             </SheetTrigger>
 
             <div className="min-w-0 flex-1">

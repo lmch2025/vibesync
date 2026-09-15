@@ -4,13 +4,14 @@ import { motion } from "framer-motion";
 import { Users, Activity, Heart, Euro, Gift, Percent, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import { useCurrency } from "@/lib/vibe/use-currency";
 import { GemIcon } from "@/components/vibe/gem-badge";
+import { AnimatedNumber } from "@/components/vibe/app/interactive-animations";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { AdminKpis } from "./types";
 
 type KpiCardProps = {
   label: string;
-  value: string;
+  value: React.ReactNode;
   sub?: string;
   delta?: number; // percentage, can be negative
   icon: React.ReactNode;
@@ -36,8 +37,15 @@ function KpiCard({ label, value, sub, delta, icon, accent, delay = 0, loading }:
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay }}
-      className="relative overflow-hidden rounded-2xl bg-card ring-1 ring-border shadow-sm"
+      // Per-value transition: the stagger `delay` must only slow the entrance
+      // opacity fade — hover lifts stay snappy (no delay, short duration).
+      transition={{
+        duration: 0.35,
+        delay,
+        y: { duration: 0.22, ease: "easeOut" },
+      }}
+      whileHover={{ y: -3 }}
+      className="relative overflow-hidden rounded-2xl bg-card ring-1 ring-border shadow-sm hover:shadow-md transition-shadow duration-300"
     >
       <div className={cn("h-1 w-full bg-gradient-to-r", ACCENT_BAR[accent])} />
       <div className="p-4 sm:p-5">
@@ -90,7 +98,17 @@ export function KpiCards({ kpis, loading }: { kpis: AdminKpis | null; loading: b
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
       <KpiCard
         label="Utilisateurs"
-        value={kpis ? kpis.users.toLocaleString("fr-FR") : "—"}
+        value={
+          kpis ? (
+            <AnimatedNumber
+              value={kpis.users}
+              duration={1100}
+              format={(n) => Math.round(n).toLocaleString("fr-FR")}
+            />
+          ) : (
+            "—"
+          )
+        }
         sub={`${kpis ? kpis.profiles.toLocaleString("fr-FR") : "—"} profils`}
         delta={4.2}
         accent="purple"
@@ -100,7 +118,17 @@ export function KpiCards({ kpis, loading }: { kpis: AdminKpis | null; loading: b
       />
       <KpiCard
         label="DAU"
-        value={kpis ? kpis.dau.toLocaleString("fr-FR") : "—"}
+        value={
+          kpis ? (
+            <AnimatedNumber
+              value={kpis.dau}
+              duration={1100}
+              format={(n) => Math.round(n).toLocaleString("fr-FR")}
+            />
+          ) : (
+            "—"
+          )
+        }
         sub="Aujourd'hui"
         delta={2.8}
         accent="pink"
@@ -110,7 +138,17 @@ export function KpiCards({ kpis, loading }: { kpis: AdminKpis | null; loading: b
       />
       <KpiCard
         label="Matchs"
-        value={kpis ? kpis.matches.toLocaleString("fr-FR") : "—"}
+        value={
+          kpis ? (
+            <AnimatedNumber
+              value={kpis.matches}
+              duration={1100}
+              format={(n) => Math.round(n).toLocaleString("fr-FR")}
+            />
+          ) : (
+            "—"
+          )
+        }
         sub={`${kpis ? kpis.messages.toLocaleString("fr-FR") : "—"} messages`}
         delta={5.1}
         accent="orange"
@@ -120,7 +158,17 @@ export function KpiCards({ kpis, loading }: { kpis: AdminKpis | null; loading: b
       />
       <KpiCard
         label="Revenu"
-        value={kpis ? moneyCents(kpis.revenueEurCents) : "—"}
+        value={
+          kpis ? (
+            <AnimatedNumber
+              value={kpis.revenueEurCents}
+              duration={1100}
+              format={(n) => moneyCents(Math.round(n))}
+            />
+          ) : (
+            "—"
+          )
+        }
         sub={`${kpis ? kpis.payingUsers.toLocaleString("fr-FR") : "—"} payants`}
         delta={9.4}
         accent="purple"
@@ -130,7 +178,17 @@ export function KpiCards({ kpis, loading }: { kpis: AdminKpis | null; loading: b
       />
       <KpiCard
         label="Cadeaux"
-        value={kpis ? kpis.gifts.toLocaleString("fr-FR") : "—"}
+        value={
+          kpis ? (
+            <AnimatedNumber
+              value={kpis.gifts}
+              duration={1100}
+              format={(n) => Math.round(n).toLocaleString("fr-FR")}
+            />
+          ) : (
+            "—"
+          )
+        }
         sub="Envoyés (total)"
         delta={6.7}
         accent="orange"
@@ -140,7 +198,17 @@ export function KpiCards({ kpis, loading }: { kpis: AdminKpis | null; loading: b
       />
       <KpiCard
         label="Conversion"
-        value={kpis ? percent(kpis.conversionRate) : "—"}
+        value={
+          kpis ? (
+            <AnimatedNumber
+              value={kpis.conversionRate}
+              duration={1100}
+              format={(n) => percent(n)}
+            />
+          ) : (
+            "—"
+          )
+        }
         sub="Utilisateurs payants"
         delta={-0.6}
         accent="pink"
@@ -164,8 +232,13 @@ export function CommissionCard({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: 0.3 }}
-      className="relative overflow-hidden rounded-2xl vibe-gradient p-5 text-white shadow-lg"
+      transition={{
+        duration: 0.35,
+        delay: 0.3,
+        y: { duration: 0.22, ease: "easeOut" },
+      }}
+      whileHover={{ y: -3 }}
+      className="relative overflow-hidden rounded-2xl vibe-gradient p-5 text-white shadow-lg hover:shadow-xl transition-shadow duration-300"
     >
       <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl" />
       <div className="absolute -right-2 bottom-2 text-6xl opacity-20">
@@ -179,7 +252,11 @@ export function CommissionCard({
           <Skeleton className="mt-2 h-9 w-32 bg-white/20" />
         ) : (
           <p className="mt-1 font-display text-3xl font-bold tracking-tight tabular-nums">
-            {moneyCents(cents)}
+            <AnimatedNumber
+              value={cents}
+              duration={1100}
+              format={(n) => moneyCents(Math.round(n))}
+            />
           </p>
         )}
         <p className="mt-2 text-xs text-white/80">

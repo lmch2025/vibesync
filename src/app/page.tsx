@@ -54,7 +54,9 @@ export default async function Home() {
     }
   }
 
-  const initialView = initialUser ? (initialUser.role === "ADMIN" ? "admin" : "app") : "landing";
+  // Role casing: the DB convention is lowercase "admin" (all admin API guards
+  // compare against "admin"); compare case-insensitively for resilience.
+  const initialView = initialUser ? (initialUser.role?.toLowerCase() === "admin" ? "admin" : "app") : "landing";
 
   return <ClientHome initialView={initialView as any} initialUser={initialUser} initialRates={initialRates} />;
 }

@@ -6,11 +6,11 @@
 // Phase 2: unwrap animation (lid flies off, confetti bursts, gift scales in)
 // Phase 3: revealed gift with value + fromName + note + social share CTA
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Gift, Share2, X } from "lucide-react";
 import { useCurrency } from "@/lib/vibe/use-currency";
 import SocialShare from "./social-share";
-import { ConfettiBurst } from "./interactive-animations";
+import { ConfettiBurst, haptic, sfx } from "./interactive-animations";
 
 type Phase = "wrapped" | "unwrapping" | "revealed";
 
@@ -44,7 +44,6 @@ export function GiftOpenModal({
   // Reset phase when modal opens.
   useEffect(() => {
     if (open && gift) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPhase(gift.opened ? "revealed" : "wrapped");
       setShareOpen(false);
       setCanClose(true);
@@ -64,6 +63,9 @@ export function GiftOpenModal({
     canCloseRef.current = false;
     setCanClose(false);
     setPhase("unwrapping");
+    // Suspense cue at the trigger, success chime at the reveal.
+    sfx.play("open");
+    haptic(20);
     if (gift && !gift.opened) {
       fetch(`/api/vibe/gifts/${gift.id}/open`, { method: "POST" }).catch(() => {});
     }
@@ -71,6 +73,7 @@ export function GiftOpenModal({
       setPhase("revealed");
       setCanClose(true);
       canCloseRef.current = true;
+      sfx.play("success");
     }, 1800);
   }
 
@@ -86,8 +89,15 @@ export function GiftOpenModal({
 
   return (
     <>
-      {open && !shareOpen && (
-        <div className="fixed inset-0 z-[100] grid place-items-center">
+      <AnimatePresence>
+        {open && !shareOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[100] grid place-items-center"
+          >
             {/* Backdrop — no click-to-close (prevents accidental close during
                 phase transitions). User closes via X button or "Plus tard". */}
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
@@ -96,7 +106,7 @@ export function GiftOpenModal({
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.25 } }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
               className="relative max-w-[380px] w-[90%] rounded-3xl overflow-hidden bg-[#0a0612] ring-1 ring-white/10 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
@@ -131,7 +141,7 @@ export function GiftOpenModal({
                     <motion.button
                       onClick={() => handleOpen()}
                       whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.92 }}
+                      whileTap={{ scale: 0.96, rotate: -2 }}
                       className="relative grid place-items-center h-40 w-40 rounded-3xl vibe-gradient vibe-glow overflow-hidden cursor-pointer"
                     >
                       <span className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
@@ -276,8 +286,9 @@ export function GiftOpenModal({
                 )}
               </div>
             </motion.div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <SocialShare
         open={shareOpen}

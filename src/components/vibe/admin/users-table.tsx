@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { GemIcon } from "@/components/vibe/gem-badge";
+import { SuccessBounce } from "@/components/vibe/app/interactive-animations";
 import { useCurrency } from "@/lib/vibe/use-currency";
 import { cn } from "@/lib/utils";
 import type { AdminUser } from "./types";
@@ -202,12 +203,15 @@ export function UsersTable({
                   const isBanned = banned[u.id] ?? u.banned;
                   const isVerified = verified[u.id] ?? u.verified;
                   const displayName = u.displayName ?? u.name ?? u.phone;
+                  // Banned dim is driven by framer (inline opacity) so the CSS
+                  // transition stays colors-only — mixing a CSS opacity transition
+                  // with framer's per-frame style updates would look choppy.
                   return (
                     <motion.tr
                       key={u.id}
                       initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.2, delay: Math.min(i * 0.02, 0.2) }}
+                      animate={{ opacity: isBanned ? 0.6 : 1 }}
+                      transition={{ duration: 0.5, delay: Math.min(i * 0.02, 0.15) }}
                       className={cn(
                         "border-b border-border transition-colors hover:bg-muted/40",
                         isBanned && "opacity-60"
@@ -251,9 +255,11 @@ export function UsersTable({
                       <TableCell className="hidden lg:table-cell">
                         <div className="flex items-center gap-1">
                           {isVerified && (
-                            <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-transparent">
-                              <BadgeCheck className="h-3 w-3" /> Vérifié
-                            </Badge>
+                            <SuccessBounce>
+                              <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-transparent">
+                                <BadgeCheck className="h-3 w-3" /> Vérifié
+                              </Badge>
+                            </SuccessBounce>
                           )}
                           {isBanned && (
                             <Badge variant="destructive">
@@ -271,10 +277,20 @@ export function UsersTable({
                       <TableCell className="pr-2 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.9 }}
+                              className={cn(
+                                buttonVariants({
+                                  variant: "ghost",
+                                  size: "icon",
+                                  className: "h-8 w-8",
+                                })
+                              )}
+                            >
                               <MoreVertical className="h-4 w-4" />
                               <span className="sr-only">Actions</span>
-                            </Button>
+                            </motion.button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-44">
                             <DropdownMenuLabel className="text-xs text-muted-foreground">

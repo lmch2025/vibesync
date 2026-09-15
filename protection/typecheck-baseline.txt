@@ -1,13 +1,9 @@
-3
+0
 # ─────────────────────────────────────────────────────────────────────────────
 # BASELINE TYPECHECK VIBESYNC (ne pas modifier à la hausse sans décision)
 # ─────────────────────────────────────────────────────────────────────────────
-# Nombre d'erreurs TypeScript tolérées dans src/ (les 3 erreurs préexistantes
-# sont toutes dans src/app/api/vibe/gems/purchase/route.ts : « Property 'title'
-# does not exist on type 'GemPack' » — lignes 49, 69, 74).
-#
-# La CI et le hook pre-push BLOQUENT toute augmentation de ce chiffre.
-# Le faire baisser (correction volontaire d'une erreur existante) est une
-# amélioration : modifiez alors ce fichier À LA BAISSE uniquement, dans le
-# cadre d'un commit [MODIF-PROTEGEE] si src/ est touché.
-# ─────────────────────────────────────────────────────────────────────────────
+# Nombre d'erreurs TypeScript tolérées dans src/ : 0 depuis le 2026-09-15.
+# Les 3 erreurs historiques (pack.title manquant sur GemPack dans
+# gems/purchase/route.ts) ont été corrigées : le champ `title` a été ajouté
+# au type GemPack et aux 3 packs du catalogue (constants.ts).
+# Toute nouvelle erreur TS dans src/ est un incident — le pre-push bloque.

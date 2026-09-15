@@ -3,7 +3,7 @@
 // Full-screen experience (NO phone bezel — the phone visual lives only on
 // the landing page). Content is centered in a mobile-width column.
 import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { Heart, MessageCircle, Wallet as WalletIcon, User, ArrowLeft, Crown } from "lucide-react";
 import { useVibe } from "@/lib/vibe/store";
 import { AuthScreen } from "./auth-screen";
@@ -21,6 +21,7 @@ import { NotificationBell } from "./notification-bell";
 import { PwaInstallPrompt } from "./pwa-install-prompt";
 import { NotificationPermissionPrompt } from "./notification-permission-prompt";
 import { GemBadge } from "@/components/vibe/gem-badge";
+import { sfx, haptic } from "@/components/vibe/app/interactive-animations";
 import { toast } from "sonner";
 
 type Tab = "swipe" | "matches" | "wallet" | "profile";
@@ -73,12 +74,32 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
     setTab("swipe");
   }, []);
 
+  // Tab selector — fires the matches-refresh event so the (always-mounted)
+  // MatchesScreen reloads its list instead of showing a stale empty state.
+  const selectTab = useCallback((t: Tab) => {
+    setTab(t);
+    if (t === "matches") {
+      window.dispatchEvent(new Event("vivilov:refresh-matches"));
+    }
+  }, []);
+
   // Booting — checking for an existing session.
   if (!booted) {
     return (
       <Shell>
         <div className="grid place-items-center h-full">
-          <div className="h-10 w-10 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+          <div className="relative grid place-items-center">
+            {/* Anneau tournant autour du logo */}
+            <span className="absolute h-14 w-14 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin" />
+            {/* Logo VS — même marque que l'AuthSplash */}
+            <motion.div
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+              className="h-10 w-10 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 grid place-items-center shadow-lg shadow-violet-500/30"
+            >
+              <span className="text-white text-base font-bold select-none">VS</span>
+            </motion.div>
+          </div>
         </div>
       </Shell>
     );
@@ -116,6 +137,17 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
         </div>
       </div>
 
+      {/* Voile de transition — remonté à chaque changement d'onglet (key={tab}),
+          donne l'impression que le nouvel écran « émerge » du noir. La stratégie
+          hidden/block des onglets est préservée (aucun unmount). */}
+      <motion.div
+        key={tab}
+        initial={{ opacity: 0.55, scale: 1.015 }}
+        animate={{ opacity: 0, scale: 1 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="absolute inset-0 z-10 pointer-events-none bg-black/40 backdrop-blur-[2px]"
+      />
+
       {/* Écran de chat en superposition */}
       <AnimatePresence>
         {chatTarget && (
@@ -141,10 +173,10 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
       {!chatTarget && (
         <div className="absolute bottom-0 inset-x-0 z-30 pb-2 pt-1 bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none">
           <div className="mx-3 rounded-2xl glass-dark flex items-center justify-around p-1.5 pointer-events-auto">
-            <NavBtn icon={<Heart className="h-5 w-5" />} label="Découvrir" active={tab === "swipe"} onClick={() => setTab("swipe")} />
-            <NavBtn icon={<MessageCircle className="h-5 w-5" />} label="Matchs" active={tab === "matches"} onClick={() => setTab("matches")} />
-            <NavBtn icon={<WalletIcon className="h-5 w-5" />} label="Boutique" active={tab === "wallet"} onClick={() => setTab("wallet")} />
-            <NavBtn icon={<User className="h-5 w-5" />} label="Profil" active={tab === "profile"} onClick={() => setTab("profile")} />
+            <NavBtn icon={<Heart className="h-5 w-5" />} label="Découvrir" active={tab === "swipe"} onClick={() => selectTab("swipe")} />
+            <NavBtn icon={<MessageCircle className="h-5 w-5" />} label="Matchs" active={tab === "matches"} onClick={() => selectTab("matches")} />
+            <NavBtn icon={<WalletIcon className="h-5 w-5" />} label="Boutique" active={tab === "wallet"} onClick={() => selectTab("wallet")} />
+            <NavBtn icon={<User className="h-5 w-5" />} label="Profil" active={tab === "profile"} onClick={() => selectTab("profile")} />
           </div>
         </div>
       )}
@@ -156,7 +188,7 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
         onMessage={(target) => {
           setMatch(null);
           setChatTarget(target);
-          setTab("matches");
+          selectTab("matches");
         }}
       />
 
@@ -175,12 +207,21 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
           <div className="absolute top-3 right-3 z-40 flex items-center gap-2">
             <StreakReward />
             <NotificationBell />
-            <button
-              onClick={() => setPremiumOpen(true)}
-              className="inline-flex items-center gap-1 rounded-full vibe-gradient px-2.5 py-1 text-[10px] font-bold text-white active:scale-95 transition"
+            <motion.button
+              onClick={() => { sfx.play("pop"); haptic(8); setPremiumOpen(true); }}
+              whileTap={{ scale: 0.92 }}
+              animate={{
+                boxShadow: [
+                  "0 0 0px oklch(0.6 0.25 295 / 0)",
+                  "0 0 16px oklch(0.6 0.25 295 / 0.45)",
+                  "0 0 0px oklch(0.6 0.25 295 / 0)",
+                ],
+              }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+              className="inline-flex items-center gap-1 rounded-full vibe-gradient px-2.5 py-1 text-[10px] font-bold text-white"
             >
               <Crown className="h-3 w-3" /> Premium
-            </button>
+            </motion.button>
           </div>
           <PremiumActionsSheet
             open={premiumOpen}
@@ -245,18 +286,20 @@ function InsufficientVibesHandler({ onGoWallet }: { onGoWallet: () => void }) {
 /// column on a dark ambient background.
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen overflow-hidden flex flex-col items-center bg-[#0a0612]">
-      {/* ambient background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl animate-float-slow" />
-        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl animate-float-slow" style={{ animationDelay: "2s" }} />
-      </div>
+    <MotionConfig reducedMotion="user">
+      <div className="relative min-h-screen overflow-hidden flex flex-col items-center bg-[#0a0612]">
+        {/* ambient background */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl animate-float-slow" />
+          <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl animate-float-slow" style={{ animationDelay: "2s" }} />
+        </div>
 
-      {/* Mobile-width column — full height, no phone bezel */}
-      <div className="relative z-10 w-full max-w-md h-screen flex-1 flex flex-col bg-zinc-950 shadow-2xl overflow-hidden">
-        {children}
+        {/* Mobile-width column — full height, no phone bezel */}
+        <div className="relative z-10 w-full max-w-md h-screen flex-1 flex flex-col bg-zinc-950 shadow-2xl overflow-hidden">
+          {children}
+        </div>
       </div>
-    </div>
+    </MotionConfig>
   );
 }
 
@@ -272,8 +315,13 @@ function NavBtn({
   onClick: () => void;
 }) {
   return (
-    <button
-      onClick={onClick}
+    <motion.button
+      onClick={() => {
+        sfx.play("pop");
+        haptic(8);
+        onClick();
+      }}
+      whileTap={{ scale: 0.88 }}
       className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition relative ${
         active ? "text-white" : "text-white/50"
       }`}
@@ -283,6 +331,6 @@ function NavBtn({
       )}
       {icon}
       <span className="text-[9px] font-medium">{label}</span>
-    </button>
+    </motion.button>
   );
 }

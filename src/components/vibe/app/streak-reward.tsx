@@ -8,7 +8,7 @@ import { Check, Flame, Gift, Link } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { useVibe } from "@/lib/vibe/store";
 import { toast } from "sonner";
-import { ConfettiBurst } from "./interactive-animations";
+import { ConfettiBurst, haptic, sfx } from "./interactive-animations";
 
 type StreakData = {
   streak: number;
@@ -58,6 +58,10 @@ export function StreakReward() {
       }
       const d = await res.json();
       patchMe({ gems: d.gems, freeGems: d.freeGems });
+      // Claim juice — coin sound + haptic pulse (confetti already bursts in
+      // the claimed view). Fired once, inside the success handler.
+      sfx.play("coin");
+      haptic([10, 30, 10]);
       setJustClaimed(true);
       toast.success(d.message);
       // After 2.5s, show the referral invite instead of auto-closing.
