@@ -1,0 +1,91 @@
+# ============================================================================
+# VibeSync Guard — CI de protection des fonctionnalités
+# ----------------------------------------------------------------------------
+# S'exécute sur CHAQUE push (toutes branches) et chaque pull request vers main.
+# Elle rejoue côté serveur (donc incontournable, même en cas de --no-verify
+# local) les contrôles suivants :
+#   1. Intégrité du scellé : le code doit correspondre au manifeste SHA-256.
+#   2. Audit des commits : toute modification de fichiers protégés doit porter
+#      le marqueur [MODIF-PROTEGEE] dans le message de commit.
+#   3. Lint : zéro erreur ESLint.
+#   4. Typecheck « ratchet » : pas plus d'erreurs TS dans src/ que le baseline.
+#
+# ⚠️ Pour que cette CI soit VRAIMENT contraignante, activez la protection de
+# branche sur GitHub (voir PROTECTION.md §4) : exiger ce workflow comme status
+# check obligatoire avant merge.
+# ============================================================================
+name: "VibeSync Guard"
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: "🛡️ Vérification intégrité + qualité"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # nécessaire pour l'audit des plages de commits
+
+      - name: Installation de Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Installation des dépendances
+        run: bun install --frozen-lockfile || bun install
+
+      - name: Génération du client Prisma (types)
+        run: bun run db:generate
+
+      # ------------------------------------------------------------------
+      # 1. INTÉGRITÉ DU SCELLÉ — le cœur du blindage
+      # ------------------------------------------------------------------
+      - name: "1/4 Intégrité des fonctionnalités protégées (manifeste SHA-256)"
+        run: node protection/verify.mjs
+
+      # ------------------------------------------------------------------
+      # 2. AUDIT DES COMMITS — marqueur [MODIF-PROTEGEE] obligatoire
+      # ------------------------------------------------------------------
+      - name: "2/4 Audit des commits protégés"
+        if: github.event_name == 'pull_request'
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+          git fetch origin "${{ github.base_ref }}" || true
+          node protection/verify.mjs --audit "${BASE}..HEAD"
+
+      - name: "2/4 Audit des commits protégés (push)"
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: |
+          node protection/verify.mjs --audit "${{ github.event.before }}..${{ github.sha }}"
+
+      # ------------------------------------------------------------------
+      # 3. LINT
+      # ------------------------------------------------------------------
+      - name: "3/4 ESLint (zéro erreur)"
+        run: bun run lint
+
+      # ------------------------------------------------------------------
+      # 4. TYPECHECK RATCHET
+      # ------------------------------------------------------------------
+      - name: "4/4 TypeScript (régression interdite)"
+        run: |
+          BASELINE=$(grep -m1 -oE "^[0-9]+" protection/typecheck-baseline.txt | tr -d " ")
+          ERRORS=$(bunx tsc --noEmit 2>&1 | grep -cE "^src/.*error TS" || true)
+          echo "Erreurs TypeScript dans src/ : ${ERRORS} (baseline tolérée : ${BASELINE})"
+          if [ "${ERRORS:-0}" -gt "${BASELINE:-0}" ]; then
+            echo ""
+            echo "❌ Régression TypeScript détectée : ${ERRORS} erreurs > baseline ${BASELINE}."
+            echo "   Chaque erreur dans src/ doit être corrigée AVANT le merge."
+            echo "   (Voir protection/typecheck-baseline.txt — ne jamais augmenter le baseline.)"
+            bunx tsc --noEmit 2>&1 | grep -E "^src/.*error TS" || true
+            exit 1
+          fi
