@@ -288,8 +288,17 @@ function reportViolations(violations, modeLabel) {
 /* ---------------------------------- audit ---------------------------------- */
 
 function auditRange(range) {
+  // Valider les extrémités de la plage (deshabillage des tags annotés via ^{commit}).
+  // NB : une plage VIDE est légitime — ex. un tag posé exactement sur la base
+  // d'audit ; elle ne doit PAS être traitée comme une plage introuvable.
+  const ends = range.split(/\.{2,3}/).filter(Boolean);
+  if (!ends.length) die(2, `Plage git introuvable : ${range}`);
+  for (const e of ends) {
+    if (!git(["rev-parse", "--verify", "--quiet", `${e}^{commit}`])) {
+      die(2, `Plage git introuvable : ${range}`);
+    }
+  }
   const log = git(["log", "--format=%H%x09%s", range]);
-  if (!log) die(2, `Plage git introuvable : ${range}`);
   const problems = [];
   for (const line of log.split("\n")) {
     if (!line) continue;
