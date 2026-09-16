@@ -1,10 +1,17 @@
-// GET /api/vibe/wallet/transactions — full transaction history for the user.
-// Returns both Vibes transactions (GemTx) and gift transactions (GiftTx)
-// merged and ordered by date (most recent first).
+// GET /api/vibe/wallet/transactions — full Vibes history for the user.
+// Returns EVERY operation concerning Vibes, merged and ordered by date
+// (most recent first):
+//   • Achats de Vibes (avec le montant payé en €)
+//   • Toutes les dépenses d'actions premium (superlike, boost, rewind,
+//     passport, icebreaker, seeLikes, messageBoost, spotlight, superRewind,
+//     vibeRadar, crushAlert, goldenHeart, timeFreeze, compatibilityReport,
+//     moodRing, ghostMode, dailyDouble…)
+//   • Cadeaux envoyés / reçus (avec la valeur € créditée au destinataire)
+//   • Bonus & récompenses (bienvenue, série quotidienne/streak, parrainage)
+//   • Retraits vers la banque (avec statut)
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/vibe/session";
-import { useCurrency } from "@/lib/vibe/use-currency";
 
 export const dynamic = "force-dynamic";
 
@@ -16,69 +23,89 @@ export async function GET() {
     db.gemTx.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
-      take: 100,
+      take: 250,
     }),
     db.giftTx.findMany({
       where: { OR: [{ senderId: user.id }, { receiverId: user.id }] },
       include: { gift: true },
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: 100,
     }),
     db.withdrawal.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 50,
     }),
   ]);
 
   type Tx = {
     id: string;
-    type: "vibe_purchase" | "vibe_spend" | "gift_sent" | "gift_received" | "withdrawal";
+    type:
+      | "vibe_purchase"    // Vibes achetées (€ payés)
+      | "vibe_spend"       // Vibes dépensées (action premium)
+      | "vibe_reward"      // Vibes gagnées (streak, bienvenue, parrainage)
+      | "gift_sent"        // Cadeau envoyé (Vibes dépensées)
+      | "gift_received"    // Cadeau reçu (€ crédités)
+      | "withdrawal";      // Retrait bancaire (€)
     label: string;
-    delta: number; // + or - for Vibes
-    amountEurCents: number | null; // for gifts / withdrawals
+    delta: number;               // + / − en Vibes
+    amountEurCents: number | null; // € : payé (achat) / crédité (cadeau reçu) / retiré
     emoji: string;
     createdAt: string;
     status?: string;
   };
 
+  // Libellés complets de TOUTES les raisons GemTx possibles.
+  const LABELS: Record<string, string> = {
+    // Achats & bonus
+    purchase: "Achat de Vibes",
+    welcome: "Bonus de bienvenue",
+    streak_reward: "Série quotidienne (Streak)",
+    referral: "Bonus de parrainage",
+    // Actions premium (dépenses)
+    superlike: "Super-Like",
+    boost: "Boost de profil",
+    gift: "Cadeau envoyé",
+    rewind: "Rewind",
+    passport: "Passport",
+    icebreaker: "Icebreaker IA",
+    see_likes: "Voir les likes",
+    seeLikes: "Voir les likes",
+    message_boost: "Boost de message",
+    messageBoost: "Boost de message",
+    spotlight: "Projecteur",
+    superRewind: "Super Rewind",
+    vibeRadar: "Vibe Radar",
+    crushAlert: "Crush Alert",
+    goldenHeart: "Cœur d'Or",
+    timeFreeze: "Temps Gelé",
+    compatibilityReport: "Rapport de Compatibilité",
+    moodRing: "Anneau d'Humeur",
+    ghostMode: "Mode Fantôme",
+    dailyDouble: "Double Quotidien",
+  };
+
+  // Raisons considérées comme des GAINS de Vibes (hors achat).
+  const REWARDS = new Set(["welcome", "streak_reward", "referral"]);
+
   const txs: Tx[] = [];
 
   for (const t of gemTx) {
+    // Les cadeaux envoyés sont représentés par la GiftTx correspondante
+    // (libellé enrichi + valeur €) — on évite le doublon ici.
     if (t.reason === "gift") continue;
-    const isPurchase = t.reason === "purchase" || t.reason === "welcome";
-    const labels: Record<string, string> = {
-      purchase: "Achat de Vibes",
-      welcome: "Bonus de bienvenue",
-      superlike: "Super-Like",
-      boost: "Boost de profil",
-      gift: "Cadeau envoyé",
-      rewind: "Rewind",
-      passport: "Passport",
-      icebreaker: "Icebreaker IA",
-      see_likes: "Voir les likes",
-      seeLikes: "Voir les likes",
-      message_boost: "Boost de message",
-      messageBoost: "Boost de message",
-      spotlight: "Projecteur",
-      superRewind: "Super Rewind",
-      vibeRadar: "Vibe Radar",
-      crushAlert: "Crush Alert",
-      goldenHeart: "Cœur d'Or",
-      timeFreeze: "Temps Gelé",
-      compatibilityReport: "Rapport de Compatibilité",
-      moodRing: "Anneau d'Humeur",
-      ghostMode: "Mode Fantôme",
-      dailyDouble: "Double Quotidien",
-      streak_reward: "Série quotidienne (Streak)",
-    };
+    const isPurchase = t.reason === "purchase";
+    const isReward = REWARDS.has(t.reason);
+    const emoji = isPurchase ? "💎"
+      : isReward ? (t.reason === "streak_reward" ? "🔥" : "🎁")
+      : "⚡";
     txs.push({
       id: t.id,
-      type: isPurchase ? "vibe_purchase" : "vibe_spend",
-      label: labels[t.reason] || t.reason,
+      type: isPurchase ? "vibe_purchase" : isReward ? "vibe_reward" : "vibe_spend",
+      label: LABELS[t.reason] || t.reason,
       delta: t.delta,
       amountEurCents: t.eurPaidCents,
-      emoji: isPurchase ? "💎" : t.reason === "gift" ? "🎁" : "⚡",
+      emoji,
       createdAt: t.createdAt.toISOString(),
     });
   }
@@ -90,6 +117,7 @@ export async function GET() {
       type: isSender ? "gift_sent" : "gift_received",
       label: `${g.gift.emoji} ${g.gift.name} ${isSender ? "envoyé" : "reçu"}`,
       delta: isSender ? -g.gift.gemCost : 0,
+      // Le destinataire touche la part après commission de la plateforme.
       amountEurCents: isSender ? null : Math.round(g.gift.eurValueCents * 0.7),
       emoji: g.gift.emoji,
       createdAt: g.createdAt.toISOString(),
@@ -111,5 +139,5 @@ export async function GET() {
 
   txs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  return NextResponse.json({ transactions: txs.slice(0, 50) });
+  return NextResponse.json({ transactions: txs.slice(0, 200) });
 }

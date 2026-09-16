@@ -2,12 +2,16 @@
 // WalletScreen — elegant, non-cluttered wallet with tabs.
 // Tab 1 "Vibes": balance + packs to recharge + what Vibes buy
 // Tab 2 "Gains": gift wallet (€) + withdrawal + progress to threshold
-// Tab 3 "Historique": merged transaction history (purchases, spends, gifts, withdrawals)
-import { useEffect, useRef, useState } from "react";
+// Tab 3 "Historique": COMPLETE merged history (purchases, spends, gifts,
+//        rewards, withdrawals) grouped by day with filter chips.
+// The history auto-refreshes every time the tab is opened or the window
+// regains focus — transactions made elsewhere (chat gifts, streaks…) always
+// appear without needing a full app reload.
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, ArrowDownLeft, ArrowUpRight, Banknote, Check, Clock, Gem,
-  Gift, History, Loader2, Lock, Wand2, TrendingUp, Wallet as WalletIcon, Zap,
+  ArrowLeft, Banknote, Check, Clock, Gem,
+  Gift, History, Loader2, Lock, RefreshCw, Wand2, TrendingUp, Wallet as WalletIcon, Zap,
 } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { useVibe } from "@/lib/vibe/store";
@@ -22,7 +26,7 @@ type Tab = "vibes" | "gains" | "history";
 
 type Tx = {
   id: string;
-  type: "vibe_purchase" | "vibe_spend" | "gift_sent" | "gift_received" | "withdrawal";
+  type: "vibe_purchase" | "vibe_spend" | "vibe_reward" | "gift_sent" | "gift_received" | "withdrawal";
   label: string;
   delta: number;
   amountEurCents: number | null;
@@ -30,6 +34,8 @@ type Tx = {
   createdAt: string;
   status?: string;
 };
+
+type HistoryFilter = "all" | "purchase" | "gift" | "spend" | "reward" | "withdrawal";
 
 export function WalletScreen({ onBack }: { onBack: () => void }) {
   const me = useVibe((s) => s.me);
@@ -43,10 +49,45 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [loadingTx, setLoadingTx] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<HistoryFilter>("all");
+  // Bump on every reload — drives the staggered re-entry animation of rows.
+  const [reloadKey, setReloadKey] = useState(0);
 
   const walletEur = (me?.walletEurCents ?? 0) / 100;
   const thresholdReached = walletEur >= WITHDRAWAL_THRESHOLD_EUR;
   const progressPct = Math.min(100, (walletEur / WITHDRAWAL_THRESHOLD_EUR) * 100);
+
+  // Filtered history according to the active chip.
+  const filteredTxs = useMemo(() => {
+    switch (filter) {
+      case "purchase": return txs.filter((t) => t.type === "vibe_purchase");
+      case "gift": return txs.filter((t) => t.type === "gift_sent" || t.type === "gift_received");
+      case "spend": return txs.filter((t) => t.type === "vibe_spend");
+      case "reward": return txs.filter((t) => t.type === "vibe_reward");
+      case "withdrawal": return txs.filter((t) => t.type === "withdrawal");
+      default: return txs;
+    }
+  }, [txs, filter]);
+
+  // Group the filtered history by calendar day (Aujourd'hui / Hier / date),
+  // preserving the most-recent-first order from the API.
+  const groupedTxs = useMemo(() => {
+    const groups: [string, Tx[]][] = [];
+    const todayStr = new Date().toLocaleDateString("fr-FR");
+    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString("fr-FR");
+    for (const tx of filteredTxs) {
+      const d = new Date(tx.createdAt);
+      const dayKey = d.toLocaleDateString("fr-FR");
+      const label = dayKey === todayStr ? "Aujourd'hui"
+        : dayKey === yesterday ? "Hier"
+        : d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" });
+      const last = groups[groups.length - 1];
+      if (last && last[0] === label) last[1].push(tx);
+      else groups.push([label, [tx]]);
+    }
+    return groups;
+  }, [filteredTxs]);
 
   async function buy(packId: string) {
     setBuying(packId);
@@ -71,16 +112,37 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
     finally { setBuying(null); }
   }
 
-  async function loadTxs() {
-    setLoadingTx(true);
+  const loadTxs = useCallback(async (silent = false) => {
+    if (silent) setRefreshing(true); else setLoadingTx(true);
     try {
       const res = await fetch("/api/vibe/wallet/transactions", { cache: "no-store" });
       const data = await res.json();
-      if (res.ok) setTxs(data.transactions ?? []);
-    } finally { setLoadingTx(false); }
-  }
+      if (res.ok) {
+        setTxs(data.transactions ?? []);
+        setReloadKey((k) => k + 1);
+      }
+    } finally {
+      setLoadingTx(false);
+      setRefreshing(false);
+    }
+  }, []);
 
-  useEffect(() => { loadTxs(); }, []);
+  // Initial load.
+  useEffect(() => { loadTxs(); }, [loadTxs]);
+
+  // AUTO-REFRESH — the wallet screen stays mounted (hidden/block strategy),
+  // so a plain mount-effect would show a stale list after gifts sent from
+  // the chat or purchases made on another device. Reload whenever:
+  //   • the History tab becomes active (fresh list on every visit)
+  //   • the window regains focus (transactions made in another tab)
+  useEffect(() => {
+    if (tab === "history") loadTxs(true);
+  }, [tab, loadTxs]);
+  useEffect(() => {
+    const onFocus = () => loadTxs(true);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [loadTxs]);
 
   // Clear the pending pack-flash timer on unmount.
   useEffect(() => () => {
@@ -309,21 +371,79 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
           {/* ===== TAB: HISTORY ===== */}
           {tab === "history" && (
             <motion.div key="history" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="pt-2">
+              {/* Filter chips + manual refresh */}
+              <div className="flex items-center gap-1.5 mb-3 overflow-x-auto no-scrollbar pb-0.5">
+                {([
+                  { id: "all", label: "Tout", count: txs.length },
+                  { id: "purchase", label: "💎 Achats", count: txs.filter((t) => t.type === "vibe_purchase").length },
+                  { id: "gift", label: "🎁 Cadeaux", count: txs.filter((t) => t.type === "gift_sent" || t.type === "gift_received").length },
+                  { id: "spend", label: "⚡ Actions", count: txs.filter((t) => t.type === "vibe_spend").length },
+                  { id: "reward", label: "🔥 Bonus", count: txs.filter((t) => t.type === "vibe_reward").length },
+                  { id: "withdrawal", label: "💸 Retraits", count: txs.filter((t) => t.type === "withdrawal").length },
+                ] as { id: HistoryFilter; label: string; count: number }[]).map((f) => (
+                  <motion.button
+                    key={f.id}
+                    onClick={() => { sfx.play("pop"); setFilter(f.id); }}
+                    whileTap={{ scale: 0.92 }}
+                    className={`shrink-0 flex items-center gap-1 h-7 px-2.5 rounded-full text-[11px] font-semibold ring-1 transition ${
+                      filter === f.id
+                        ? "vibe-gradient text-white ring-white/20"
+                        : "bg-white/5 text-white/50 ring-white/10 hover:text-white/80"
+                    }`}
+                  >
+                    {f.label}
+                    {f.count > 0 && <span className="text-[9px] opacity-60 tabular-nums">{f.count}</span>}
+                  </motion.button>
+                ))}
+                <motion.button
+                  onClick={() => loadTxs(true)}
+                  whileTap={{ scale: 0.85, rotate: 90 }}
+                  aria-label="Rafraîchir l'historique"
+                  className="shrink-0 ml-auto h-7 w-7 grid place-items-center rounded-full bg-white/5 ring-1 ring-white/10 text-white/50 hover:text-white/80"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                </motion.button>
+              </div>
+
+              {/* Subtle live-refresh indicator */}
+              <AnimatePresence>
+                {refreshing && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="text-[10px] text-white/30 text-center overflow-hidden"
+                  >
+                    Actualisation…
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
               {loadingTx ? (
                 <div className="grid place-items-center py-12">
                   <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-vibe-purple animate-spin" />
                 </div>
-              ) : txs.length === 0 ? (
+              ) : filteredTxs.length === 0 ? (
                 <div className="text-center py-12">
                   <History className="h-8 w-8 mx-auto mb-2 text-white/20" />
-                  <p className="text-sm text-white/40">Aucune transaction pour l'instant</p>
+                  <p className="text-sm text-white/40">
+                    {filter === "all" ? "Aucune transaction pour l'instant" : "Aucune transaction de ce type"}
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-1">
-                  {txs.map((tx, i) => (
-                    <TxRow key={tx.id} tx={tx} index={i} />
-                  ))}
-                </div>
+                groupedTxs.map(([day, dayTxs]) => (
+                  <div key={day} className="mb-2">
+                    {/* Sticky day header */}
+                    <p className="sticky top-0 z-10 bg-zinc-950/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wide text-white/35 px-2 py-1.5">
+                      {day}
+                    </p>
+                    <div className="space-y-0.5">
+                      {dayTxs.map((tx, i) => (
+                        <TxRow key={tx.id} tx={tx} index={i} reloadKey={reloadKey} />
+                      ))}
+                    </div>
+                  </div>
+                ))
               )}
             </motion.div>
           )}
@@ -343,9 +463,9 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
 }
 
 // ===== TRANSACTION ROW =====
-function TxRow({ tx, index = 0 }: { tx: Tx; index?: number }) {
+function TxRow({ tx, index = 0, reloadKey = 0 }: { tx: Tx; index?: number; reloadKey?: number }) {
   const { moneyCents } = useCurrency();
-  const time = new Date(tx.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  const time = new Date(tx.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
   const isIncoming = tx.delta > 0 || tx.type === "gift_received";
   const statusColors: Record<string, string> = {
@@ -361,22 +481,27 @@ function TxRow({ tx, index = 0 }: { tx: Tx; index?: number }) {
     rejected: "Refusé",
   };
 
+  // Type-aware visual identity — each operation family gets its own colour.
+  const iconStyles: Record<Tx["type"], string> = {
+    vibe_purchase: "bg-vibe-purple/15 ring-1 ring-vibe-purple/30",
+    vibe_spend: "bg-white/5 ring-1 ring-white/10",
+    vibe_reward: "bg-amber-400/10 ring-1 ring-amber-300/25",
+    gift_sent: "bg-pink-500/10 ring-1 ring-pink-400/25",
+    gift_received: "bg-emerald-500/15 ring-1 ring-emerald-400/25",
+    withdrawal: "bg-cyan-500/10 ring-1 ring-cyan-400/25",
+  };
+
   return (
     <motion.div
+      key={`${reloadKey}-${tx.id}`}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.6), duration: 0.25 }}
       className="flex items-center gap-3 py-2.5 px-2 rounded-xl hover:bg-white/[0.03] transition"
     >
-      {/* Icon */}
-      <div className={`grid place-items-center h-9 w-9 rounded-full shrink-0 ${isIncoming ? "bg-emerald-500/15" : "bg-white/5"}`}>
-        {tx.type === "withdrawal" ? (
-          <ArrowUpRight className="h-4 w-4 text-amber-400" />
-        ) : isIncoming ? (
-          <ArrowDownLeft className="h-4 w-4 text-emerald-400" />
-        ) : (
-          <ArrowUpRight className="h-4 w-4 text-white/40" />
-        )}
+      {/* Icon — the operation's own emoji in a type-coloured bubble */}
+      <div className={`grid place-items-center h-9 w-9 rounded-full shrink-0 text-base ${iconStyles[tx.type]}`}>
+        <span aria-hidden>{tx.emoji}</span>
       </div>
 
       {/* Label + time */}
@@ -385,18 +510,22 @@ function TxRow({ tx, index = 0 }: { tx: Tx; index?: number }) {
         <p className="text-[10px] text-white/40">{time}{tx.status && <span className={`ml-1.5 ${statusColors[tx.status]}`}>· {statusLabels[tx.status]}</span>}</p>
       </div>
 
-      {/* Amount */}
+      {/* Amounts — Vibes delta + € semantics per type */}
       <div className="text-right shrink-0">
         {tx.delta !== 0 && (
           <p className={`text-sm font-bold tabular-nums ${isIncoming ? "text-emerald-400" : "text-white/60"}`}>
             {isIncoming ? "+" : ""}{tx.delta} <span className="text-[10px]">💎</span>
           </p>
         )}
-        {tx.amountEurCents !== null && tx.amountEurCents !== 0 && (
-          <p className={`text-[11px] tabular-nums ${tx.amountEurCents > 0 ? "text-emerald-400/70" : "text-white/40"}`}>
-            {tx.amountEurCents > 0 ? "+" : ""}{moneyCents(Math.abs(tx.amountEurCents))}
-          </p>
-        )}
+        {tx.type === "vibe_purchase" && tx.amountEurCents ? (
+          // A purchase: the € line is what was PAID (neutral, not a gain).
+          <p className="text-[11px] tabular-nums text-white/40">{moneyCents(tx.amountEurCents)} payés</p>
+        ) : tx.type === "gift_received" && tx.amountEurCents ? (
+          // A received gift: real money credited to the wallet.
+          <p className="text-[11px] tabular-nums text-emerald-400/80">+{moneyCents(tx.amountEurCents)} crédités</p>
+        ) : tx.type === "withdrawal" && tx.amountEurCents ? (
+          <p className="text-[11px] tabular-nums text-cyan-300/80">−{moneyCents(Math.abs(tx.amountEurCents))}</p>
+        ) : null}
       </div>
     </motion.div>
   );

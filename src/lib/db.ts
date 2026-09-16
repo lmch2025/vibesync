@@ -16,13 +16,18 @@ function resolveDatabaseUrl(): string | undefined {
   if (envUrl && (envUrl.startsWith('postgresql://') || envUrl.startsWith('postgres://'))) {
     return envUrl // URL PostgreSQL valide déjà présente dans l'environnement
   }
-  // Repli : lire DATABASE_URL (PostgreSQL) dans le .env du projet
-  try {
-    const envFile = readFileSync(join(process.cwd(), '.env'), 'utf8')
-    const match = envFile.match(/^DATABASE_URL=["']?(postgresql:\/\/[^"'\r\n]+)["']?\s*$/m)
-    if (match) return match[1]
-  } catch {
-    // .env absent ou illisible : laisser Prisma utiliser env("DATABASE_URL") tel quel
+  // Repli 1 : lire DATABASE_URL (PostgreSQL) dans le .env du projet.
+  // Repli 2 : .env.neon — copie de secours que la sandbox ne réécrit PAS
+  //   (la sandbox réinitialise périodiquement .env vers une URL SQLite,
+  //   ce qui cassait le serveur à chaque redémarrage à chaud).
+  for (const file of ['.env', '.env.neon']) {
+    try {
+      const envFile = readFileSync(join(process.cwd(), file), 'utf8')
+      const match = envFile.match(/^DATABASE_URL=["']?(postgresql:\/\/[^"'\r\n]+)["']?\s*$/m)
+      if (match) return match[1]
+    } catch {
+      // fichier absent ou illisible : essayer le suivant
+    }
   }
   return undefined
 }

@@ -27,7 +27,7 @@ import { GemIcon } from "@/components/vibe/gem-badge";
 import { sfx, haptic, TypingDots, useShake } from "@/components/vibe/app/interactive-animations";
 import { useVibe } from "@/lib/vibe/store";
 import { useCurrency } from "@/lib/vibe/use-currency";
-import { GIFTS, GEM_ACTIONS, MAX_MESSAGES_BEFORE_REPLY } from "@/lib/vibe/constants";
+import { GIFTS, GEM_ACTIONS } from "@/lib/vibe/constants";
 import EmojiPicker from "./emoji-picker";
 import { GiftOpenModal } from "./gift-open-modal";
 import { VoiceRecorder } from "./voice-recorder";
@@ -72,6 +72,8 @@ type ChatState = {
   myMessagesCount: number;
   theirMessagesCount: number;
   remainingBeforeLock: number;
+  // The REAL admin-configured anti-spam limit (never hardcode it client-side).
+  maxMessagesBeforeReply?: number;
 };
 
 export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { matchId: string; initialName?: string; initialPoster?: string | null; onBack: () => void }) {
@@ -382,7 +384,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
           <Lock className="h-5 w-5 mx-auto mb-1 text-amber-300" />
           <p className="text-xs text-amber-100 font-medium">Anti-spam actif</p>
           <p className="text-[11px] text-amber-100/70 mt-0.5">
-            Tu as envoyé tes {MAX_MESSAGES_BEFORE_REPLY} messages. Attends une réponse, ou envoie un cadeau.
+            Tu as envoyé tes {state?.maxMessagesBeforeReply ?? 3} messages. Attends une réponse, ou envoie un cadeau.
           </p>
           <button onClick={() => setGiftOpen(true)} className="mt-2 h-8 px-3 rounded-full bg-amber-300 text-black text-xs font-bold">
             Offrir un cadeau
@@ -572,7 +574,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         )}
         {state && !state.unlocked && state.isInitiator && state.remainingBeforeLock > 0 && !voiceMode && (
           <p className="text-[10px] text-white/30 text-center mt-1">
-            Reste {state.remainingBeforeLock} message{state.remainingBeforeLock > 1 ? "s" : ""} avant blocage anti-spam
+            Reste {state.remainingBeforeLock} message{state.remainingBeforeLock > 1 ? "s" : ""} sur {state.maxMessagesBeforeReply ?? 3} avant blocage anti-spam
           </p>
         )}
       </div>

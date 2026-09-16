@@ -35,13 +35,18 @@ const DEFAULTS: AppSettings = {
   videoMaxSizeKb: 2048,
 };
 
-/// Cache settings in-memory for the process lifetime (avoids a DB hit on every
-/// request). Settings change rarely; admin can restart to refresh
-/// or call `refreshSettings()` after an update.
+/// Cache settings in-memory with a SHORT TTL (15s). A process-lifetime cache
+/// proved dangerous on serverless (Vercel): `refreshSettings()` only clears
+/// the cache on the instance that handled the admin PUT — other warm
+/// instances kept enforcing a STALE limit (e.g. 1 message instead of 3).
+/// With a 15s TTL, every instance converges to the admin-configured value
+/// within seconds, and DB load stays negligible (≤ 1 query / 15s / instance).
+const CACHE_TTL_MS = 15_000;
 let cached: AppSettings | null = null;
+let cachedAt = 0;
 
 export async function getSettings(): Promise<AppSettings> {
-  if (cached) return cached;
+  if (cached && Date.now() - cachedAt < CACHE_TTL_MS) return cached;
   try {
     const rows = await db.setting.findMany();
     const map: Record<string, string> = {};
@@ -58,6 +63,7 @@ export async function getSettings(): Promise<AppSettings> {
       videoQuality: Number(map.videoQuality) || DEFAULTS.videoQuality,
       videoMaxSizeKb: Number(map.videoMaxSizeKb) || DEFAULTS.videoMaxSizeKb,
     };
+    cachedAt = Date.now();
     return cached;
   } catch {
     return DEFAULTS;
@@ -67,4 +73,5 @@ export async function getSettings(): Promise<AppSettings> {
 /// Invalidate the cache (call after admin updates settings).
 export function refreshSettings() {
   cached = null;
+  cachedAt = 0;
 }

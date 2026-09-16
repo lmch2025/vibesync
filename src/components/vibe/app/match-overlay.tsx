@@ -1,5 +1,6 @@
 "use client";
 // "It's a match!" full-screen celebration overlay with animated rings + confetti.
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
 import { ConfettiBurst } from "./interactive-animations";
@@ -8,6 +9,10 @@ type MatchData = {
   id: string;
   withProfile: { id: string; displayName: string; posterUrl: string; city: string };
 };
+
+// Module-level cache for the admin-configured anti-spam limit — fetched once
+// from the public settings endpoint, shared across every overlay instance.
+let cachedMsgLimit: number | null = null;
 
 export function MatchOverlay({
   match,
@@ -20,6 +25,25 @@ export function MatchOverlay({
   onMessage: (target: { id: string, name: string, poster: string | null }) => void;
   myPoster?: string;
 }) {
+  // The REAL limit configured in the admin panel (fallback 3 = product default).
+  const [msgLimit, setMsgLimit] = useState<number>(cachedMsgLimit ?? 3);
+
+  useEffect(() => {
+    if (cachedMsgLimit !== null) return;
+    let alive = true;
+    fetch("/api/vibe/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const v = Number(data?.maxMessagesBeforeReply);
+        if (alive && Number.isFinite(v) && v > 0) {
+          cachedMsgLimit = v;
+          setMsgLimit(v);
+        }
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
   return (
     <AnimatePresence>
       {match && (
@@ -117,7 +141,7 @@ export function MatchOverlay({
               </button>
             </div>
             <p className="text-white/60 text-[10px] mt-5">
-              ⚠️ Anti-spam : tu peux envoyer 3 messages max tant qu&apos;elle ne répond pas.
+              ⚠️ Anti-spam : tu peux envoyer {msgLimit} message{msgLimit > 1 ? "s" : ""} max tant que {match.withProfile.displayName} ne répond pas.
             </p>
           </div>
         </motion.div>

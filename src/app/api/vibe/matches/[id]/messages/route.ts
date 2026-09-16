@@ -124,6 +124,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     myMessagesCount,
     theirMessagesCount,
     remainingBeforeLock: Math.max(0, maxMessagesBeforeReply - myMessagesCount),
+    // The REAL admin-configured limit — the client must never hardcode it.
+    maxMessagesBeforeReply,
   });
 }
 

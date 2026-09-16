@@ -6,20 +6,14 @@ import { getCurrentUser } from "@/lib/vibe/session";
 import { GEM_PACKS } from "@/lib/vibe/constants";
 
 export async function POST(req: Request) {
-  let user = await getCurrentUser();
-  const body = await req.json().catch(() => ({} as any));
-  const { packId, currency, userId } = body;
-
-  if (!user && userId) {
-    user = await db.user.findUnique({ where: { id: userId }, include: { profile: true } });
-  }
-
-  // Fallback to first available demo user if sandbox/mobile anonymous
-  if (!user) {
-    user = await db.user.findFirst({ include: { profile: true } });
-  }
-
+  // STRICT auth: a purchase must be attributed to the real session user.
+  // The old "findFirst" fallback silently credited the first DB user when
+  // a session was missing — creating phantom transactions in someone else's
+  // history. A clean 401 forces re-login instead.
+  const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  const body = await req.json().catch(() => ({} as any));
+  const { packId, currency } = body;
   const pack = GEM_PACKS.find((p) => p.id === packId);
   if (!pack) return NextResponse.json({ error: "Pack inconnu" }, { status: 400 });
   const tier = pack.tiers.find((t) => t.currency === currency) ?? pack.tiers[0];
