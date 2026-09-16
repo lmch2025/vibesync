@@ -157,7 +157,7 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
             animate={{ opacity: 1, x: 0 }} 
             exit={{ opacity: 0, x: 30 }} 
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute inset-0 z-20 bg-zinc-950"
+            className="absolute inset-0 z-20 v-bg-app"
           >
             <ChatScreen 
               matchId={chatTarget.id}
@@ -287,15 +287,15 @@ function InsufficientVibesHandler({ onGoWallet }: { onGoWallet: () => void }) {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <MotionConfig reducedMotion="user">
-      <div className="relative min-h-screen overflow-hidden flex flex-col items-center bg-[#0a0612]">
+      <div className="relative min-h-screen overflow-hidden flex flex-col items-center v-bg-page">
         {/* ambient background */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl animate-float-slow" />
-          <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl animate-float-slow" style={{ animationDelay: "2s" }} />
+          <div className="v-ambient-orb absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl animate-float-slow" />
+          <div className="v-ambient-orb absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/20 blur-3xl animate-float-slow" style={{ animationDelay: "2s" }} />
         </div>
 
         {/* Mobile-width column — full height, no phone bezel */}
-        <div className="relative z-10 w-full max-w-md h-screen flex-1 flex flex-col bg-zinc-950 shadow-2xl overflow-hidden">
+        <div className="relative z-10 w-full max-w-md h-screen flex-1 flex flex-col v-bg-app shadow-2xl overflow-hidden">
           {children}
         </div>
       </div>
@@ -323,7 +323,7 @@ function NavBtn({
       }}
       whileTap={{ scale: 0.88 }}
       className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition relative ${
-        active ? "text-white" : "text-white/50"
+        active ? "text-white" : "text-white/70"
       }`}
     >
       {active && (

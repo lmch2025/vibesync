@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = { variable: "--font-geist-sans" };
 const geistMono = { variable: "--font-geist-mono" };
@@ -159,9 +160,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${display.variable} antialiased bg-background text-foreground`}
       >
-        {children}
-        <Toaster />
-        <SonnerToaster position="top-center" richColors />
+        <ThemeProvider>
+          {children}
+          <Toaster />
+          <SonnerToaster position="top-center" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

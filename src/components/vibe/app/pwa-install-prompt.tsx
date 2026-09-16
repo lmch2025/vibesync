@@ -127,7 +127,7 @@ export function PwaInstallPrompt() {
             {/* Close */}
             <button
               onClick={dismiss}
-              className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+              className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full v-surface-2 text-white hover:v-surface-3 transition"
               aria-label="Fermer"
             >
               <X className="h-4 w-4" />
@@ -146,7 +146,7 @@ export function PwaInstallPrompt() {
             <h3 className="font-display text-xl font-bold text-center text-white">
               Installe Vivilov
             </h3>
-            <p className="text-sm text-white/60 text-center mt-1 mb-5">
+            <p className="text-sm text-white/70 text-center mt-1 mb-5">
               Lance-toi en 1 tap — pas de store, pas d'attente. Ton app
               plein écran, notifications incluses.
             </p>
@@ -194,7 +194,7 @@ export function PwaInstallPrompt() {
                   e.preventDefault();
                   dismiss();
                 }}
-                className="block w-full h-12 rounded-2xl bg-white/10 ring-1 ring-white/15 text-white font-display font-bold text-sm active:scale-95 transition text-center leading-[3rem]"
+                className="block w-full h-12 rounded-2xl v-surface-2 ring-1 ring-white/15 text-white font-display font-bold text-sm active:scale-95 transition text-center leading-[3rem]"
               >
                 J'ai compris
               </a>
@@ -202,7 +202,7 @@ export function PwaInstallPrompt() {
 
             <button
               onClick={dismiss}
-              className="w-full text-center text-[11px] text-white/40 hover:text-white/70 transition mt-3"
+              className="w-full text-center text-[11px] text-white/70 hover:text-white/70 transition mt-3"
             >
               Plus tard
             </button>
@@ -221,8 +221,8 @@ function Instruction({
   text: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-white/5 ring-1 ring-white/10 px-3 py-2.5">
-      <span className="grid place-items-center h-7 w-7 rounded-full bg-white/10 shrink-0">
+    <div className="flex items-center gap-3 rounded-2xl v-surface-1 ring-1 ring-white/10 px-3 py-2.5">
+      <span className="grid place-items-center h-7 w-7 rounded-full v-surface-2 shrink-0">
         {icon}
       </span>
       <span className="text-sm text-white/80">{text}</span>

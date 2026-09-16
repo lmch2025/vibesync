@@ -3,6 +3,51 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ===== Utilitaires du thème Vivilov (directive @utility : les variantes
+   Tailwind — hover:, active:, … — sont générées automatiquement) ===== */
+
+/* Dégradé signature récupéré de la page d'accueil :
+   « en vidéo de 15 secondes. » — corail #FF7E67 → violet #9B51E0. */
+@utility v-text-gradient {
+  background-image: linear-gradient(92deg, #ff7e67 0%, #c95be0 52%, #9b51e0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Surfaces du thème immersif — basculent avec le mode sombre opt-in. */
+@utility v-bg-page {
+  background-color: var(--v-bg-page);
+}
+@utility v-bg-app {
+  background-color: var(--v-bg-app);
+}
+@utility v-surface-1 {
+  background-color: var(--v-surface-1);
+}
+@utility v-surface-2 {
+  background-color: var(--v-surface-2);
+}
+@utility v-surface-3 {
+  background-color: var(--v-surface-3);
+}
+@utility v-surface-solid {
+  background-color: var(--v-surface-solid);
+}
+@utility v-divider {
+  border-color: var(--v-divider);
+}
+/* Orbes d'ambiance violet/corail — atténuées en mode sombre profond. */
+@utility v-ambient-orb {
+  opacity: var(--v-ambient-opacity);
+  transition: opacity 0.4s ease;
+}
+/* Halo violet signature (respiration de la page d'accueil, version statique). */
+@utility v-glow-cta {
+  box-shadow: 0 10px 30px -5px var(--v-glow-purple);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -57,6 +102,22 @@
   --vibe-orange: oklch(0.72 0.19 55);
   --vibe-orange-soft: oklch(0.8 0.16 55);
   --vibe-pink: oklch(0.65 0.24 350);
+
+  /* ===== Thème immersif Vivilov (récupéré de la page d'accueil) =====
+     Fond #09090B + vidéo, textes blancs /95→/70, dégradé signature
+     #FF7E67 → #9B51E0, halo violet #9B51E0. Appliqué par défaut
+     dans toute l'app. L'utilisateur peut opter pour le mode sombre
+     profond via .sombre (voir plus bas). */
+  --v-bg-page: #0a0612;            /* fond ambiant derrière la colonne */
+  --v-bg-app: #09090b;             /* fond exact de la page d'accueil */
+  --v-surface-1: oklch(1 0 0 / 5%);
+  --v-surface-2: oklch(1 0 0 / 10%);
+  --v-surface-3: oklch(1 0 0 / 16%);
+  --v-surface-solid: oklch(0.19 0.01 295);  /* ≈ zinc-900, cartes pleines */
+  --v-divider: oklch(1 0 0 / 8%);
+  --v-glow-purple: oklch(0.55 0.24 295 / 0.55);
+  --v-glow-orange: oklch(0.72 0.19 55 / 0.35);
+  --v-ambient-opacity: 1;
 
   --background: oklch(0.99 0.005 295);
   --foreground: oklch(0.18 0.02 295);
@@ -125,6 +186,31 @@
   --sidebar-ring: oklch(0.62 0.2 295);
 }
 
+/* ===== MODE SOMBRE (opt-in utilisateur, « lights-out » AMOLED) =====
+   Le thème par défaut reste le thème immersif de la page d'accueil
+   (:root ci-dessus). L'utilisateur peut opter pour le mode sombre
+   profond depuis son profil : noir pur #000, ambiance éteinte,
+   surfaces encore plus discrètes — idéal écrans AMOLED. */
+.sombre {
+  --v-bg-page: #000;
+  --v-bg-app: #000;
+  --v-surface-1: oklch(1 0 0 / 4%);
+  --v-surface-2: oklch(1 0 0 / 8%);
+  --v-surface-3: oklch(1 0 0 / 13%);
+  --v-surface-solid: oklch(0.1 0.005 295);
+  --v-divider: oklch(1 0 0 / 7%);
+  --v-glow-purple: oklch(0.55 0.24 295 / 0.28);
+  --v-glow-orange: oklch(0.72 0.19 55 / 0.25);
+  --v-ambient-opacity: 0.18;
+}
+.sombre .glass-dark {
+  background: oklch(0 0 0 / 0.72);
+  border-color: oklch(1 0 0 / 8%);
+}
+.sombre .vibe-glow {
+  box-shadow: 0 10px 34px -12px var(--v-glow-purple), 0 4px 14px -6px var(--v-glow-orange);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -170,10 +256,10 @@
     box-shadow: 6px 6px 14px oklch(0.55 0.24 295 / 0.18), -6px -6px 14px oklch(1 0 0 / 0.9);
   }
   .vibe-glow {
-    box-shadow: 0 10px 40px -10px oklch(0.55 0.24 295 / 0.55), 0 4px 16px -4px oklch(0.72 0.19 55 / 0.35);
+    box-shadow: 0 10px 40px -10px var(--v-glow-purple), 0 4px 16px -4px var(--v-glow-orange);
   }
   .vibe-glow-orange {
-    box-shadow: 0 10px 40px -10px oklch(0.72 0.19 55 / 0.55);
+    box-shadow: 0 10px 40px -10px var(--v-glow-orange);
   }
   .scrollbar-vibe::-webkit-scrollbar {
     width: 6px;

@@ -120,7 +120,7 @@ export function ActionSuccessModal({
             {/* Close */}
             <button
               onClick={() => onOpenChange(false)}
-              className="absolute top-3 right-3 z-30 h-9 w-9 grid place-items-center rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition"
+              className="absolute top-3 right-3 z-30 h-9 w-9 grid place-items-center rounded-full v-surface-2 backdrop-blur text-white hover:v-surface-3 transition"
               aria-label="Fermer"
             >
               <X className="h-4 w-4" />
@@ -166,7 +166,7 @@ export function ActionSuccessModal({
                 {title}
               </h3>
               {message && (
-                <p className="text-sm text-white/60 mb-4">{message}</p>
+                <p className="text-sm text-white/70 mb-4">{message}</p>
               )}
 
               {/* Buff countdown preview */}
@@ -175,7 +175,7 @@ export function ActionSuccessModal({
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.35, type: "spring" }}
-                  className="my-3 flex flex-col items-center gap-2 rounded-2xl bg-white/5 ring-1 ring-white/10 px-5 py-4"
+                  className="my-3 flex flex-col items-center gap-2 rounded-2xl v-surface-1 ring-1 ring-white/10 px-5 py-4"
                 >
                   <CountdownRing
                     type={buffType}
@@ -185,7 +185,7 @@ export function ActionSuccessModal({
                     size={72}
                     strokeWidth={6}
                   />
-                  <p className="text-[11px] text-white/60 -mt-1">
+                  <p className="text-[11px] text-white/70 -mt-1">
                     {buffMeta?.emoji} {buffMeta?.label} actif — reste{" "}
                     <span className="text-white font-semibold">
                       {formatShort(totalMs)}

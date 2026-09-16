@@ -175,7 +175,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
           {/* Progress bar — 4 segments */}
           <div className="flex items-center gap-1.5 w-full max-w-xs">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="flex-1 h-1.5 rounded-full overflow-hidden bg-white/10">
+              <div key={i} className="flex-1 h-1.5 rounded-full overflow-hidden v-surface-2">
                 <motion.div
                   initial={false}
                   animate={{ width: i < step ? "100%" : i === step ? "100%" : "0%" }}
@@ -186,11 +186,11 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
               </div>
             ))}
           </div>
-          <p className="text-xs text-white/50 mt-2 tabular-nums">Étape {step + 1} / 4 — {stepTitles[step]}</p>
+          <p className="text-xs text-white/70 mt-2 tabular-nums">Étape {step + 1} / 4 — {stepTitles[step]}</p>
         </div>
 
         {/* Card */}
-        <div className="relative rounded-3xl bg-white/[0.03] backdrop-blur-xl ring-1 ring-white/10 shadow-2xl p-6 sm:p-8 overflow-hidden">
+        <div className="relative rounded-3xl v-surface-1 backdrop-blur-xl ring-1 ring-white/10 shadow-2xl p-6 sm:p-8 overflow-hidden">
           <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-vibe-purple/15 blur-2xl" />
 
           <AnimatePresence mode="wait">
@@ -206,25 +206,25 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
               >
                 <div>
                   <h2 className="font-display text-2xl font-bold mb-1">Comment tu t&apos;appelles ?</h2>
-                  <p className="text-sm text-white/50">Ton pseudo sera visible par les autres membres.</p>
+                  <p className="text-sm text-white/70">Ton pseudo sera visible par les autres membres.</p>
                 </div>
 
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70" />
                   <Input
                     value={pseudo}
                     onChange={(e) => setPseudo(e.target.value)}
                     placeholder="ex. Alex, Léa, Marco…"
                     maxLength={20}
-                    className="pl-10 h-12 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-vibe-purple focus-visible:ring-vibe-purple/40"
+                    className="pl-10 h-12 rounded-2xl v-surface-1 border-white/10 text-white placeholder:text-white/70 focus:border-vibe-purple focus-visible:ring-vibe-purple/40"
                     onKeyDown={(e) => e.key === "Enter" && canProceed() && setStep(1)}
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/30 tabular-nums">{pseudo.length}/20</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/70 tabular-nums">{pseudo.length}/20</span>
                 </div>
 
                 {/* Gender */}
                 <div>
-                  <label className="text-xs font-semibold text-white/60 mb-2 block">Tu es…</label>
+                  <label className="text-xs font-semibold text-white/70 mb-2 block">Tu es…</label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       { v: "f", label: "Femme", emoji: "♀" },
@@ -239,7 +239,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                           "rounded-2xl py-3 text-sm font-semibold transition ring-1",
                           gender === g.v
                             ? "vibe-gradient text-white ring-transparent vibe-glow"
-                            : "bg-white/5 text-white/60 ring-white/10 hover:bg-white/10"
+                            : "v-surface-1 text-white/70 ring-white/10 hover:v-surface-2"
                         )}
                       >
                         <span className="text-lg block mb-0.5">{g.emoji}</span>
@@ -251,7 +251,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
 
                 {/* Looking for */}
                 <div>
-                  <label className="text-xs font-semibold text-white/60 mb-2 block">Tu cherches…</label>
+                  <label className="text-xs font-semibold text-white/70 mb-2 block">Tu cherches…</label>
                   <div className="grid grid-cols-4 gap-2">
                     {[
                       { v: "f", label: "Femmes" },
@@ -267,7 +267,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                           "rounded-xl py-2.5 text-xs font-semibold transition ring-1",
                           lookingFor === g.v
                             ? "vibe-gradient text-white ring-transparent"
-                            : "bg-white/5 text-white/60 ring-white/10 hover:bg-white/10"
+                            : "v-surface-1 text-white/70 ring-white/10 hover:v-surface-2"
                         )}
                       >
                         {g.label}
@@ -292,24 +292,24 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
               >
                 <div>
                   <h2 className="font-display text-2xl font-bold mb-1">Toi en bref</h2>
-                  <p className="text-sm text-white/50">Ton âge et ta ville — le reste viendra en douceur.</p>
+                  <p className="text-sm text-white/70">Ton âge et ta ville — le reste viendra en douceur.</p>
                 </div>
 
                 {/* Age dropdown */}
                 <div>
-                  <label className="text-xs font-semibold text-white/60 mb-2 block">Âge</label>
+                  <label className="text-xs font-semibold text-white/70 mb-2 block">Âge</label>
                   <div className="relative">
                     <motion.button
                       onClick={() => setAgeOpen((o) => !o)}
                       whileTap={{ scale: 0.98 }}
                       className={cn(
-                        "w-full h-12 rounded-2xl bg-white/5 border border-white/10 text-left px-4 flex items-center justify-between transition",
-                        age !== null ? "text-white" : "text-white/30",
+                        "w-full h-12 rounded-2xl v-surface-1 border border-white/10 text-left px-4 flex items-center justify-between transition",
+                        age !== null ? "text-white" : "text-white/70",
                         ageOpen && "border-vibe-purple"
                       )}
                     >
                       <span className="font-medium">{age !== null ? `${age} ans` : "Sélectionne ton âge"}</span>
-                      <ChevronDown className={cn("h-4 w-4 text-white/40 transition", ageOpen && "rotate-180")} />
+                      <ChevronDown className={cn("h-4 w-4 text-white/70 transition", ageOpen && "rotate-180")} />
                     </motion.button>
                     <AnimatePresence>
                       {ageOpen && (
@@ -317,7 +317,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                           initial={{ opacity: 0, y: -8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
-                          className="absolute z-30 mt-1.5 inset-x-0 max-h-56 overflow-y-auto scrollbar-vibe rounded-2xl bg-zinc-900 ring-1 ring-white/10 shadow-2xl p-1.5"
+                          className="absolute z-30 mt-1.5 inset-x-0 max-h-56 overflow-y-auto scrollbar-vibe rounded-2xl v-surface-solid ring-1 ring-white/10 shadow-2xl p-1.5"
                         >
                           {AGES.map((a) => (
                             <button
@@ -325,7 +325,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                               onClick={() => { setAge(a); setAgeOpen(false); }}
                               className={cn(
                                 "w-full text-left px-3 py-2 rounded-xl text-sm transition tabular-nums",
-                                age === a ? "vibe-gradient text-white font-semibold" : "text-white/70 hover:bg-white/10"
+                                age === a ? "vibe-gradient text-white font-semibold" : "text-white/70 hover:v-surface-2"
                               )}
                             >
                               {a} ans
@@ -339,9 +339,9 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
 
                 {/* City — predictive, selection-only */}
                 <div>
-                  <label className="text-xs font-semibold text-white/60 mb-2 block">Ville</label>
+                  <label className="text-xs font-semibold text-white/70 mb-2 block">Ville</label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 pointer-events-none z-10" />
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70 pointer-events-none z-10" />
                     <Input
                       value={cityQuery}
                       onChange={(e) => {
@@ -353,7 +353,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       onBlur={() => setTimeout(() => setCityFocused(false), 200)}
                       placeholder="Tape ta ville…"
                       className={cn(
-                        "pl-10 h-12 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-vibe-purple/40",
+                        "pl-10 h-12 rounded-2xl v-surface-1 border-white/10 text-white placeholder:text-white/70 focus-visible:ring-vibe-purple/40",
                         selectedCity && "border-emerald-400/50"
                       )}
                     />
@@ -367,10 +367,10 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                           initial={{ opacity: 0, y: -8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
-                          className="absolute z-30 mt-1.5 inset-x-0 max-h-56 overflow-y-auto scrollbar-vibe rounded-2xl bg-zinc-900 ring-1 ring-white/10 shadow-2xl p-1.5"
+                          className="absolute z-30 mt-1.5 inset-x-0 max-h-56 overflow-y-auto scrollbar-vibe rounded-2xl v-surface-solid ring-1 ring-white/10 shadow-2xl p-1.5"
                         >
                           {cityResults.length === 0 ? (
-                            <div className="px-3 py-3 text-sm text-white/40 flex items-center gap-2">
+                            <div className="px-3 py-3 text-sm text-white/70 flex items-center gap-2">
                               <Search className="h-3.5 w-3.5" />
                               {cityQuery.length < 2 ? "Continue à taper…" : "Aucune ville trouvée"}
                             </div>
@@ -380,11 +380,11 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                                 key={`${c.name}-${c.country}`}
                                 onMouseDown={(e) => { e.preventDefault(); selectCity(c); }}
                                 onClick={() => selectCity(c)}
-                                className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-white/10 transition flex items-center gap-2"
+                                className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:v-surface-2 transition flex items-center gap-2"
                               >
                                 <MapPin className="h-3.5 w-3.5 text-vibe-purple shrink-0" />
                                 <span className="font-medium text-white">{c.name}</span>
-                                <span className="text-white/40 text-xs">{c.country}</span>
+                                <span className="text-white/70 text-xs">{c.country}</span>
                               </button>
                             ))
                           )}
@@ -418,7 +418,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
               >
                 <div>
                   <h2 className="font-display text-2xl font-bold mb-1">Que cherches-tu ?</h2>
-                  <p className="text-sm text-white/50">Sois honnête — ça aide à matcher avec les bonnes personnes.</p>
+                  <p className="text-sm text-white/70">Sois honnête — ça aide à matcher avec les bonnes personnes.</p>
                 </div>
 
                 <div className="space-y-2.5">
@@ -450,15 +450,15 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                         "w-full flex items-center gap-3 rounded-2xl p-3.5 ring-1 transition text-left",
                         relationshipType === r.v
                           ? "bg-vibe-gradient-soft ring-vibe-purple/50 vibe-glow"
-                          : "bg-white/5 ring-white/10 hover:bg-white/10"
+                          : "v-surface-1 ring-white/10 hover:v-surface-2"
                       )}
                     >
-                      <span className="grid place-items-center h-11 w-11 rounded-xl bg-white/10 shrink-0 text-2xl">
+                      <span className="grid place-items-center h-11 w-11 rounded-xl v-surface-2 shrink-0 text-2xl">
                         {r.emoji}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm">{r.label}</p>
-                        <p className="text-[11px] text-white/50 mt-0.5">{r.desc}</p>
+                        <p className="text-[11px] text-white/70 mt-0.5">{r.desc}</p>
                       </div>
                       {relationshipType === r.v && (
                         <motion.span
@@ -493,7 +493,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
               >
                 <div>
                   <h2 className="font-display text-2xl font-bold mb-0.5">Ta vidéo de présentation</h2>
-                  <p className="text-sm text-white/50">15 secondes, portrait. Optionnelle mais puissante.</p>
+                  <p className="text-sm text-white/70">15 secondes, portrait. Optionnelle mais puissante.</p>
                 </div>
 
                 {/* Upload zone + preview — compact landscape, side-by-side with info on desktop */}
@@ -505,12 +505,12 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       onClick={() => fileRef.current?.click()}
                       disabled={uploading}
                       whileTap={uploading ? undefined : { scale: 0.98 }}
-                      className="relative h-36 sm:h-44 rounded-2xl border-2 border-dashed border-white/15 hover:border-vibe-purple/50 bg-white/[0.02] hover:bg-white/[0.04] transition flex flex-col items-center justify-center gap-2 group"
+                      className="relative h-36 sm:h-44 rounded-2xl border-2 border-dashed border-white/15 hover:border-vibe-purple/50 v-surface-1 hover:v-surface-2 transition flex flex-col items-center justify-center gap-2 group"
                     >
                       {uploading ? (
                         <>
                           <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-vibe-purple animate-spin" />
-                          <span className="text-xs text-white/60">Traitement…</span>
+                          <span className="text-xs text-white/70">Traitement…</span>
                         </>
                       ) : (
                         <>
@@ -519,7 +519,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                           </span>
                           <div className="text-center">
                             <p className="font-semibold text-white text-sm">Ajouter ma vidéo</p>
-                            <p className="text-[10px] text-white/40 mt-0.5">Portrait · 15s · MP4/MOV</p>
+                            <p className="text-[10px] text-white/70 mt-0.5">Portrait · 15s · MP4/MOV</p>
                           </div>
                         </>
                       )}
@@ -534,7 +534,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       <motion.button
                         onClick={() => fileRef.current?.click()}
                         whileTap={{ scale: 0.95 }}
-                        className="absolute bottom-2 left-2 right-2 h-7 rounded-lg glass-dark text-[11px] font-semibold flex items-center justify-center gap-1 hover:bg-white/20 transition"
+                        className="absolute bottom-2 left-2 right-2 h-7 rounded-lg glass-dark text-[11px] font-semibold flex items-center justify-center gap-1 hover:v-surface-3 transition"
                       >
                         <Video className="h-3 w-3" /> Changer
                       </motion.button>
@@ -549,11 +549,11 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                   )}
 
                   {/* What video unlocks — compact, beside the upload zone on desktop */}
-                  <div className="rounded-2xl bg-white/[0.03] ring-1 ring-white/10 p-3 flex flex-col justify-center">
+                  <div className="rounded-2xl v-surface-1 ring-1 ring-white/10 p-3 flex flex-col justify-center">
                     <p className="text-[11px] font-semibold text-white/70 mb-2 flex items-center gap-1.5">
                       <Heart className="h-3.5 w-3.5 text-vibe-pink" /> Sans vidéo, bloqué :
                     </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-2 text-[11px] text-white/50">
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-2 text-[11px] text-white/70">
                       <li>• Apparaître dans le swipe</li>
                       <li>• Super-liker</li>
                       <li>• Recevoir des cadeaux</li>
@@ -606,7 +606,7 @@ function BackBtn({ onClick }: { onClick: () => void }) {
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.95 }}
-      className="h-12 px-4 rounded-2xl bg-white/5 ring-1 ring-white/10 text-white/70 font-medium text-sm hover:bg-white/10 transition"
+      className="h-12 px-4 rounded-2xl v-surface-1 ring-1 ring-white/10 text-white/70 font-medium text-sm hover:v-surface-2 transition"
     >
       Retour
     </motion.button>

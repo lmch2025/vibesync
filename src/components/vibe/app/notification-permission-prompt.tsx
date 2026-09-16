@@ -165,7 +165,7 @@ export function NotificationPermissionPrompt() {
           >
             <button
               onClick={dismiss}
-              className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+              className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full v-surface-2 text-white hover:v-surface-3 transition"
               aria-label="Fermer"
             >
               <X className="h-4 w-4" />
@@ -184,7 +184,7 @@ export function NotificationPermissionPrompt() {
             <h3 className="font-display text-xl font-bold text-center text-white">
               Reste connecté·e
             </h3>
-            <p className="text-sm text-white/60 text-center mt-1 mb-5">
+            <p className="text-sm text-white/70 text-center mt-1 mb-5">
               Active les notifications pour ne rien manquer de tes
               rencontres. On ne spamme jamais — promis.
             </p>
@@ -197,14 +197,14 @@ export function NotificationPermissionPrompt() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 + i * 0.05 }}
-                  className="flex items-center gap-2 rounded-2xl bg-white/5 ring-1 ring-white/10 px-3 py-2"
+                  className="flex items-center gap-2 rounded-2xl v-surface-1 ring-1 ring-white/10 px-3 py-2"
                 >
                   <span className="text-xl">{p.emoji}</span>
                   <div className="min-w-0">
                     <p className={`text-xs font-bold ${p.accent} flex items-center gap-1`}>
                       {p.label}
                     </p>
-                    <p className="text-[9px] text-white/40 truncate">{p.desc}</p>
+                    <p className="text-[9px] text-white/70 truncate">{p.desc}</p>
                   </div>
                 </motion.div>
               ))}
@@ -229,7 +229,7 @@ export function NotificationPermissionPrompt() {
             </button>
             <button
               onClick={dismiss}
-              className="w-full text-center text-[11px] text-white/40 hover:text-white/70 transition mt-3"
+              className="w-full text-center text-[11px] text-white/70 hover:text-white/70 transition mt-3"
             >
               Plus tard
             </button>

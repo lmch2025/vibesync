@@ -316,8 +316,8 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
   return (
     <div className="absolute inset-0 bg-[#0e1014] text-white overflow-hidden flex flex-col">
       {/* ===== WHATSAPP-STYLE HEADER ===== */}
-      <div className="pt-9 px-3 py-2 flex items-center gap-2.5 border-b border-white/5 bg-zinc-900/80 backdrop-blur-md z-20">
-        <button onClick={onBack} className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 shrink-0">
+      <div className="pt-9 px-3 py-2 flex items-center gap-2.5 border-b border-white/5 v-surface-solid/80 backdrop-blur-md z-20">
+        <button onClick={onBack} className="h-9 w-9 grid place-items-center rounded-full hover:v-surface-2 shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="relative h-9 w-9 rounded-full overflow-hidden ring-1 ring-white/10 shrink-0">
@@ -334,7 +334,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
             <p className="text-[10px] text-emerald-400">en ligne</p>
           )}
         </div>
-        <button onClick={() => setGiftOpen(true)} className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10 text-fuchsia-300 transition shrink-0" aria-label="Offrir un cadeau">
+        <button onClick={() => setGiftOpen(true)} className="h-9 w-9 grid place-items-center rounded-full hover:v-surface-2 text-fuchsia-300 transition shrink-0" aria-label="Offrir un cadeau">
           <Gift className="h-5 w-5" />
         </button>
       </div>
@@ -383,7 +383,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         <div className="mx-3 mb-2 rounded-2xl bg-amber-400/15 ring-1 ring-amber-300/40 p-3 text-center">
           <Lock className="h-5 w-5 mx-auto mb-1 text-amber-300" />
           <p className="text-xs text-amber-100 font-medium">Anti-spam actif</p>
-          <p className="text-[11px] text-amber-100/70 mt-0.5">
+          <p className="text-[11px] text-amber-100/85 mt-0.5">
             Tu as envoyé tes {state?.maxMessagesBeforeReply ?? 3} messages. Attends une réponse, ou envoie un cadeau.
           </p>
           <button onClick={() => setGiftOpen(true)} className="mt-2 h-8 px-3 rounded-full bg-amber-300 text-black text-xs font-bold">
@@ -401,7 +401,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
               icebreaker();
             }}
             whileTap={{ scale: 0.95 }}
-            className="w-full h-9 rounded-xl bg-white/5 ring-1 ring-white/10 text-xs text-white/80 flex items-center justify-center gap-1.5 hover:bg-white/10"
+            className="w-full h-9 rounded-xl v-surface-1 ring-1 ring-white/10 text-xs text-white/80 flex items-center justify-center gap-1.5 hover:v-surface-2"
           >
             <Wand2 className="h-3.5 w-3.5 text-accent" /> Icebreaker IA · 3 <GemIcon className="h-3 w-3" />
           </motion.button>
@@ -409,7 +409,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
       )}
 
       {/* ===== WHATSAPP-STYLE INPUT BAR ===== */}
-      <div className="px-2.5 pb-3 pt-2 bg-zinc-900/80 backdrop-blur-md border-t border-white/5">
+      <div className="px-2.5 pb-3 pt-2 v-surface-solid/80 backdrop-blur-md border-t border-white/5">
         {/* Boost banner — single unified element (replaces old banner + tooltip).
             Shows full explanation on first activation, compact on subsequent. */}
         <AnimatePresence>
@@ -473,7 +473,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
             {/* Emoji */}
             <button
               onClick={() => setEmojiOpen(true)}
-              className="h-10 w-10 grid place-items-center rounded-full shrink-0 text-white/50 hover:text-white/80 transition"
+              className="h-10 w-10 grid place-items-center rounded-full shrink-0 text-white/70 hover:text-white/80 transition"
               aria-label="Emojis"
             >
               <Smile className="h-5 w-5" />
@@ -494,7 +494,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
               className={`relative h-10 w-10 grid place-items-center rounded-full shrink-0 transition ${
                 boost
                   ? "bg-gradient-to-br from-amber-300 to-amber-500 text-black"
-                  : "text-white/50 hover:text-amber-300 hover:bg-amber-400/10"
+                  : "text-white/70 hover:text-amber-300 hover:bg-amber-400/10"
               }`}
               aria-label="Booster ce message (10 Vibes)"
               title="Booster — 10 Vibes"
@@ -530,10 +530,10 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
                 onKeyDown={(e) => e.key === "Enter" && send()}
                 disabled={locked}
                 placeholder={locked ? "En attente…" : boost ? "✨ Message boosté…" : "Écris un message…"}
-                className={`w-full h-10 rounded-full px-4 pr-10 text-sm placeholder:text-white/30 outline-none ring-1 transition disabled:opacity-50 ${
+                className={`w-full h-10 rounded-full px-4 pr-10 text-sm placeholder:text-white/70 outline-none ring-1 transition disabled:opacity-50 ${
                   boost
                     ? "bg-amber-400/10 ring-amber-300/40 focus:ring-amber-300/60"
-                    : "bg-white/8 ring-white/5 focus:ring-white/20"
+                    : "v-surface-2 ring-white/5 focus:ring-white/20"
                 }`}
               />
             </div>
@@ -564,7 +564,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
               <button
                 onClick={() => setVoiceMode(true)}
                 disabled={locked}
-                className="h-10 w-10 grid place-items-center rounded-full text-white/50 hover:text-white/80 transition disabled:opacity-40 shrink-0"
+                className="h-10 w-10 grid place-items-center rounded-full text-white/70 hover:text-white/80 transition disabled:opacity-40 shrink-0"
                 aria-label="Enregistrer un vocal"
               >
                 <Mic className="h-5 w-5" />
@@ -573,7 +573,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
           </motion.div>
         )}
         {state && !state.unlocked && state.isInitiator && state.remainingBeforeLock > 0 && !voiceMode && (
-          <p className="text-[10px] text-white/30 text-center mt-1">
+          <p className="text-[10px] text-white/70 text-center mt-1">
             Reste {state.remainingBeforeLock} message{state.remainingBeforeLock > 1 ? "s" : ""} sur {state.maxMessagesBeforeReply ?? 3} avant blocage anti-spam
           </p>
         )}
@@ -594,23 +594,23 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
             <motion.div
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="absolute bottom-0 inset-x-0 z-50 rounded-t-3xl bg-zinc-900 ring-1 ring-white/10 p-4 pb-6"
+              className="absolute bottom-0 inset-x-0 z-50 rounded-t-3xl v-surface-solid ring-1 ring-white/10 p-4 pb-6"
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-display font-bold text-lg">Offrir un cadeau 🎁</h3>
-                <button onClick={() => setGiftOpen(false)} className="h-8 w-8 grid place-items-center rounded-full hover:bg-white/10">
+                <button onClick={() => setGiftOpen(false)} className="h-8 w-8 grid place-items-center rounded-full hover:v-surface-2">
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <p className="text-[11px] text-white/50 mb-2">Le destinataire découvrira le cadeau en l'ouvrant. 70% de la valeur lui est créditée.</p>
+              <p className="text-[11px] text-white/70 mb-2">Le destinataire découvrira le cadeau en l'ouvrant. 70% de la valeur lui est créditée.</p>
               <input
                 value={giftNote} onChange={(e) => setGiftNote(e.target.value)} maxLength={200}
                 placeholder="Ajoute un petit mot (optionnel)…"
-                className="w-full h-9 rounded-xl bg-white/5 ring-1 ring-white/10 px-3 text-sm placeholder:text-white/30 outline-none focus:ring-vibe-purple/50 mb-3"
+                className="w-full h-9 rounded-xl v-surface-1 ring-1 ring-white/10 px-3 text-sm placeholder:text-white/70 outline-none focus:ring-vibe-purple/50 mb-3"
               />
               <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto no-scrollbar">
                 {GIFTS.map((g) => (
-                  <button key={g.key} onClick={() => sendGift(g.key)} className="relative flex flex-col items-center gap-1 rounded-2xl bg-white/5 ring-1 ring-white/10 p-2 hover:bg-white/10 active:scale-95 transition">
+                  <button key={g.key} onClick={() => sendGift(g.key)} className="relative flex flex-col items-center gap-1 rounded-2xl v-surface-1 ring-1 ring-white/10 p-2 hover:v-surface-2 active:scale-95 transition">
                     {g.popular && <span className="absolute -top-1.5 -right-1.5 text-[8px] bg-accent text-black font-bold rounded-full px-1 py-0.5">HOT</span>}
                     <span className="text-2xl">{g.emoji}</span>
                     <span className="text-[10px] text-white/80 text-center leading-tight">{g.name}</span>
@@ -653,7 +653,7 @@ function MessageBubble({ item, onListened, animateIn = true }: { item: Extract<T
               : "bg-gradient-to-br from-vibe-purple to-vibe-pink/80 text-white rounded-br-md"
             : item.boosted
               ? "bg-gradient-to-br from-amber-600/40 to-orange-700/40 text-white rounded-bl-md ring-1 ring-amber-400/40"
-              : "bg-white/10 text-white rounded-bl-md"
+              : "v-surface-2 text-white rounded-bl-md"
         } ${item.boosted ? "ring-2 ring-amber-300/80" : ""} ${isSending ? "opacity-70 animate-pulse" : ""}`}
       >
         {item.boosted && (
@@ -697,7 +697,7 @@ function MessageBubble({ item, onListened, animateIn = true }: { item: Extract<T
 
         {/* Timestamp + status checkmarks — WhatsApp style */}
         <div className={`flex items-center gap-1 ${item.mine ? "justify-end" : "justify-end"} -mt-0.5 -mb-0.5`}>
-          <span className={`text-[9px] ${item.mine ? "text-white/60" : "text-white/40"}`}>{time}</span>
+          <span className={`text-[9px] ${item.mine ? "text-white/70" : "text-white/70"}`}>{time}</span>
           {item.mine && <StatusCheckmarks status={item.status} listened={item.voiceListened} isVoice={isVoice} />}
         </div>
       </div>
@@ -718,13 +718,13 @@ function GiftBubble({ item, onOpen, animateIn = true }: { item: Extract<Timeline
         <div className="max-w-[78%] rounded-2xl bg-gradient-to-br from-vibe-purple to-vibe-pink/80 text-white rounded-br-md px-3 py-2 flex items-center gap-2">
           <span className="text-2xl">{item.giftEmoji}</span>
           <div><p className="text-[10px] uppercase tracking-wide text-white/70">Cadeau envoyé</p><p className="text-sm font-semibold">{item.giftName}</p></div>
-          <span className="text-[9px] text-white/50 ml-2">{time}</span>
+          <span className="text-[9px] text-white/70 ml-2">{time}</span>
         </div>
       ) : item.opened ? (
-        <div className="max-w-[78%] rounded-2xl bg-white/10 text-white rounded-bl-md px-3 py-2 flex items-center gap-2">
+        <div className="max-w-[78%] rounded-2xl v-surface-2 text-white rounded-bl-md px-3 py-2 flex items-center gap-2">
           <span className="text-2xl">{item.giftEmoji}</span>
-          <div><p className="text-[10px] uppercase tracking-wide text-white/50">Cadeau de {item.senderName}</p><p className="text-sm font-semibold">{item.giftName}</p></div>
-          <span className="text-[9px] text-white/40 ml-2">{time}</span>
+          <div><p className="text-[10px] uppercase tracking-wide text-white/70">Cadeau de {item.senderName}</p><p className="text-sm font-semibold">{item.giftName}</p></div>
+          <span className="text-[9px] text-white/70 ml-2">{time}</span>
         </div>
       ) : (
         <motion.button
@@ -735,11 +735,11 @@ function GiftBubble({ item, onOpen, animateIn = true }: { item: Extract<Timeline
           <span className="absolute inset-0 -translate-x-full animate-[shimmer_2.5s_infinite] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
           <motion.div animate={{ rotate: [0, 8, -8, 0] }} transition={{ duration: 3, repeat: Infinity }} className="relative text-3xl">🎁</motion.div>
           <div className="relative text-left">
-            <p className="text-[10px] uppercase tracking-wide text-white/60">{item.senderName} t'offre</p>
+            <p className="text-[10px] uppercase tracking-wide text-white/70">{item.senderName} t'offre</p>
             <p className="text-sm font-bold text-white">Un cadeau surprise</p>
-            <p className="text-[10px] text-white/50 mt-0.5">👆 Tape pour ouvrir</p>
+            <p className="text-[10px] text-white/70 mt-0.5">👆 Tape pour ouvrir</p>
           </div>
-          <span className="relative text-[9px] text-white/40 ml-2">{time}</span>
+          <span className="relative text-[9px] text-white/70 ml-2">{time}</span>
         </motion.button>
       )}
     </motion.div>
@@ -750,18 +750,18 @@ function GiftBubble({ item, onOpen, animateIn = true }: { item: Extract<Timeline
 function StatusCheckmarks({ status, listened, isVoice }: { status: string; listened: boolean; isVoice: boolean }) {
   // Envoi en cours : petite horloge pulsée (bulle optimiste)
   if (status === "sending") {
-    return <Clock className="h-3 w-3 text-white/50 animate-pulse" />;
+    return <Clock className="h-3 w-3 text-white/70 animate-pulse" />;
   }
   // For voice notes: blue ✓✓ when listened, gray ✓✓ when delivered, gray ✓ when sent
   // For text: blue ✓✓ when read, gray ✓✓ when delivered, gray ✓ when sent
   const isRead = status === "read" || (isVoice && listened);
 
   if (status === "sent") {
-    return <Check className="h-3 w-3 text-white/50" />;
+    return <Check className="h-3 w-3 text-white/70" />;
   }
   return (
     <CheckCheck
-      className={`h-3 w-3 ${isRead ? "text-sky-400" : "text-white/50"}`}
+      className={`h-3 w-3 ${isRead ? "text-sky-400" : "text-white/70"}`}
       style={isRead ? { filter: "drop-shadow(0 0 1px oklch(0.7 0.15 230))" } : undefined}
     />
   );

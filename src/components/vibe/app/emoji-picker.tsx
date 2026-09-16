@@ -114,7 +114,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
         {!closing && (
           <motion.div
             key="emoji-sheet"
-            className="relative w-full max-w-md bg-zinc-900 ring-1 ring-white/10 rounded-t-3xl shadow-2xl flex flex-col"
+            className="relative w-full max-w-md v-surface-solid ring-1 ring-white/10 rounded-t-3xl shadow-2xl flex flex-col"
             style={{ maxHeight: "55vh" }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
@@ -132,14 +132,14 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
               onPointerDown={(e) => dragControls.start(e)}
               className="flex flex-col items-center pt-2.5 pb-1.5 cursor-grab active:cursor-grabbing touch-none"
             >
-              <div className="h-1.5 w-12 rounded-full bg-white/25" />
+              <div className="h-1.5 w-12 rounded-full v-surface-3" />
             </div>
 
             {/* Header */}
             <div className="flex items-center justify-between px-4 pb-2">
               <div className="flex items-baseline gap-2">
                 <h2 className="text-base font-semibold text-white tracking-tight">Emojis</h2>
-                <span className="text-[11px] text-white/45 font-medium">
+                <span className="text-[11px] text-white/70 font-medium">
                   Choisis un vibe · {TOTAL_EMOJIS}
                 </span>
               </div>
@@ -147,7 +147,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
                 type="button"
                 onClick={close}
                 aria-label="Fermer"
-                className="h-8 w-8 grid place-items-center rounded-full bg-white/5 text-white/70 hover:bg-white/10 hover:text-white active:scale-90 transition"
+                className="h-8 w-8 grid place-items-center rounded-full v-surface-1 text-white/70 hover:v-surface-2 hover:text-white active:scale-90 transition"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -165,7 +165,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
                       onClick={() => setActiveIdx(i)}
                       aria-pressed={isActive}
                       className={`relative shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
-                        isActive ? "text-white" : "text-white/55 hover:text-white/85"
+                        isActive ? "text-white" : "text-white/70 hover:text-white/85"
                       }`}
                     >
                       {isActive && (
@@ -200,7 +200,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
                       onClick={() => handleSelect(emoji)}
                       whileTap={{ scale: 0.85 }}
                       transition={{ type: "spring", stiffness: 600, damping: 22 }}
-                      className="h-9 w-9 grid place-items-center rounded-lg text-xl leading-none hover:bg-white/10 active:scale-90 transition-colors"
+                      className="h-9 w-9 grid place-items-center rounded-lg text-xl leading-none hover:v-surface-2 active:scale-90 transition-colors"
                       aria-label={`Insérer ${emoji}`}
                     >
                       <span className="leading-none select-none">{emoji}</span>

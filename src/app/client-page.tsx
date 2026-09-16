@@ -9,18 +9,19 @@ import { toast } from "sonner";
 
 // Branded splash shown during the initial session-hydration fetch.
 // Prevents ANY flash of the landing page for authenticated users.
+// Thème immersif de la page d'accueil : fond #0a0612, texte blanc lisible.
 function AuthSplash() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+    <div className="min-h-screen flex flex-col items-center justify-center v-bg-page gap-4">
       <div className="relative flex items-center justify-center">
         {/* Outer glow ring */}
-        <span className="absolute h-20 w-20 rounded-full bg-violet-500/20 animate-ping" />
+        <span className="absolute h-20 w-20 rounded-full bg-[#9B51E0]/30 animate-ping" />
         {/* Logo mark */}
         <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shadow-lg shadow-violet-500/40">
           <span className="text-white text-2xl font-bold select-none">VS</span>
         </div>
       </div>
-      <p className="text-white/40 text-sm tracking-widest uppercase animate-pulse">Connexion en cours…</p>
+      <p className="text-white/70 text-sm tracking-widest uppercase animate-pulse">Connexion en cours…</p>
     </div>
   );
 }
@@ -97,7 +98,7 @@ export function ClientHome({ initialView, initialUser, initialRates }: { initial
   const activeView = view;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col v-bg-page">
       {activeView === "landing" && (
         <ImmersiveLanding onEnterApp={() => setView("app")} />
       )}

@@ -1,10 +1,11 @@
 "use client";
 // Profile screen — video profile, stats, premium actions, settings, logout.
 // Supports up to 3 mini videos with confetti on successful upload.
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "next-themes";
 import {
-  ArrowLeft, BadgeCheck, Eye, Globe, Loader2, LogOut, MapPin, Plane, Volume2, VolumeX, Waves, Video, X, Check, Pencil, Trash2, Play, ShieldCheck,
+  ArrowLeft, BadgeCheck, Eye, Globe, Loader2, LogOut, MapPin, Moon, Plane, Volume2, VolumeX, Waves, Video, X, Check, Pencil, Trash2, Play, ShieldCheck,
 } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { VideoPlayer } from "./video-player";
@@ -50,6 +51,13 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
   const [exiting, setExiting] = useState(false);
   // Toggle sons d'interface — branché sur le socle sfx (persisté localStorage).
   const [sfxOn, setSfxOn] = useSfxEnabled();
+  // Thème : « vivi » (immersif de la page d'accueil) par défaut, « sombre »
+  // (noir profond AMOLED) si l'utilisateur a opté. next-themes ne résout le
+  // thème qu'après montage — on évite tout mismatch d'hydratation.
+  const { resolvedTheme, setTheme } = useTheme();
+  const [themeMounted, setThemeMounted] = useState(false);
+  useEffect(() => setThemeMounted(true), []);
+  const sombreOn = themeMounted ? resolvedTheme === "sombre" : false;
   const videoFileRef = useRef<HTMLInputElement>(null);
   const pendingSlotRef = useRef(1);
 
@@ -216,6 +224,16 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
     haptic(8);
   }
 
+  // Bascule thème immersif ↔ mode sombre profond. Le choix est persisté par
+  // next-thèmes (localStorage) et réappliqué avant le premier rendu suivant.
+  function toggleSombre() {
+    const next = resolvedTheme === "sombre" ? "vivi" : "sombre";
+    setTheme(next);
+    haptic(8);
+    sfx.play("pop");
+    toast(next === "sombre" ? "Mode sombre activé 🌙" : "Thème Vivilov activé ✨");
+  }
+
   const poster = activeVideo?.poster || "/profiles/lea.png";
   const videoUrl = activeVideo?.url || "";
 
@@ -285,7 +303,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
       initial={false}
       animate={exiting ? { opacity: 0, scale: 0.98 } : { opacity: 1, scale: 1 }}
       transition={{ duration: 0.25, ease: "easeInOut" }}
-      className="absolute inset-0 bg-zinc-950 text-white overflow-hidden flex flex-col"
+      className="absolute inset-0 v-bg-app text-white overflow-hidden flex flex-col"
     >
       {/* Confetti explosion overlay */}
       <AnimatePresence>
@@ -302,8 +320,8 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
       <input ref={videoFileRef} type="file" accept="video/*" onChange={handleVideoChange} className="hidden" />
 
       <div className="pt-9 px-3 py-2 flex items-center gap-2">
-        <motion.button onClick={onBack} whileTap={{ scale: 0.88 }} className="h-9 w-9 grid place-items-center rounded-full hover:bg-white/10"><ArrowLeft className="h-5 w-5" /></motion.button>
-        <span className="font-display font-bold text-lg">Profil</span>
+        <motion.button onClick={onBack} whileTap={{ scale: 0.88 }} className="h-9 w-9 grid place-items-center rounded-full hover:v-surface-2"><ArrowLeft className="h-5 w-5" /></motion.button>
+        <span className="font-display font-bold text-lg v-text-gradient">Profil</span>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-24">
@@ -350,13 +368,13 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           {/* Info profil en bas */}
           <div className="absolute bottom-0 inset-x-0 p-4 pointer-events-none">
             <div className="flex items-center gap-1.5">
-              <h2 className="font-display text-2xl font-bold">{me?.profile?.displayName ?? me?.name ?? "Toi"}</h2>
+              <h2 className="font-display text-2xl font-bold v-text-gradient">{me?.profile?.displayName ?? me?.name ?? "Toi"}</h2>
               {me?.verified && <BadgeCheck className="h-5 w-5 text-cyan-300" />}
             </div>
             {me?.profile && (
               <>
                 <p className="text-sm text-white/80 flex items-center gap-1"><MapPin className="h-3 w-3" /> {me.profile.city}</p>
-                <p className="text-xs text-white/60 mt-1 line-clamp-2">{me.profile.bio}</p>
+                <p className="text-xs text-white/70 mt-1 line-clamp-2">{me.profile.bio}</p>
               </>
             )}
           </div>
@@ -365,7 +383,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         {/* Miniatures des slots vidéo */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] uppercase tracking-wide text-white/40 font-semibold">Mes vidéos ({filledSlots}/3)</p>
+            <p className="text-[10px] uppercase tracking-wide text-white/70 font-semibold">Mes vidéos ({filledSlots}/3)</p>
             {filledSlots < 3 && (
               <motion.button onClick={() => startUpload(filledSlots + 1)} disabled={videoUploading} whileTap={{ scale: 0.9 }}
                 className="text-[10px] text-vibe-purple font-semibold flex items-center gap-1 hover:opacity-80 transition disabled:opacity-40">
@@ -396,12 +414,12 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                     disabled={isUploading}
                     className={`absolute inset-0 rounded-xl overflow-hidden ring-1 transition w-full h-full ${
                       isActive ? "ring-2 ring-vibe-purple shadow-[0_0_12px_rgba(192,38,211,0.5)]" : "ring-white/10"
-                    } ${!hasVideo && !isUploading ? "bg-white/5 hover:bg-white/10 border-2 border-dashed border-white/15" : ""}`}
+                    } ${!hasVideo && !isUploading ? "v-surface-1 hover:v-surface-2 border-2 border-dashed border-white/15" : ""}`}
                   >
                     {isUploading ? (
                       <div className="absolute inset-0 grid place-items-center flex-col gap-1">
                         <ProgressRing percent={uploadProgress} size={40} strokeWidth={3} />
-                        <span className="text-[7px] text-white/60 mt-0.5 absolute bottom-2 left-0 right-0 text-center">
+                        <span className="text-[7px] text-white/70 mt-0.5 absolute bottom-2 left-0 right-0 text-center">
                           {uploadPhase === "compress" ? "⚙️ Compression…" : "☁️ Envoi…"}
                         </span>
                       </div>
@@ -418,7 +436,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                         {isActive && <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-vibe-purple ring-2 ring-black" />}
                       </>
                     ) : (
-                      <div className="absolute inset-0 grid place-items-center flex-col gap-1 text-white/30">
+                      <div className="absolute inset-0 grid place-items-center flex-col gap-1 text-white/70">
                         <Video className="h-5 w-5" />
                         <span className="text-[8px]">Ajouter</span>
                       </div>
@@ -452,11 +470,11 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
 
         {/* settings */}
         <h3 className="font-display font-bold text-sm mb-2 px-1">Réglages</h3>
-        <div className="rounded-2xl bg-white/5 ring-1 ring-white/10 divide-y divide-white/5">
-          <Row icon={<Globe className="h-4 w-4" />} label="Devise"><span className="text-white/60 text-xs">{currency} · auto</span></Row>
-          <Row icon={<BadgeCheck className="h-4 w-4" />} label="Compte vérifié">{me?.verified ? <span className="text-cyan-300 text-xs">Oui</span> : <span className="text-white/40 text-xs">En attente</span>}</Row>
+        <div className="rounded-2xl v-surface-1 ring-1 ring-white/10 divide-y divide-white/5">
+          <Row icon={<Globe className="h-4 w-4" />} label="Devise"><span className="text-white/70 text-xs">{currency} · auto</span></Row>
+          <Row icon={<BadgeCheck className="h-4 w-4" />} label="Compte vérifié">{me?.verified ? <span className="text-cyan-300 text-xs">Oui</span> : <span className="text-white/70 text-xs">En attente</span>}</Row>
           <Row
-            icon={sfxOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-white/40" />}
+            icon={sfxOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-white/70" />}
             label="Sons de l'interface"
           >
             <motion.button
@@ -466,10 +484,31 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
               aria-label="Activer les sons de l'interface"
               onClick={toggleSounds}
               whileTap={{ scale: 0.92 }}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${sfxOn ? "bg-vibe-purple/80" : "bg-white/15"}`}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${sfxOn ? "bg-vibe-purple/80" : "v-surface-3"}`}
             >
               <motion.span
                 animate={{ x: sfxOn ? "110%" : "0%" }}
+                transition={{ type: "spring", stiffness: 500, damping: 32 }}
+                className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow"
+              />
+            </motion.button>
+          </Row>
+          {/* Mode sombre — choix laissé à l'utilisateur. Par défaut l'app porte
+              le thème immersif de la page d'accueil ; ici il opte (ou non) pour
+              le noir profond AMOLED. */}
+          <Row icon={<Moon className="h-4 w-4" />} label="Mode sombre">
+            <span className="text-[10px] text-white/70 mr-1 hidden sm:inline">Noir profond</span>
+            <motion.button
+              type="button"
+              role="switch"
+              aria-checked={sombreOn}
+              aria-label="Activer le mode sombre profond"
+              onClick={toggleSombre}
+              whileTap={{ scale: 0.92 }}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${sombreOn ? "bg-vibe-purple/80" : "v-surface-3"}`}
+            >
+              <motion.span
+                animate={{ x: sombreOn ? "110%" : "0%" }}
                 transition={{ type: "spring", stiffness: 500, damping: 32 }}
                 className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow"
               />
@@ -505,7 +544,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         >
           <LogOut className="h-4 w-4" /> {exiting ? "Déconnexion…" : "Se déconnecter"}
         </motion.button>
-        <p className="text-[10px] text-white/30 text-center mt-4">Vivilov · PWA démo</p>
+        <p className="text-[10px] text-white/70 text-center mt-4">Vivilov · PWA démo</p>
       </div>
       {/* Modale de confirmation de suppression */}
       <AnimatePresence>
@@ -522,7 +561,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 60, opacity: 0 }}
               transition={{ type: "spring", stiffness: 350, damping: 30 }}
-              className="w-full max-w-sm rounded-3xl bg-zinc-900 ring-1 ring-white/10 p-6 shadow-2xl mb-4"
+              className="w-full max-w-sm rounded-3xl v-surface-solid ring-1 ring-white/10 p-6 shadow-2xl mb-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex flex-col items-center text-center gap-3 mb-6">
@@ -531,7 +570,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                 </div>
                 <div>
                   <h3 className="font-display font-bold text-lg text-white">Supprimer la vidéo {confirmDelete} ?</h3>
-                  <p className="text-sm text-white/50 mt-1">Cette action est irréversible. La vidéo sera définitivement supprimée de ton profil.</p>
+                  <p className="text-sm text-white/70 mt-1">Cette action est irréversible. La vidéo sera définitivement supprimée de ton profil.</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -539,7 +578,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                   onClick={() => setConfirmDelete(null)}
                   disabled={deleting}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-1 h-12 rounded-2xl bg-white/5 text-white/70 font-semibold hover:bg-white/10 transition disabled:opacity-50"
+                  className="flex-1 h-12 rounded-2xl v-surface-1 text-white/70 font-semibold hover:v-surface-2 transition disabled:opacity-50"
                 >
                   Annuler
                 </motion.button>
@@ -573,7 +612,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-3xl bg-zinc-900 ring-1 ring-white/10 p-6 shadow-2xl"
+              className="w-full max-w-sm rounded-3xl v-surface-solid ring-1 ring-white/10 p-6 shadow-2xl"
             >
               <h3 className="font-display font-bold text-lg mb-4 text-white">
                 {editingField === "bio_filled" && "Modifier ta bio"}
@@ -590,19 +629,19 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     placeholder="Saisis ton texte..."
-                    className="h-12 rounded-2xl bg-white/5 border-white/10 text-white focus:border-vibe-purple"
+                    className="h-12 rounded-2xl v-surface-1 border-white/10 text-white focus:border-vibe-purple"
                     autoFocus
                   />
                 ) : editingField === "gender_set" ? (
                   <div className="grid grid-cols-3 gap-2">
                     {[{v:"f", l:"Femme"}, {v:"m", l:"Homme"}, {v:"nb", l:"NB"}].map(g => (
-                      <motion.button key={g.v} onClick={() => setEditValue(g.v)} whileTap={{ scale: 0.93 }} className={`h-10 rounded-xl text-xs font-semibold transition ${editValue === g.v ? "vibe-gradient text-white vibe-glow" : "bg-white/5 text-white/50 hover:bg-white/10"}`}>{g.l}</motion.button>
+                      <motion.button key={g.v} onClick={() => setEditValue(g.v)} whileTap={{ scale: 0.93 }} className={`h-10 rounded-xl text-xs font-semibold transition ${editValue === g.v ? "vibe-gradient text-white vibe-glow" : "v-surface-1 text-white/70 hover:v-surface-2"}`}>{g.l}</motion.button>
                     ))}
                   </div>
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
                     {[{v:"f", l:"Femmes"}, {v:"m", l:"Hommes"}, {v:"nb", l:"NB"}, {v:"all", l:"Tous"}].map(g => (
-                      <motion.button key={g.v} onClick={() => setEditValue(g.v)} whileTap={{ scale: 0.93 }} className={`h-10 rounded-xl text-xs font-semibold transition ${editValue === g.v ? "vibe-gradient text-white vibe-glow" : "bg-white/5 text-white/50 hover:bg-white/10"}`}>{g.l}</motion.button>
+                      <motion.button key={g.v} onClick={() => setEditValue(g.v)} whileTap={{ scale: 0.93 }} className={`h-10 rounded-xl text-xs font-semibold transition ${editValue === g.v ? "vibe-gradient text-white vibe-glow" : "v-surface-1 text-white/70 hover:v-surface-2"}`}>{g.l}</motion.button>
                     ))}
                   </div>
                 )}
@@ -612,7 +651,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                 <motion.button
                   onClick={() => setEditingField(null)}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-1 h-12 rounded-2xl bg-white/5 text-white/70 font-semibold hover:bg-white/10 transition"
+                  className="flex-1 h-12 rounded-2xl v-surface-1 text-white/70 font-semibold hover:v-surface-2 transition"
                 >
                   Annuler
                 </motion.button>
@@ -664,8 +703,8 @@ function ProgressRing({ percent, size = 48, strokeWidth = 4 }: { percent: number
 
 function Stat({ label, value, icon }: { label: string; value: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl bg-white/5 ring-1 ring-white/10 p-2.5 text-center">
-      <p className="text-[10px] text-white/50 uppercase tracking-wide flex items-center justify-center gap-1">{icon}{label}</p>
+    <div className="rounded-2xl v-surface-1 ring-1 ring-white/10 p-2.5 text-center">
+      <p className="text-[10px] text-white/70 uppercase tracking-wide flex items-center justify-center gap-1">{icon}{label}</p>
       <p className="font-display font-bold text-sm mt-0.5 capitalize truncate">{value}</p>
     </div>
   );
@@ -673,9 +712,9 @@ function Stat({ label, value, icon }: { label: string; value: React.ReactNode; i
 
 function PremiumRow({ icon, title, desc, cost, onClick, loading }: { icon: React.ReactNode; title: string; desc: string; cost: number; onClick: () => void; loading: boolean }) {
   return (
-    <motion.button onClick={onClick} disabled={loading} whileTap={{ scale: 0.98 }} className="w-full flex items-center gap-3 rounded-2xl bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/10 transition text-left disabled:opacity-60">
+    <motion.button onClick={onClick} disabled={loading} whileTap={{ scale: 0.98 }} className="w-full flex items-center gap-3 rounded-2xl v-surface-1 ring-1 ring-white/10 p-3 hover:v-surface-2 transition text-left disabled:opacity-60">
       <span className="grid place-items-center h-9 w-9 rounded-xl bg-fuchsia-500/15 text-fuchsia-300 shrink-0">{icon}</span>
-      <div className="flex-1 min-w-0"><p className="font-semibold text-sm">{title}</p><p className="text-[11px] text-white/50 truncate">{desc}</p></div>
+      <div className="flex-1 min-w-0"><p className="font-semibold text-sm">{title}</p><p className="text-[11px] text-white/70 truncate">{desc}</p></div>
       <span className="text-xs text-fuchsia-300 flex items-center gap-0.5 shrink-0">
         {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>{cost} <GemIcon className="h-3 w-3" /></>}
       </span>
@@ -684,5 +723,5 @@ function PremiumRow({ icon, title, desc, cost, onClick, loading }: { icon: React
 }
 
 function Row({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
-  return (<div className="flex items-center gap-3 p-3"><span className="text-white/60">{icon}</span><span className="flex-1 text-sm">{label}</span>{children}</div>);
+  return (<div className="flex items-center gap-3 p-3"><span className="text-white/70">{icon}</span><span className="flex-1 text-sm">{label}</span>{children}</div>);
 }

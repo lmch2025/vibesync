@@ -130,26 +130,26 @@ export function PremiumActionsSheet({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl bg-zinc-900 ring-1 ring-white/10 p-4 pb-6 max-h-[70vh] overflow-y-auto no-scrollbar"
+              className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl v-surface-solid ring-1 ring-white/10 p-4 pb-6 max-h-[70vh] overflow-y-auto no-scrollbar"
             >
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-display font-bold text-lg flex items-center gap-1.5">
                   <Crown className="h-5 w-5 text-accent" /> Actions Premium
                 </h3>
-                <motion.button onClick={() => onOpenChange(false)} whileTap={{ scale: 0.88 }} className="h-8 w-8 grid place-items-center rounded-full hover:bg-white/10">
+                <motion.button onClick={() => onOpenChange(false)} whileTap={{ scale: 0.88 }} className="h-8 w-8 grid place-items-center rounded-full hover:v-surface-2">
                   <X className="h-4 w-4" />
                 </motion.button>
               </div>
 
-              <div className="flex items-center gap-1.5 mb-4 rounded-full bg-white/5 ring-1 ring-white/10 px-3 py-1.5">
+              <div className="flex items-center gap-1.5 mb-4 rounded-full v-surface-1 ring-1 ring-white/10 px-3 py-1.5">
                 <GemIcon className="h-4 w-4" />
                 <span className="text-sm font-bold tabular-nums">{me?.gems ?? 0}</span>
-                <span className="text-xs text-white/40">Vibes</span>
+                <span className="text-xs text-white/70">Vibes</span>
               </div>
 
               {Object.entries(grouped).map(([cat, items]) => items.length > 0 && (
                 <div key={cat} className="mb-4">
-                  <p className="text-[10px] uppercase tracking-wide text-white/30 font-semibold mb-2">
+                  <p className="text-[10px] uppercase tracking-wide text-white/70 font-semibold mb-2">
                     {cat === "swipe" ? "🎯 Swipe" : cat === "social" ? "💬 Social" : cat === "profile" ? "👤 Profil" : "⚙️ Méta"}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -159,11 +159,11 @@ export function PremiumActionsSheet({
                         onClick={() => execute(action)}
                         disabled={busy === action.key}
                         whileTap={{ scale: 0.95 }}
-                        className="relative flex flex-col items-start gap-1 rounded-2xl bg-white/5 ring-1 ring-white/10 p-3 hover:bg-white/10 transition disabled:opacity-50 text-left"
+                        className="relative flex flex-col items-start gap-1 rounded-2xl v-surface-1 ring-1 ring-white/10 p-3 hover:v-surface-2 transition disabled:opacity-50 text-left"
                       >
                         <span className="text-2xl">{action.emoji}</span>
                         <span className="text-xs font-bold leading-tight">{action.label}</span>
-                        <span className="text-[10px] text-white/50 leading-tight">{action.description}</span>
+                        <span className="text-[10px] text-white/70 leading-tight">{action.description}</span>
                         <span className="flex items-center gap-0.5 text-[10px] text-fuchsia-300 font-semibold mt-1">
                           <GemIcon className="h-2.5 w-2.5" /> {action.cost}
                         </span>
@@ -205,20 +205,20 @@ function EffectResult({ result }: { result: ActionResult }) {
   return (
     <div className="space-y-2">
       {result.message && (
-        <div className="rounded-xl bg-white/5 ring-1 ring-white/10 px-3 py-2 text-sm text-white/80 text-center">
+        <div className="rounded-xl v-surface-1 ring-1 ring-white/10 px-3 py-2 text-sm text-white/80 text-center">
           {result.message}
         </div>
       )}
 
       {result.peek && result.peek.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-white/40 font-semibold">Aperçu des 3 prochains</p>
+          <p className="text-[10px] uppercase tracking-wide text-white/70 font-semibold">Aperçu des 3 prochains</p>
           {result.peek.map((p) => (
-            <div key={p.id} className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2">
+            <div key={p.id} className="flex items-center gap-2 rounded-xl v-surface-1 px-3 py-2">
               <span className="text-lg">👤</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{p.displayName}, {p.age}</p>
-                <p className="text-[10px] text-white/40">{p.city}</p>
+                <p className="text-[10px] text-white/70">{p.city}</p>
               </div>
             </div>
           ))}
@@ -229,14 +229,14 @@ function EffectResult({ result }: { result: ActionResult }) {
         <div className="space-y-1.5">
           <p className="text-[10px] uppercase tracking-wide text-emerald-400 font-semibold">📍 En ligne maintenant</p>
           {result.online.map((p) => (
-            <div key={p.id} className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2">
+            <div key={p.id} className="flex items-center gap-2 rounded-xl v-surface-1 px-3 py-2">
               <span className="relative">
                 <span className="text-lg">👤</span>
                 <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-1 ring-zinc-900" />
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{p.displayName}, {p.age}</p>
-                <p className="text-[10px] text-white/40">{p.city} · {p.distanceKm}km · {p.lastActive}</p>
+                <p className="text-[10px] text-white/70">{p.city} · {p.distanceKm}km · {p.lastActive}</p>
               </div>
             </div>
           ))}
@@ -247,11 +247,11 @@ function EffectResult({ result }: { result: ActionResult }) {
         <div className="space-y-1.5">
           <p className="text-[10px] uppercase tracking-wide text-amber-300 font-semibold">👁️ Ils t'ont liké</p>
           {result.likers.map((l) => (
-            <div key={l.id} className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2">
+            <div key={l.id} className="flex items-center gap-2 rounded-xl v-surface-1 px-3 py-2">
               <span className="text-lg">{l.direction === "superlike" ? "⭐" : "❤️"}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{l.displayName}, {l.age}</p>
-                <p className="text-[10px] text-white/40">{l.city}</p>
+                <p className="text-[10px] text-white/70">{l.city}</p>
               </div>
             </div>
           ))}
@@ -261,7 +261,7 @@ function EffectResult({ result }: { result: ActionResult }) {
       {result.score !== undefined && (
         <div className="space-y-2">
           <div className="rounded-xl bg-gradient-to-br from-vibe-purple/20 to-vibe-pink/20 ring-1 ring-white/10 px-4 py-3 text-center">
-            <p className="text-[10px] uppercase tracking-wide text-white/40">Score de compatibilité</p>
+            <p className="text-[10px] uppercase tracking-wide text-white/70">Score de compatibilité</p>
             <motion.p
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -272,7 +272,7 @@ function EffectResult({ result }: { result: ActionResult }) {
             </motion.p>
           </div>
           {result.report && (
-            <div className="space-y-1 text-[11px] text-white/60">
+            <div className="space-y-1 text-[11px] text-white/70">
               <p>🎯 {result.report.vibe}</p>
               <p>🎂 {result.report.ageGap}</p>
               <p>📍 {result.report.location}</p>
@@ -284,13 +284,13 @@ function EffectResult({ result }: { result: ActionResult }) {
 
       {result.mood && (
         <div className="rounded-xl bg-gradient-to-br from-vibe-purple/20 to-vibe-pink/20 ring-1 ring-white/10 px-4 py-3 text-center">
-          <p className="text-[10px] uppercase tracking-wide text-white/40">Humeur actuelle</p>
+          <p className="text-[10px] uppercase tracking-wide text-white/70">Humeur actuelle</p>
           <p className="font-display text-2xl font-bold">{result.mood}</p>
         </div>
       )}
 
       {result.undoneCount !== undefined && (
-        <div className="rounded-xl bg-white/5 ring-1 ring-white/10 px-3 py-2 text-sm text-white/80 text-center">
+        <div className="rounded-xl v-surface-1 ring-1 ring-white/10 px-3 py-2 text-sm text-white/80 text-center">
           ↩️ {result.undoneCount} swipe{result.undoneCount > 1 ? "s" : ""} annulé{result.undoneCount > 1 ? "s" : ""} — le{result.undoneCount > 1 ? "s" : ""} profil{result.undoneCount > 1 ? "s" : ""} revient{result.undoneCount > 1 ? "ent" : ""} dans ton deck !
         </div>
       )}
@@ -302,7 +302,7 @@ function EffectResult({ result }: { result: ActionResult }) {
       )}
 
       {result.expiresAt && (
-        <div className="rounded-xl bg-white/5 ring-1 ring-white/10 px-3 py-2 text-sm text-white/80 text-center">
+        <div className="rounded-xl v-surface-1 ring-1 ring-white/10 px-3 py-2 text-sm text-white/80 text-center">
           🚀 Boost actif pendant 30 minutes — tu es en haut de la file !
         </div>
       )}

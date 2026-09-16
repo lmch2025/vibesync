@@ -115,7 +115,7 @@ export function GiftOpenModal({
               {phase !== "unwrapping" && (
                 <button
                   onClick={handleClose}
-                  className="absolute top-3 right-3 z-50 h-9 w-9 grid place-items-center rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition"
+                  className="absolute top-3 right-3 z-50 h-9 w-9 grid place-items-center rounded-full v-surface-2 backdrop-blur text-white hover:v-surface-3 transition"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -135,7 +135,7 @@ export function GiftOpenModal({
                     animate={{ opacity: 1, scale: 1 }}
                     className="relative z-10 flex flex-col items-center text-center px-6"
                   >
-                    <p className="text-sm text-white/60 mb-1">{gift.fromName} t&apos;a envoyé</p>
+                    <p className="text-sm text-white/70 mb-1">{gift.fromName} t&apos;a envoyé</p>
                     <p className="font-display text-lg font-bold text-white mb-6">un cadeau surprise 🎁</p>
 
                     <motion.button
@@ -163,7 +163,7 @@ export function GiftOpenModal({
                     >
                       👆 Tape pour ouvrir
                     </motion.p>
-                    <p className="text-[11px] text-white/40 mt-1">Le suspense fait son effet…</p>
+                    <p className="text-[11px] text-white/70 mt-1">Le suspense fait son effet…</p>
                   </motion.div>
                 )}
 
@@ -239,7 +239,7 @@ export function GiftOpenModal({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.25 }}
-                      className="text-sm text-white/60 mt-1"
+                      className="text-sm text-white/70 mt-1"
                     >
                       de la part de <span className="font-semibold text-white">{gift.fromName}</span>
                     </motion.p>
@@ -259,9 +259,9 @@ export function GiftOpenModal({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.45 }}
-                        className="mt-4 rounded-2xl bg-white/5 ring-1 ring-white/10 px-4 py-3 w-full"
+                        className="mt-4 rounded-2xl v-surface-1 ring-1 ring-white/10 px-4 py-3 w-full"
                       >
-                        <p className="text-[11px] text-white/40 mb-1">Message de {gift.fromName} :</p>
+                        <p className="text-[11px] text-white/70 mb-1">Message de {gift.fromName} :</p>
                         <p className="text-sm text-white/90 italic">&ldquo;{gift.messageText}&rdquo;</p>
                       </motion.div>
                     )}
@@ -278,7 +278,7 @@ export function GiftOpenModal({
                     </motion.button>
                     <button
                       onClick={handleClose}
-                      className="mt-2 text-sm text-white/50 hover:text-white/80 transition"
+                      className="mt-2 text-sm text-white/70 hover:text-white/80 transition"
                     >
                       Plus tard
                     </button>

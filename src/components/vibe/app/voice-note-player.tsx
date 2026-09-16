@@ -80,7 +80,7 @@ export function VoiceNotePlayer({
       <button
         onClick={togglePlay}
         className={`h-9 w-9 grid place-items-center rounded-full shrink-0 transition active:scale-90 ${
-          mine ? "bg-white/25" : "bg-vibe-purple/30"
+          mine ? "v-surface-3" : "bg-vibe-purple/30"
         }`}
         aria-label={playing ? "Pause" : "Lire"}
       >
@@ -102,7 +102,7 @@ export function VoiceNotePlayer({
               className={`flex-1 rounded-full min-h-[2px] transition-colors ${
                 isPlayed
                   ? mine ? "bg-white" : "bg-vibe-purple"
-                  : mine ? "bg-white/40" : "bg-white/25"
+                  : mine ? "bg-white/40" : "v-surface-3"
               }`}
               style={{ height: `${h * 100}%` }}
             />

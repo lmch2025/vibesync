@@ -129,7 +129,7 @@ export function VoiceRecorder({
       <div className="flex items-center gap-2 px-3 py-2 text-xs text-red-300">
         <X className="h-4 w-4" />
         {error}
-        <button onClick={onCancel} className="ml-auto text-white/60 underline">Fermer</button>
+        <button onClick={onCancel} className="ml-auto text-white/70 underline">Fermer</button>
       </div>
     );
   }
@@ -139,7 +139,7 @@ export function VoiceRecorder({
     return (
       <div className="flex-1 flex items-center justify-center h-10">
         <div className="h-5 w-5 rounded-full border-2 border-white/20 border-t-vibe-purple animate-spin" />
-        <span className="ml-2 text-xs text-white/50">Micro…</span>
+        <span className="ml-2 text-xs text-white/70">Micro…</span>
       </div>
     );
   }
@@ -156,7 +156,7 @@ export function VoiceRecorder({
       </button>
 
       {/* Waveform + timer */}
-      <div className="flex-1 flex items-center gap-2 h-10 rounded-full bg-white/5 px-3 ring-1 ring-white/10">
+      <div className="flex-1 flex items-center gap-2 h-10 rounded-full v-surface-1 px-3 ring-1 ring-white/10">
         <span className="text-xs tabular-nums text-red-300 font-mono shrink-0">
           {Math.floor(duration / 60)}:{String(duration % 60).padStart(2, "0")}
         </span>

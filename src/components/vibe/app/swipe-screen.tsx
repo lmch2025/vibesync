@@ -157,17 +157,17 @@ export function SwipeScreen({
   const top = deck[0];
 
   return (
-    <div className="absolute inset-0 bg-zinc-950 text-white overflow-hidden">
+    <div className="absolute inset-0 v-bg-app text-white overflow-hidden">
       {/* top bar */}
       <div className="absolute top-9 inset-x-0 z-20 flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-2">
-          <span className="font-display font-bold text-lg">Découvrir</span>
+          <span className="font-display font-bold text-lg v-text-gradient">Découvrir</span>
           {/* Discreet filter toggle — a small dot signals active filters */}
           <motion.button
             onClick={() => { sfx.play("pop"); setFilterOpen(true); }}
             whileTap={{ scale: 0.85 }}
             aria-label="Filtres de découverte"
-            className="relative h-8 w-8 grid place-items-center rounded-full bg-white/5 ring-1 ring-white/10 text-white/60 hover:text-white hover:bg-white/10 transition"
+            className="relative h-8 w-8 grid place-items-center rounded-full v-surface-1 ring-1 ring-white/10 text-white/70 hover:text-white hover:v-surface-2 transition"
           >
             <SlidersHorizontal className="h-4 w-4" />
             {filtersActive && (
@@ -192,7 +192,7 @@ export function SwipeScreen({
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="absolute inset-0 rounded-3xl overflow-hidden ring-1 ring-white/10 bg-white/5"
+                className="absolute inset-0 rounded-3xl overflow-hidden ring-1 ring-white/10 v-surface-1"
                 style={{
                   transform: `scale(${1 - i * 0.045}) translateY(${i * 12}px)`,
                   opacity: 1 - i * 0.25,
@@ -201,12 +201,12 @@ export function SwipeScreen({
                 <Shimmer />
                 <div className="absolute inset-0 animate-pulse bg-gradient-to-t from-white/10 via-transparent to-white/5" />
                 {/* bloc vibe check factice */}
-                <div className="absolute top-16 inset-x-4 h-28 rounded-2xl bg-white/5 animate-pulse" />
+                <div className="absolute top-16 inset-x-4 h-28 rounded-2xl v-surface-1 animate-pulse" />
                 {/* bloc infos factices */}
                 <div className="absolute bottom-0 inset-x-0 p-4 pb-5 space-y-2">
-                  <div className="h-5 w-36 rounded-lg bg-white/15 animate-pulse" />
-                  <div className="h-3 w-24 rounded bg-white/10 animate-pulse" />
-                  <div className="h-3 w-full rounded bg-white/10 animate-pulse" />
+                  <div className="h-5 w-36 rounded-lg v-surface-3 animate-pulse" />
+                  <div className="h-3 w-24 rounded v-surface-2 animate-pulse" />
+                  <div className="h-3 w-full rounded v-surface-2 animate-pulse" />
                 </div>
               </div>
             ))}
@@ -373,14 +373,14 @@ function SwipeCard({
         <div className="glass-dark rounded-2xl p-3">
           <p className="text-xs text-white/70 mb-2 font-medium">{vibeQ.q}</p>
           <div className="grid grid-cols-2 gap-2">
-            <div className={`rounded-xl px-3 py-2 text-center text-sm font-semibold transition ${vibeMatch === "a" ? "bg-emerald-400/30 ring-1 ring-emerald-300 text-white" : "bg-white/10 text-white/60"}`}>
+            <div className={`rounded-xl px-3 py-2 text-center text-sm font-semibold transition ${vibeMatch === "a" ? "bg-emerald-400/30 ring-1 ring-emerald-300 text-white" : "v-surface-2 text-white/85"}`}>
               {vibeQ.a === "plage" ? "🏖️" : vibeQ.a === "chien" ? "🐶" : vibeQ.a === "aventure" ? "🧗" : vibeQ.a === "cafe" ? "☕" : "🏙️"} {vibeQ.a}
             </div>
-            <div className={`rounded-xl px-3 py-2 text-center text-sm font-semibold transition ${vibeMatch === "b" ? "bg-emerald-400/30 ring-1 ring-emerald-300 text-white" : "bg-white/10 text-white/60"}`}>
+            <div className={`rounded-xl px-3 py-2 text-center text-sm font-semibold transition ${vibeMatch === "b" ? "bg-emerald-400/30 ring-1 ring-emerald-300 text-white" : "v-surface-2 text-white/85"}`}>
               {vibeQ.b === "montagne" ? "⛰️" : vibeQ.b === "chat" ? "🐱" : vibeQ.b === "confort" ? "🛋️" : vibeQ.b === "the" ? "🍵" : "🌳"} {vibeQ.b}
             </div>
           </div>
-          <p className="text-[10px] text-white/50 mt-1.5 text-center">
+          <p className="text-[10px] text-white/70 mt-1.5 text-center">
             {vibeMatch ? "✓ Vibe compatible" : "Vibe différente — ose quand même !"}
           </p>
         </div>
@@ -396,13 +396,13 @@ function SwipeCard({
             <p className="text-sm text-white/80 flex items-center gap-1">
               <MapPin className="h-3 w-3" /> {profile.city}
               {profile.distanceKm != null && (
-                <span className="text-white/50">· {profile.distanceKm} km</span>
+                <span className="text-white/70">· {profile.distanceKm} km</span>
               )}
             </p>
           </div>
         </div>
         <p className="text-xs text-white/70 mt-2 line-clamp-2">{profile.bio}</p>
-        <p className="text-[10px] text-white/40 mt-2">Glisse ← pass · → like · ↑ super-like</p>
+        <p className="text-[10px] text-white/70 mt-2">Glisse ← pass · → like · ↑ super-like</p>
       </div>
     </motion.div>
   );
@@ -443,11 +443,11 @@ function ActionButton({
       className="flex flex-col items-center gap-1 group"
     >
       <span
-        className={`grid place-items-center rounded-full bg-zinc-900 ring-1 ${tones[tone]} transition group-hover:bg-white/5 ${big ? "h-14 w-14" : "h-11 w-11"}`}
+        className={`grid place-items-center rounded-full v-surface-solid ring-1 ${tones[tone]} transition group-hover:v-surface-1 ${big ? "h-14 w-14" : "h-11 w-11"}`}
       >
         {children}
       </span>
-      <span className="text-[9px] text-white/50 font-medium flex items-center gap-0.5">
+      <span className="text-[9px] text-white/70 font-medium flex items-center gap-0.5">
         {label}{cost ? `·${cost}` : ""}
       </span>
     </motion.button>
@@ -460,7 +460,7 @@ function EmptyDeck({ onReload }: { onReload: () => void }) {
       <div>
         <div className="text-5xl mb-3">🎉</div>
         <h3 className="font-display text-xl font-bold mb-1">C&apos;est tout pour aujourd&apos;hui !</h3>
-        <p className="text-sm text-white/60 mb-4">Reviens demain ou élargis ta zone. En attendant, booste ton profil.</p>
+        <p className="text-sm text-white/70 mb-4">Reviens demain ou élargis ta zone. En attendant, booste ton profil.</p>
         <button onClick={onReload} className="h-10 px-5 rounded-full vibe-gradient text-white font-semibold text-sm">
           Recharger la file
         </button>
@@ -559,16 +559,16 @@ function FilterSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 38 }}
-            className="w-full rounded-t-3xl bg-zinc-900 ring-1 ring-white/10 p-5 pb-8"
+            className="w-full rounded-t-3xl v-surface-solid ring-1 ring-white/10 p-5 pb-8"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Filtres de découverte"
           >
             {/* grabber */}
-            <div className="mx-auto h-1 w-10 rounded-full bg-white/20 mb-4" />
+            <div className="mx-auto h-1 w-10 rounded-full v-surface-3 mb-4" />
 
             <h3 className="font-display font-bold text-lg mb-1">Filtres de découverte</h3>
-            <p className="text-[11px] text-white/40 mb-5">
+            <p className="text-[11px] text-white/70 mb-5">
               Affine les profils recommandés. Les changements s'appliquent immédiatement à ta file.
             </p>
 
@@ -588,7 +588,7 @@ function FilterSheet({
                 step={1}
                 aria-label="Distance maximum"
               />
-              <div className="flex justify-between text-[10px] text-white/30 mt-1.5">
+              <div className="flex justify-between text-[10px] text-white/70 mt-1.5">
                 <span>1 km</span>
                 <span>500 km</span>
               </div>
@@ -612,7 +612,7 @@ function FilterSheet({
                 step={1}
                 aria-label="Tranche d'âge"
               />
-              <div className="flex justify-between text-[10px] text-white/30 mt-1.5">
+              <div className="flex justify-between text-[10px] text-white/70 mt-1.5">
                 <span>18 ans</span>
                 <span>99+</span>
               </div>
@@ -632,7 +632,7 @@ function FilterSheet({
                     className={`h-11 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-0.5 transition ${
                       lookingFor === g.v
                         ? "vibe-gradient text-white vibe-glow"
-                        : "bg-white/5 text-white/50 ring-1 ring-white/10 hover:bg-white/10"
+                        : "v-surface-1 text-white/70 ring-1 ring-white/10 hover:v-surface-2"
                     }`}
                   >
                     <span className="text-base leading-none">{g.e}</span> {g.l}
@@ -651,7 +651,7 @@ function FilterSheet({
                   setLookingFor("all");
                   sfx.play("pop");
                 }}
-                className="flex-1 h-12 rounded-2xl bg-white/5 ring-1 ring-white/10 text-white/70 font-semibold hover:bg-white/10 transition"
+                className="flex-1 h-12 rounded-2xl v-surface-1 ring-1 ring-white/10 text-white/70 font-semibold hover:v-surface-2 transition"
               >
                 Tout afficher
               </motion.button>

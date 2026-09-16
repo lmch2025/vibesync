@@ -138,7 +138,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-[420px] p-0 gap-0 overflow-hidden rounded-3xl border-border/60">
+      <DialogContent className="max-w-[420px] p-0 gap-0 overflow-hidden rounded-3xl border-white/10 v-bg-app! text-white">
         {/* Gradient header */}
         <div className="relative vibe-gradient px-6 pt-6 pb-7 overflow-hidden">
           <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
@@ -166,12 +166,12 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
           </div>
         </div>
 
-        {/* Step body */}
-        <div className="bg-card px-6 py-7 min-h-[260px] flex flex-col">
+        {/* Step body — thème immersif de la page d'accueil */}
+        <div className="v-bg-app px-6 py-7 min-h-[260px] flex flex-col">
           <AnimatePresence mode="wait">
             {step === "phone" && (
               <motion.div key="phone" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col">
-                <label className="text-xs font-semibold text-muted-foreground mb-2">Téléphone</label>
+                <label className="text-xs font-semibold text-white/75 mb-2">Téléphone</label>
                 <div className="flex gap-2">
                   <CountryCodeSelect value={country} onChange={setCountry} />
                   <Input
@@ -180,7 +180,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
                     placeholder="6 12 34 56 78"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="flex-1 h-12 rounded-2xl text-base"
+                    className="flex-1 h-12 rounded-2xl text-base bg-white/5 border-white/15 text-white placeholder:text-white/50"
                     onKeyDown={(e) => e.key === "Enter" && checkPhone()}
                   />
                 </div>
@@ -192,7 +192,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
                   {loading ? "Vérification…" : "Continuer"}
                   <ArrowRight className="h-4 w-4" />
                 </button>
-                <p className="text-[11px] text-muted-foreground text-center mt-5 leading-relaxed">
+                <p className="text-[11px] text-white/70 text-center mt-5 leading-relaxed">
                   En continuant, tu acceptes nos CGU et notre Politique RGPD.<br />Ton numéro n&apos;est jamais affiché.
                 </p>
               </motion.div>
@@ -204,10 +204,10 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
                 <ShieldCheck className="h-8 w-8 text-primary mb-2 mt-2" />
                 <InputOTP maxLength={4} value={pin} onChange={setPin}>
                   <InputOTPGroup className="gap-2">
-                    <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-xl" />
-                    <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-xl" />
-                    <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-xl" />
-                    <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
+                    <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
+                    <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
+                    <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
                   </InputOTPGroup>
                 </InputOTP>
                 <AnimatePresence>
@@ -238,13 +238,13 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
                   }}
                 >
                   <InputOTPGroup className="gap-2">
-                    <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-xl" />
-                    <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-xl" />
-                    <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-xl" />
-                    <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
+                    <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
+                    <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
+                    <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
                   </InputOTPGroup>
                 </InputOTP>
-                {loading && <p className="text-sm text-muted-foreground mt-5">Création du compte…</p>}
+                {loading && <p className="text-sm text-white/75 mt-5">Création du compte…</p>}
               </motion.div>
             )}
 
@@ -254,10 +254,10 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
                 <KeyRound className="h-8 w-8 text-primary mb-2 mt-2" />
                 <InputOTP maxLength={4} value={pin} onChange={setPin}>
                   <InputOTPGroup className="gap-2">
-                    <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-xl" />
-                    <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-xl" />
-                    <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-xl" />
-                    <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-xl" />
+                    <InputOTPSlot index={0} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
+                    <InputOTPSlot index={1} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
+                    <InputOTPSlot index={2} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
+                    <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
                   </InputOTPGroup>
                 </InputOTP>
                 <AnimatePresence>
@@ -283,7 +283,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
 
 function BackBtn({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} className="self-start mb-4 text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition">
+    <button onClick={onClick} className="self-start mb-4 text-sm text-white/75 hover:text-white flex items-center gap-1 transition">
       <ArrowLeft className="h-4 w-4" /> Retour
     </button>
   );
@@ -296,18 +296,18 @@ function CountryCodeSelect({ value, onChange }: { value: Country; onChange: (c: 
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 h-12 rounded-2xl border border-input bg-background px-3 text-sm font-medium hover:bg-accent/10 transition shrink-0"
+          className="inline-flex items-center gap-1.5 h-12 rounded-2xl border border-white/15 v-surface-1 px-3 text-sm font-medium text-white hover:v-surface-2 transition shrink-0"
           aria-label="Choisir le code pays"
         >
           <span className="text-xl leading-none">{value.flag}</span>
           <span className="tabular-nums">{value.dial}</span>
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          <ChevronDown className="h-3.5 w-3.5 text-white/70" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[280px] p-0" align="start">
-        <Command>
-          <div className="flex items-center border-b px-3">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+      <PopoverContent className="w-[280px] p-0 v-bg-app! text-white border-white/10" align="start">
+        <Command className="[&_input]:bg-transparent [&_input]:text-white [&_input]:placeholder:text-white/50">
+          <div className="flex items-center border-b border-white/10 px-3">
+            <Search className="mr-2 h-4 w-4 shrink-0 text-white/50" />
             <CommandInput placeholder="Rechercher un pays…" className="h-9" />
           </div>
           <CommandList className="max-h-[280px]">
@@ -321,11 +321,11 @@ function CountryCodeSelect({ value, onChange }: { value: Country; onChange: (c: 
                     onChange(c);
                     setOpen(false);
                   }}
-                  className="gap-2.5"
+                  className="gap-2.5 data-[selected=true]:bg-white/10 data-[selected=true]:text-white"
                 >
                   <span className="text-xl leading-none">{c.flag}</span>
                   <span className="flex-1 truncate">{c.name}</span>
-                  <span className="text-muted-foreground tabular-nums text-sm">{c.dial}</span>
+                  <span className="text-white/70 tabular-nums text-sm">{c.dial}</span>
                   {c.iso === value.iso && <Check className="h-4 w-4 text-primary" />}
                 </CommandItem>
               ))}

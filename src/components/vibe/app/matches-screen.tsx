@@ -75,9 +75,9 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
   const boostedCount = active.filter((m) => m.lastMessageBoosted).length;
 
   return (
-    <div className="absolute inset-0 bg-zinc-950 text-white overflow-hidden">
+    <div className="absolute inset-0 v-bg-app text-white overflow-hidden">
       <div className="absolute top-9 inset-x-0 z-20 px-4 py-2 flex items-center justify-between">
-        <span className="font-display font-bold text-lg">Matchs</span>
+        <span className="font-display font-bold text-lg v-text-gradient">Matchs</span>
         <div className="flex items-center gap-3">
           {boostedCount > 0 && (
             <motion.span
@@ -102,16 +102,16 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 rounded-2xl bg-white/5 ring-1 ring-white/10 p-2.5 animate-pulse"
+                className="flex items-center gap-3 rounded-2xl v-surface-1 ring-1 ring-white/10 p-2.5 animate-pulse"
                 style={{ animationDelay: `${i * 140}ms` }}
               >
-                <div className="h-14 w-14 shrink-0 rounded-xl bg-white/10" />
+                <div className="h-14 w-14 shrink-0 rounded-xl v-surface-2" />
                 <div className="min-w-0 flex-1 space-y-2 py-1">
-                  <div className="h-3 w-1/3 rounded-full bg-white/10" />
-                  <div className="h-2.5 w-1/4 rounded-full bg-white/10" />
-                  <div className="h-2.5 w-2/3 rounded-full bg-white/10" />
+                  <div className="h-3 w-1/3 rounded-full v-surface-2" />
+                  <div className="h-2.5 w-1/4 rounded-full v-surface-2" />
+                  <div className="h-2.5 w-2/3 rounded-full v-surface-2" />
                 </div>
-                <div className="h-2.5 w-8 rounded-full bg-white/10 shrink-0" />
+                <div className="h-2.5 w-8 rounded-full v-surface-2 shrink-0" />
               </div>
             ))}
           </div>
@@ -119,7 +119,7 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
           <div className="grid place-items-center py-24 text-center px-6">
             <Floating amplitude={10} duration={3.5} className="text-5xl mb-3">💭</Floating>
             <h3 className="font-display text-lg font-bold mb-1">Aucun match pour l&apos;instant</h3>
-            <p className="text-sm text-white/60">Continue à swiper — ton premier match est tout proche.</p>
+            <p className="text-sm text-white/70">Continue à swiper — ton premier match est tout proche.</p>
           </div>
         ) : (
           <ul className="space-y-2.5">
@@ -145,7 +145,7 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
                     className={`w-full flex items-center gap-3 rounded-2xl p-2.5 transition text-left ${
                       isBoosted
                         ? "bg-amber-400/10 ring-1 ring-amber-300/40 hover:bg-amber-400/15"
-                        : "bg-white/5 ring-1 ring-white/10 hover:bg-white/10"
+                        : "v-surface-1 ring-1 ring-white/10 hover:v-surface-2"
                     }`}
                   >
                     <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden ring-1 ring-white/10">
@@ -166,7 +166,7 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
                         {m.other!.verified && <BadgeCheck className="h-3.5 w-3.5 text-cyan-300 shrink-0" />}
                         {m.locked && <Lock className="h-3 w-3 text-amber-300 shrink-0" />}
                       </div>
-                      <p className="text-xs text-white/50 flex items-center gap-1">
+                      <p className="text-xs text-white/70 flex items-center gap-1">
                         <MapPin className="h-3 w-3" /> {m.other!.city}
                       </p>
                       <p className={`text-xs truncate mt-0.5 ${isBoosted ? "text-amber-200 font-medium" : "text-white/70"}`}>
@@ -175,7 +175,7 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
                       {time && (
-                        <span className={`text-[10px] tabular-nums ${isBoosted ? "text-amber-300" : "text-white/40"}`}>
+                        <span className={`text-[10px] tabular-nums ${isBoosted ? "text-amber-300" : "text-white/70"}`}>
                           {time}
                         </span>
                       )}

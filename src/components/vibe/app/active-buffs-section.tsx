@@ -18,7 +18,7 @@ export function ActiveBuffsSection() {
 
   if (loading && buffs.length === 0) {
     return (
-      <div className="rounded-3xl bg-white/5 ring-1 ring-white/10 p-5">
+      <div className="rounded-3xl v-surface-1 ring-1 ring-white/10 p-5">
         <div className="flex items-center gap-1.5 mb-3">
           <Rocket className="h-4 w-4 text-accent" />
           <h3 className="font-display font-bold text-sm">Buffs actifs</h3>
@@ -27,7 +27,7 @@ export function ActiveBuffsSection() {
           {[0, 1].map((i) => (
             <div
               key={i}
-              className="h-24 rounded-2xl bg-white/5 animate-pulse"
+              className="h-24 rounded-2xl v-surface-1 animate-pulse"
             />
           ))}
         </div>
@@ -37,10 +37,10 @@ export function ActiveBuffsSection() {
 
   if (buffs.length === 0) {
     return (
-      <div className="rounded-3xl bg-white/5 ring-1 ring-white/10 p-5 text-center">
+      <div className="rounded-3xl v-surface-1 ring-1 ring-white/10 p-5 text-center">
         <div className="text-3xl mb-2">✨</div>
         <p className="font-display font-bold text-sm">Aucun buff actif</p>
-        <p className="text-[11px] text-white/50 mt-1">
+        <p className="text-[11px] text-white/70 mt-1">
           Active un <span className="text-accent">Boost</span> pour être en
           haut de la file !
         </p>
@@ -49,13 +49,13 @@ export function ActiveBuffsSection() {
   }
 
   return (
-    <div className="rounded-3xl bg-white/5 ring-1 ring-white/10 p-5">
+    <div className="rounded-3xl v-surface-1 ring-1 ring-white/10 p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <Rocket className="h-4 w-4 text-accent" />
           <h3 className="font-display font-bold text-sm">Buffs actifs</h3>
         </div>
-        <span className="text-[10px] text-white/40">
+        <span className="text-[10px] text-white/70">
           {buffs.length} actif{buffs.length > 1 ? "s" : ""}
         </span>
       </div>
@@ -98,7 +98,7 @@ function BuffCard({ buff, index }: { buff: ActiveBuff; index: number }) {
               {buff.label}
             </p>
           </div>
-          <p className="text-[9px] text-white/50 leading-tight mt-0.5 line-clamp-2">
+          <p className="text-[9px] text-white/70 leading-tight mt-0.5 line-clamp-2">
             {buff.desc}
           </p>
         </div>

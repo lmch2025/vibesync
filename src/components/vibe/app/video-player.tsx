@@ -161,11 +161,11 @@ export function VideoPlayer({
 
   if (!videoUrl) {
     return (
-      <div className={`w-full h-full relative overflow-hidden bg-zinc-950 ${className}`}>
+      <div className={`w-full h-full relative overflow-hidden v-bg-app ${className}`}>
         {activePoster ? (
           <img src={activePoster} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-white/30 text-xs">
+          <div className="absolute inset-0 flex items-center justify-center text-white/70 text-xs">
             Aucune vidéo
           </div>
         )}
@@ -176,7 +176,7 @@ export function VideoPlayer({
   return (
     <div
       onClick={togglePlay}
-      className={`w-full h-full relative overflow-hidden bg-zinc-950 cursor-pointer select-none group ${className}`}
+      className={`w-full h-full relative overflow-hidden v-bg-app cursor-pointer select-none group ${className}`}
     >
       {/* Blurred background backdrop */}
       {activePoster && (
@@ -212,7 +212,7 @@ export function VideoPlayer({
       />
 
       {/* Slim progress bar at the very top */}
-      <div className="absolute top-0 inset-x-0 h-1 bg-white/20 z-20 pointer-events-none">
+      <div className="absolute top-0 inset-x-0 h-1 v-surface-3 z-20 pointer-events-none">
         <div
           className="h-full bg-gradient-to-r from-fuchsia-500 to-pink-500 transition-all duration-100 ease-linear"
           style={{ width: `${progress}%` }}
@@ -232,7 +232,7 @@ export function VideoPlayer({
       {/* Center Play Button Overlay (when paused) */}
       {!isPlaying && !isLoading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 pointer-events-none animate-in fade-in duration-200">
-          <div className="h-16 w-16 rounded-full bg-white/25 backdrop-blur-md border border-white/40 text-white flex items-center justify-center shadow-2xl transition-transform hover:scale-105">
+          <div className="h-16 w-16 rounded-full v-surface-3 backdrop-blur-md border border-white/40 text-white flex items-center justify-center shadow-2xl transition-transform hover:scale-105">
             <Play className="h-8 w-8 ml-1 fill-white" />
           </div>
         </div>
@@ -251,7 +251,7 @@ export function VideoPlayer({
       {hasError && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 text-white text-center p-4">
           <p className="text-sm font-semibold">Lecture impossible</p>
-          <p className="text-xs text-white/60 mt-1">Appuie pour réessayer</p>
+          <p className="text-xs text-white/70 mt-1">Appuie pour réessayer</p>
         </div>
       )}
     </div>
