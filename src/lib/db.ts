@@ -16,14 +16,15 @@ function resolveDatabaseUrl(): string | undefined {
   if (envUrl && (envUrl.startsWith('postgresql://') || envUrl.startsWith('postgres://'))) {
     return envUrl // URL PostgreSQL valide déjà présente dans l'environnement
   }
-  // Repli 1 : lire DATABASE_URL (PostgreSQL) dans le .env du projet.
-  // Repli 2 : .env.neon — copie de secours que la sandbox ne réécrit PAS
-  //   (la sandbox réinitialise périodiquement .env vers une URL SQLite,
-  //   ce qui cassait le serveur à chaque redémarrage à chaud).
-  for (const file of ['.env', '.env.neon']) {
+  // Repli : lire DATABASE_URL (PostgreSQL) dans le .env du projet, puis dans
+  // pg-connection.txt — secours durable (la sandbox réinitialise périodiquement
+  // .env / supprime les fichiers .env* vers une URL SQLite, ce qui cassait le
+  // serveur à chaque redémarrage à chaud ; pg-connection.txt n'est pas un
+  // fichier "env" et survit aux nettoyages).
+  for (const file of ['.env', '.env.neon', 'pg-connection.txt']) {
     try {
       const envFile = readFileSync(join(process.cwd(), file), 'utf8')
-      const match = envFile.match(/^DATABASE_URL=["']?(postgresql:\/\/[^"'\r\n]+)["']?\s*$/m)
+      const match = envFile.match(/^(?:DATABASE_URL=)?["']?(postgresql:\/\/[^"'\r\n]+)["']?\s*$/m)
       if (match) return match[1]
     } catch {
       // fichier absent ou illisible : essayer le suivant
