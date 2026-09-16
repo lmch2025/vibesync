@@ -4,7 +4,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, BadgeCheck, Eye, Globe, Loader2, LogOut, MapPin, Plane, Volume2, VolumeX, Waves, Video, X, Check, Pencil, Trash2, Play,
+  ArrowLeft, BadgeCheck, Eye, Globe, Loader2, LogOut, MapPin, Plane, Volume2, VolumeX, Waves, Video, X, Check, Pencil, Trash2, Play, ShieldCheck,
 } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { VideoPlayer } from "./video-player";
@@ -476,6 +476,26 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
             </motion.button>
           </Row>
         </div>
+
+        {/* Admin panel access — ONLY rendered for admin accounts (the sole
+            admin being the owner's account). Elegant gradient CTA with a
+            subtle animated glow, placed above logout. */}
+        {me?.role === "admin" && (
+          <motion.button
+            onClick={() => { sfx.play("chime"); haptic(12); setView("admin"); }}
+            whileTap={{ scale: 0.97 }}
+            className="mt-4 w-full h-12 rounded-2xl vibe-gradient text-white font-semibold text-sm flex items-center justify-center gap-2 relative overflow-hidden"
+          >
+            <ShieldCheck className="h-4 w-4" /> Panneau Administrateur
+            <motion.span
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+              initial={{ x: "-100%" }}
+              animate={{ x: "100%" }}
+              transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 1.6, ease: "easeInOut" }}
+            />
+          </motion.button>
+        )}
 
         <motion.button
           onClick={handleLogoutClick}

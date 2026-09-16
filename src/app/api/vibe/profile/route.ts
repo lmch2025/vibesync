@@ -19,6 +19,10 @@ export async function PATCH(req: Request) {
     if (body.gender !== undefined) profileUpdates.gender = body.gender;
     if (body.lookingFor !== undefined) profileUpdates.lookingFor = body.lookingFor;
     if (body.vibeAnswer !== undefined) profileUpdates.vibeAnswer = body.vibeAnswer;
+    // Discovery filters (Découvrir tab filter sheet) — clamped for safety.
+    if (body.prefMinAge !== undefined) profileUpdates.prefMinAge = Math.min(80, Math.max(18, Number(body.prefMinAge) || 18));
+    if (body.prefMaxAge !== undefined) profileUpdates.prefMaxAge = Math.min(99, Math.max(18, Number(body.prefMaxAge) || 99));
+    if (body.prefMaxDistance !== undefined) profileUpdates.prefMaxDistance = Math.min(500, Math.max(1, Number(body.prefMaxDistance) || 50));
 
     if (Object.keys(profileUpdates).length > 0) {
       await db.profile.update({

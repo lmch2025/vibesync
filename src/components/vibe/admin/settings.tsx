@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, MapPin, MessageSquare, Percent, Wallet, Gift, Video, Check, Loader2 } from "lucide-react";
+import { Save, MapPin, MessageSquare, Percent, Wallet, Gift, Video, Check, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,15 @@ export function Settings() {
   const [videoMaxWidth, setVideoMaxWidth] = useState(480);
   const [videoQuality, setVideoQuality] = useState(50);
   const [videoMaxSizeKb, setVideoMaxSizeKb] = useState(2048);
+  // ── Recommendation algorithm weights ──
+  const [wDistance, setWDistance] = useState(30);
+  const [wAge, setWAge] = useState(20);
+  const [wVibe, setWVibe] = useState(25);
+  const [wVerified, setWVerified] = useState(5);
+  const [wRecency, setWRecency] = useState(10);
+  const [wPopularity, setWPopularity] = useState(10);
+  const [boostMultiplier, setBoostMultiplier] = useState(2);
+  const [deckSize, setDeckSize] = useState(12);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   // Brief "saved ✓" state on the submit button after a successful save.
@@ -87,6 +96,16 @@ export function Settings() {
           setVideoMaxWidth(Number(s.videoMaxWidth) || 480);
           setVideoQuality(Math.round((Number(s.videoQuality) || 0.5) * 100));
           setVideoMaxSizeKb(Number(s.videoMaxSizeKb) || 2048);
+          // Recommendation weights — 0 is valid, so guard explicitly.
+          const nOr = (v: unknown, d: number) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
+          setWDistance(nOr(s.recWeightDistance, 30));
+          setWAge(nOr(s.recWeightAge, 20));
+          setWVibe(nOr(s.recWeightVibe, 25));
+          setWVerified(nOr(s.recWeightVerified, 5));
+          setWRecency(nOr(s.recWeightRecency, 10));
+          setWPopularity(nOr(s.recWeightPopularity, 10));
+          setBoostMultiplier(nOr(s.recBoostMultiplier, 2));
+          setDeckSize(nOr(s.deckSize, 12));
         }
       } catch {
         /* ignore */
@@ -115,6 +134,14 @@ export function Settings() {
             videoMaxWidth: String(videoMaxWidth),
             videoQuality: String(videoQuality / 100),
             videoMaxSizeKb: String(videoMaxSizeKb),
+            recWeightDistance: String(wDistance),
+            recWeightAge: String(wAge),
+            recWeightVibe: String(wVibe),
+            recWeightVerified: String(wVerified),
+            recWeightRecency: String(wRecency),
+            recWeightPopularity: String(wPopularity),
+            recBoostMultiplier: String(boostMultiplier),
+            deckSize: String(deckSize),
           },
         }),
       });
@@ -371,6 +398,159 @@ export function Settings() {
 
       <Separator />
 
+      {/* ===== ALGORITHME DE RECOMMANDATION ===== */}
+      <div className="rounded-2xl bg-card ring-1 ring-border shadow-sm divide-y divide-border">
+        <div className="p-5">
+          <h3 className="font-display font-semibold text-base flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" /> Algorithme de recommandation
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            Poids des signaux utilisés pour classer les profils du deck de découverte. Score = Σ(poids × signal) / somme des poids. Les profils avec un Boost actif voient leur score multiplié. Total actuel : <span className="font-semibold text-foreground tabular-nums">{wDistance + wAge + wVibe + wVerified + wRecency + wPopularity}</span>.
+          </p>
+        </div>
+
+        <div className="px-5">
+          <FieldRow
+            icon={<MapPin className="h-4 w-4" />}
+            title="Poids — Proximité géographique"
+            description="Distance Haversine entre les deux profils. Plus le poids est élevé, plus les profils proches remontent."
+          >
+            <div className="space-y-3">
+              <Slider value={[wDistance]} onValueChange={(v) => setWDistance(v[0] ?? 30)} min={0} max={50} step={1} />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Désactivé</span>
+                <span className="font-semibold text-foreground tabular-nums">{wDistance}</span>
+                <span>50</span>
+              </div>
+            </div>
+          </FieldRow>
+        </div>
+
+        <div className="px-5">
+          <FieldRow
+            icon={<MessageSquare className="h-4 w-4" />}
+            title="Poids — Proximité d'âge"
+            description="Écart d'âge avec le profil qui swipe (0 an = signal maximal, ≥ 15 ans = nul)."
+          >
+            <div className="space-y-3">
+              <Slider value={[wAge]} onValueChange={(v) => setWAge(v[0] ?? 20)} min={0} max={50} step={1} />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Désactivé</span>
+                <span className="font-semibold text-foreground tabular-nums">{wAge}</span>
+                <span>50</span>
+              </div>
+            </div>
+          </FieldRow>
+        </div>
+
+        <div className="px-5">
+          <FieldRow
+            icon={<Sparkles className="h-4 w-4" />}
+            title="Poids — Compatibilité Vibe Check"
+            description="Même question + même réponse = signal maximal ; même question + réponse différente = signal faible ; question différente = neutre."
+          >
+            <div className="space-y-3">
+              <Slider value={[wVibe]} onValueChange={(v) => setWVibe(v[0] ?? 25)} min={0} max={50} step={1} />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Désactivé</span>
+                <span className="font-semibold text-foreground tabular-nums">{wVibe}</span>
+                <span>50</span>
+              </div>
+            </div>
+          </FieldRow>
+        </div>
+
+        <div className="px-5">
+          <FieldRow
+            icon={<Check className="h-4 w-4" />}
+            title="Poids — Profil vérifié"
+            description="Bonus pour les comptes vérifiés (rassure et récompense la vérification)."
+          >
+            <div className="space-y-3">
+              <Slider value={[wVerified]} onValueChange={(v) => setWVerified(v[0] ?? 5)} min={0} max={30} step={1} />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Désactivé</span>
+                <span className="font-semibold text-foreground tabular-nums">{wVerified}</span>
+                <span>30</span>
+              </div>
+            </div>
+          </FieldRow>
+        </div>
+
+        <div className="px-5">
+          <FieldRow
+            icon={<Video className="h-4 w-4" />}
+            title="Poids — Récence du profil"
+            description="Favorise les nouveaux profils (décroissance linéaire sur 30 jours) pour un flux vivant."
+          >
+            <div className="space-y-3">
+              <Slider value={[wRecency]} onValueChange={(v) => setWRecency(v[0] ?? 10)} min={0} max={50} step={1} />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Désactivé</span>
+                <span className="font-semibold text-foreground tabular-nums">{wRecency}</span>
+                <span>50</span>
+              </div>
+            </div>
+          </FieldRow>
+        </div>
+
+        <div className="px-5">
+          <FieldRow
+            icon={<Sparkles className="h-4 w-4" />}
+            title="Poids — Popularité"
+            description="Likes/superlikes reçus par le profil (échelle log : 10 likes ≈ 60 % du signal)."
+          >
+            <div className="space-y-3">
+              <Slider value={[wPopularity]} onValueChange={(v) => setWPopularity(v[0] ?? 10)} min={0} max={50} step={1} />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Désactivé</span>
+                <span className="font-semibold text-foreground tabular-nums">{wPopularity}</span>
+                <span>50</span>
+              </div>
+            </div>
+          </FieldRow>
+        </div>
+
+        <div className="px-5">
+          <FieldRow
+            icon={<Sparkles className="h-4 w-4" />}
+            title="Multiplicateur Boost"
+            description="Un profil avec un Boost actif voit son score × cette valeur (il remonte en haut de la file)."
+          >
+            <div className="space-y-3">
+              <Slider value={[boostMultiplier]} onValueChange={(v) => setBoostMultiplier(v[0] ?? 2)} min={1} max={5} step={0.5} />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>×1 (aucun effet)</span>
+                <span className="font-semibold text-foreground tabular-nums">×{boostMultiplier}</span>
+                <span>×5</span>
+              </div>
+            </div>
+          </FieldRow>
+        </div>
+
+        <div className="px-5">
+          <FieldRow
+            icon={<Sparkles className="h-4 w-4" />}
+            title="Taille du deck"
+            description="Nombre de profils renvoyés à chaque chargement de l'onglet Découvrir."
+          >
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={4}
+                max={50}
+                value={deckSize}
+                onChange={(e) => setDeckSize(Number(e.target.value))}
+                className="rounded-xl"
+              />
+              <span className="text-sm font-medium text-muted-foreground">profils</span>
+            </div>
+          </FieldRow>
+        </div>
+      </div>
+
+      <Separator />
+
       <div className="flex items-center justify-end gap-2 pb-4">
         <motion.button
           type="button"
@@ -386,6 +566,14 @@ export function Settings() {
             setVideoMaxWidth(480);
             setVideoQuality(50);
             setVideoMaxSizeKb(2048);
+            setWDistance(30);
+            setWAge(20);
+            setWVibe(25);
+            setWVerified(5);
+            setWRecency(10);
+            setWPopularity(10);
+            setBoostMultiplier(2);
+            setDeckSize(12);
             toast.info("Réinitialisé aux valeurs par défaut");
           }}
           className={cn(buttonVariants({ variant: "ghost" }))}

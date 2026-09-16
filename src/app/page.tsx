@@ -45,6 +45,10 @@ export default async function Home() {
               lng: user.profile.lng,
               vibeQuestion: user.profile.vibeQuestion,
               vibeAnswer: user.profile.vibeAnswer,
+              // Discovery filters — kept in sync for the filter sheet UI.
+              prefMinAge: user.profile.prefMinAge,
+              prefMaxAge: user.profile.prefMaxAge,
+              prefMaxDistance: user.profile.prefMaxDistance,
             }
           : null,
       };
@@ -54,9 +58,9 @@ export default async function Home() {
     }
   }
 
-  // Role casing: the DB convention is lowercase "admin" (all admin API guards
-  // compare against "admin"); compare case-insensitively for resilience.
-  const initialView = initialUser ? (initialUser.role?.toLowerCase() === "admin" ? "admin" : "app") : "landing";
+  // Authenticated users (admin included — the admin panel is reached from the
+  // profile tab button, NOT on boot) resume straight into the app on refresh.
+  const initialView = initialUser ? "app" : "landing";
 
   return <ClientHome initialView={initialView as any} initialUser={initialUser} initialRates={initialRates} />;
 }

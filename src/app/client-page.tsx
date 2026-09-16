@@ -57,30 +57,52 @@ export function ClientHome({ initialView, initialUser, initialRates }: { initial
       .catch(() => {});
   }, []);
 
-  async function enterAdmin() {
-    try {
-      const res = await fetch("/api/vibe/auth/demo-admin", { method: "POST" });
-      const data = await res.json();
-      if (data.user) {
-        setMe(data.user);
-        useVibe.getState().setRates(data.rates ?? {});
+  // SESSION SAFETY NET — guarantees that an authenticated user NEVER falls
+  // back to the landing page on refresh. The normal flow is the server-side
+  // cookie check in page.tsx (initialView="app"), but certain contexts can
+  // serve a stale/cached landing HTML (edge cache, iframe reload timing…).
+  // This background probe re-hydrates the session from the cookie if one
+  // exists, silently switching to the app. No visual change when logged out.
+  useEffect(() => {
+    if (useVibe.getState().view !== "landing") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/vibe/me", { cache: "no-store" });
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.user) {
+          setMe(data.user);
+          useVibe.getState().setRates(data.rates ?? {});
+          // Only override the view if we're STILL on the landing (the user may
+          // have clicked "Connexion" and be mid-auth-flow by now). Admins too
+          // resume into the app — the admin panel opens from the profile tab.
+          if (useVibe.getState().view === "landing") {
+            useVibe.getState().setView("app");
+          }
+        }
+      } catch {
+        /* ignore — offline or no session */
       }
-      setView("admin");
-      toast.success("Connecté en admin (démo)");
-    } catch {
-      setView("admin");
-    }
-  }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [setMe]);
+
+  // Admin access is EXCLUSIVELY via the profile tab (role === "admin").
+  // The public "Admin" landing button and the demo-admin shortcut were
+  // removed — see immersive-landing.tsx and the deleted demo-admin route.
 
   const activeView = view;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {activeView === "landing" && (
-        <ImmersiveLanding onEnterApp={() => setView("app")} onEnterAdmin={enterAdmin} />
+        <ImmersiveLanding onEnterApp={() => setView("app")} />
       )}
       {activeView === "app" && <AppDemo onExit={() => setView("landing")} />}
-      {activeView === "admin" && <AdminDashboard onExit={() => setView("landing")} />}
+      {activeView === "admin" && <AdminDashboard onExit={() => setView("app")} />}
     </div>
   );
 }

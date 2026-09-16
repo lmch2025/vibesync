@@ -75,6 +75,10 @@ model Profile {
   relationshipType String @default("serious") // "serious" | "casual" | "friendship"
   lat          Float
   lng          Float
+  // User discovery filters (adjustable in the Découvrir tab, non-intrusive).
+  prefMinAge   Int      @default(18)  // min age of recommended profiles
+  prefMaxAge   Int      @default(99)  // max age of recommended profiles
+  prefMaxDistance Int   @default(50)  // km — max distance of recommended profiles
   vibeQuestion String   @default("Plage ou Montagne ?")
   vibeAnswer   String   @default("plage") // shared answer required to see each other
   modStatus    String   @default("approved") // "pending" | "approved" | "rejected"

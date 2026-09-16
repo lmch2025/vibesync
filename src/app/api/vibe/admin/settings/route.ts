@@ -23,6 +23,15 @@ const DEFAULTS: Record<string, string> = {
   videoMaxWidth: "480",
   videoQuality: "0.5",
   videoMaxSizeKb: "2048",
+  // ── Recommendation algorithm ──
+  recWeightDistance: "30",
+  recWeightAge: "20",
+  recWeightVibe: "25",
+  recWeightVerified: "5",
+  recWeightRecency: "10",
+  recWeightPopularity: "10",
+  recBoostMultiplier: "2",
+  deckSize: "12",
 };
 
 export async function GET() {

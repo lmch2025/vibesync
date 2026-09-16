@@ -1,15 +1,19 @@
 "use client";
 // Swipe deck: Tinder-like drag with spring physics, Ken Burns video posters,
 // Vibe Check overlay, action bar (rewind/pass/superlike/like/boost), match overlay.
+// Includes the non-intrusive discovery FILTERS (distance, age range, gender)
+// — a discreet button in the top bar opens a bottom sheet; filters are saved
+// to the profile and enforced server-side by the recommendation algorithm.
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { RotateCcw, X, Star, Heart, Zap, BadgeCheck, Waves, MapPin } from "lucide-react";
+import { RotateCcw, X, Star, Heart, Zap, BadgeCheck, Waves, MapPin, SlidersHorizontal, Check, Loader2 } from "lucide-react";
 import { GemBadge } from "@/components/vibe/gem-badge";
 import { sfx, haptic, EmojiBurst, Shimmer, type SfxName } from "@/components/vibe/app/interactive-animations";
 import { VideoPlayer } from "./video-player";
 import { useVibe } from "@/lib/vibe/store";
 import { GEM_ACTIONS, VIBE_QUESTIONS } from "@/lib/vibe/constants";
 import { toast } from "sonner";
+import { Slider } from "@/components/ui/slider";
 
 type Profile = {
   id: string;
@@ -24,6 +28,7 @@ type Profile = {
   vibeQuestion: string;
   vibeAnswer: string;
   verified: boolean;
+  distanceKm: number | null;
 };
 
 type SwipeResult = {
@@ -52,6 +57,15 @@ export function SwipeScreen({
   const [superBurst, setSuperBurst] = useState(0);
   const [vibeIndex] = useState(() => Math.floor(Math.random() * VIBE_QUESTIONS.length));
   const vibeQ = VIBE_QUESTIONS[vibeIndex];
+  // Discovery filters sheet — collapsed by default (non-intrusive).
+  const [filterOpen, setFilterOpen] = useState(false);
+  const pref = me?.profile as any;
+  const filtersActive =
+    !!pref &&
+    ((pref.lookingFor && pref.lookingFor !== "all") ||
+      (pref.prefMinAge != null && pref.prefMinAge > 18) ||
+      (pref.prefMaxAge != null && pref.prefMaxAge < 99) ||
+      (pref.prefMaxDistance != null && pref.prefMaxDistance < 50));
 
   const loadDeck = useCallback(async () => {
     setLoading(true);
@@ -146,9 +160,30 @@ export function SwipeScreen({
     <div className="absolute inset-0 bg-zinc-950 text-white overflow-hidden">
       {/* top bar */}
       <div className="absolute top-9 inset-x-0 z-20 flex items-center justify-between px-4 py-2">
-        <span className="font-display font-bold text-lg">Découvrir</span>
+        <div className="flex items-center gap-2">
+          <span className="font-display font-bold text-lg">Découvrir</span>
+          {/* Discreet filter toggle — a small dot signals active filters */}
+          <motion.button
+            onClick={() => { sfx.play("pop"); setFilterOpen(true); }}
+            whileTap={{ scale: 0.85 }}
+            aria-label="Filtres de découverte"
+            className="relative h-8 w-8 grid place-items-center rounded-full bg-white/5 ring-1 ring-white/10 text-white/60 hover:text-white hover:bg-white/10 transition"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {filtersActive && (
+              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-vibe-pink ring-2 ring-zinc-950" />
+            )}
+          </motion.button>
+        </div>
         <GemBadge gems={me?.gems ?? 0} onClick={onOpenWallet} />
       </div>
+
+      {/* Discovery filters — non-intrusive bottom sheet */}
+      <FilterSheet
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        onSaved={() => loadDeck()}
+      />
 
       {/* deck */}
       <div className="absolute inset-0 pt-20 pb-44 px-4">
@@ -360,6 +395,9 @@ function SwipeCard({
             </h3>
             <p className="text-sm text-white/80 flex items-center gap-1">
               <MapPin className="h-3 w-3" /> {profile.city}
+              {profile.distanceKm != null && (
+                <span className="text-white/50">· {profile.distanceKm} km</span>
+              )}
             </p>
           </div>
         </div>
@@ -428,5 +466,208 @@ function EmptyDeck({ onReload }: { onReload: () => void }) {
         </button>
       </div>
     </div>
+  );
+}
+
+// ===== DISCOVERY FILTER SHEET (non-intrusive) =====
+// Opens from the small sliders button in the top bar. Saves the user's
+// preferences to their profile; the server-side recommendation algorithm
+// applies them (hard filters: gender, age range, max distance) and re-ranks.
+function FilterSheet({
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onSaved: () => void;
+}) {
+  const me = useVibe((s) => s.me);
+  const patchMe = useVibe((s) => s.patchMe);
+  const pref = me?.profile as any;
+
+  const [maxDistance, setMaxDistance] = useState<number>(pref?.prefMaxDistance ?? 50);
+  const [ageRange, setAgeRange] = useState<[number, number]>([
+    pref?.prefMinAge ?? 18,
+    pref?.prefMaxAge ?? 99,
+  ]);
+  const [lookingFor, setLookingFor] = useState<string>(pref?.lookingFor ?? "all");
+  const [saving, setSaving] = useState(false);
+
+  // Sync local state when the sheet opens (profile may have changed elsewhere).
+  useEffect(() => {
+    if (open) {
+      setMaxDistance(pref?.prefMaxDistance ?? 50);
+      setAgeRange([pref?.prefMinAge ?? 18, pref?.prefMaxAge ?? 99]);
+      setLookingFor(pref?.lookingFor ?? "all");
+    }
+  }, [open, pref?.prefMaxDistance, pref?.prefMinAge, pref?.prefMaxAge, pref?.lookingFor]);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/vibe/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lookingFor,
+          prefMinAge: ageRange[0],
+          prefMaxAge: ageRange[1],
+          prefMaxDistance: maxDistance,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (data.user) {
+        const meNow = useVibe.getState().me;
+        patchMe({ ...meNow, ...data.user });
+      }
+      sfx.play("success");
+      haptic(12);
+      toast.success("Filtres enregistrés", {
+        description: "Ta file de découverte a été mise à jour.",
+        duration: 2500,
+      });
+      onOpenChange(false);
+      onSaved();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const genderOptions = [
+    { v: "f", l: "Femmes", e: "👩" },
+    { v: "m", l: "Hommes", e: "👨" },
+    { v: "nb", l: "NB", e: "🌈" },
+    { v: "all", l: "Tous", e: "✨" },
+  ];
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end"
+          onClick={() => !saving && onOpenChange(false)}
+        >
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 380, damping: 38 }}
+            className="w-full rounded-t-3xl bg-zinc-900 ring-1 ring-white/10 p-5 pb-8"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Filtres de découverte"
+          >
+            {/* grabber */}
+            <div className="mx-auto h-1 w-10 rounded-full bg-white/20 mb-4" />
+
+            <h3 className="font-display font-bold text-lg mb-1">Filtres de découverte</h3>
+            <p className="text-[11px] text-white/40 mb-5">
+              Affine les profils recommandés. Les changements s'appliquent immédiatement à ta file.
+            </p>
+
+            {/* Distance */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-sm font-medium flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-accent" /> Distance max
+                </span>
+                <span className="text-sm font-bold tabular-nums vibe-text-gradient">{maxDistance} km</span>
+              </div>
+              <Slider
+                value={[maxDistance]}
+                onValueChange={(v) => setMaxDistance(v[0] ?? 50)}
+                min={1}
+                max={500}
+                step={1}
+                aria-label="Distance maximum"
+              />
+              <div className="flex justify-between text-[10px] text-white/30 mt-1.5">
+                <span>1 km</span>
+                <span>500 km</span>
+              </div>
+            </div>
+
+            {/* Age range — dual-thumb */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-sm font-medium flex items-center gap-1.5">
+                  <Star className="h-3.5 w-3.5 text-amber-300" /> Âge recherché
+                </span>
+                <span className="text-sm font-bold tabular-nums vibe-text-gradient">
+                  {ageRange[0]} – {ageRange[1] === 99 ? "99+" : ageRange[1]} ans
+                </span>
+              </div>
+              <Slider
+                value={ageRange}
+                onValueChange={(v) => setAgeRange([v[0] ?? 18, v[1] ?? 99])}
+                min={18}
+                max={99}
+                step={1}
+                aria-label="Tranche d'âge"
+              />
+              <div className="flex justify-between text-[10px] text-white/30 mt-1.5">
+                <span>18 ans</span>
+                <span>99+</span>
+              </div>
+            </div>
+
+            {/* Gender preference */}
+            <div className="mb-7">
+              <span className="text-sm font-medium flex items-center gap-1.5 mb-2.5">
+                <Heart className="h-3.5 w-3.5 text-pink-400" /> Je cherche
+              </span>
+              <div className="grid grid-cols-4 gap-2">
+                {genderOptions.map((g) => (
+                  <motion.button
+                    key={g.v}
+                    whileTap={{ scale: 0.92 }}
+                    onClick={() => { sfx.play("pop"); setLookingFor(g.v); }}
+                    className={`h-11 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-0.5 transition ${
+                      lookingFor === g.v
+                        ? "vibe-gradient text-white vibe-glow"
+                        : "bg-white/5 text-white/50 ring-1 ring-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="text-base leading-none">{g.e}</span> {g.l}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setMaxDistance(500);
+                  setAgeRange([18, 99]);
+                  setLookingFor("all");
+                  sfx.play("pop");
+                }}
+                className="flex-1 h-12 rounded-2xl bg-white/5 ring-1 ring-white/10 text-white/70 font-semibold hover:bg-white/10 transition"
+              >
+                Tout afficher
+              </motion.button>
+              <motion.button
+                whileTap={saving ? undefined : { scale: 0.95 }}
+                onClick={save}
+                disabled={saving}
+                className="flex-1 h-12 rounded-2xl vibe-gradient text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                {saving ? "Enregistrement…" : "Appliquer"}
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

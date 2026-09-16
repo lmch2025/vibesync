@@ -42,6 +42,10 @@ export async function GET() {
             lng: user.profile.lng,
             vibeQuestion: user.profile.vibeQuestion,
             vibeAnswer: user.profile.vibeAnswer,
+            // Discovery filters — kept in sync for the filter sheet UI.
+            prefMinAge: user.profile.prefMinAge,
+            prefMaxAge: user.profile.prefMaxAge,
+            prefMaxDistance: user.profile.prefMaxDistance,
           }
         : null,
     },

@@ -20,6 +20,18 @@ export type AppSettings = {
   videoMaxWidth: number; // px, compression target (default 480)
   videoQuality: number; // 0..1, compression quality (default 0.5)
   videoMaxSizeKb: number; // max compressed size in KB (default 2048)
+  // ── Recommendation algorithm (admin-configurable weights) ──
+  // Each weight is a relative importance on a 100-point scale. The final
+  // score of a candidate = Σ(weight × normalized-signal) / Σweights, then
+  // × recBoostMultiplier if the profile has an active Boost.
+  recWeightDistance: number; // geographic proximity (Haversine)
+  recWeightAge: number; // age proximity to the viewer
+  recWeightVibe: number; // Vibe Check compatibility (same question/answer)
+  recWeightVerified: number; // verified-profile bonus
+  recWeightRecency: number; // recently joined profiles
+  recWeightPopularity: number; // likes/superlikes received
+  recBoostMultiplier: number; // score multiplier for boosted profiles
+  deckSize: number; // profiles returned per deck fetch
 };
 
 const DEFAULTS: AppSettings = {
@@ -33,6 +45,15 @@ const DEFAULTS: AppSettings = {
   videoMaxWidth: 480,
   videoQuality: 0.5,
   videoMaxSizeKb: 2048,
+  // Recommendation defaults — balanced starter weights (sum = 100).
+  recWeightDistance: 30,
+  recWeightAge: 20,
+  recWeightVibe: 25,
+  recWeightVerified: 5,
+  recWeightRecency: 10,
+  recWeightPopularity: 10,
+  recBoostMultiplier: 2,
+  deckSize: 12,
 };
 
 /// Cache settings in-memory with a SHORT TTL (15s). A process-lifetime cache
@@ -44,6 +65,12 @@ const DEFAULTS: AppSettings = {
 const CACHE_TTL_MS = 15_000;
 let cached: AppSettings | null = null;
 let cachedAt = 0;
+
+/// Parse a setting value that may legitimately be 0 (unlike `||`).
+function numOr(v: string | undefined, d: number): number {
+  const n = Number(v);
+  return v !== undefined && Number.isFinite(n) ? n : d;
+}
 
 export async function getSettings(): Promise<AppSettings> {
   if (cached && Date.now() - cachedAt < CACHE_TTL_MS) return cached;
@@ -62,6 +89,17 @@ export async function getSettings(): Promise<AppSettings> {
       videoMaxWidth: Number(map.videoMaxWidth) || DEFAULTS.videoMaxWidth,
       videoQuality: Number(map.videoQuality) || DEFAULTS.videoQuality,
       videoMaxSizeKb: Number(map.videoMaxSizeKb) || DEFAULTS.videoMaxSizeKb,
+      // Weights: 0 is a legitimate value ("signal disabled"), so we can't use
+      // `||` — we need an explicit finite check (Number(undefined) is NaN,
+      // and `NaN ?? d` would silently return NaN, not d).
+      recWeightDistance: numOr(map.recWeightDistance, DEFAULTS.recWeightDistance),
+      recWeightAge: numOr(map.recWeightAge, DEFAULTS.recWeightAge),
+      recWeightVibe: numOr(map.recWeightVibe, DEFAULTS.recWeightVibe),
+      recWeightVerified: numOr(map.recWeightVerified, DEFAULTS.recWeightVerified),
+      recWeightRecency: numOr(map.recWeightRecency, DEFAULTS.recWeightRecency),
+      recWeightPopularity: numOr(map.recWeightPopularity, DEFAULTS.recWeightPopularity),
+      recBoostMultiplier: numOr(map.recBoostMultiplier, DEFAULTS.recBoostMultiplier),
+      deckSize: Math.min(50, Math.max(4, numOr(map.deckSize, DEFAULTS.deckSize))),
     };
     cachedAt = Date.now();
     return cached;
