@@ -178,7 +178,7 @@ export function CountdownRing({
       </svg>
       {showTime && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-display font-bold text-white tabular-nums leading-none"
+          <span className="font-display font-bold v-fg tabular-nums leading-none"
             style={{ fontSize: Math.max(8, size / 6) }}
           >
             {formatDuration(liveRemaining)}

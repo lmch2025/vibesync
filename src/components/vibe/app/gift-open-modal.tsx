@@ -108,7 +108,7 @@ export function GiftOpenModal({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.25 } }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative max-w-[380px] w-[90%] rounded-3xl overflow-hidden bg-[#0a0612] ring-1 ring-white/10 shadow-2xl"
+              className="relative max-w-[380px] w-[90%] rounded-3xl overflow-hidden bg-[#0a0612] immersive ring-1 ring-white/10 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close button (only when not unwrapping) */}

@@ -68,7 +68,7 @@ export function NotificationBell() {
         className="relative h-9 w-9 grid place-items-center rounded-full hover:v-surface-2 transition"
         aria-label="Notifications"
       >
-        <Bell className="h-5 w-5 text-white/70" />
+        <Bell className="h-5 w-5 v-fg-muted" />
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
@@ -96,7 +96,7 @@ export function NotificationBell() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 inset-x-0 z-[70] rounded-t-3xl v-surface-solid ring-1 ring-white/10 p-4 pb-6 max-h-[70vh] overflow-y-auto no-scrollbar"
+              className="fixed bottom-0 inset-x-0 z-[70] rounded-t-3xl v-surface-solid ring-1 ring-[var(--v-divider)] p-4 pb-6 max-h-[70vh] overflow-y-auto no-scrollbar"
             >
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-display font-bold text-lg">Notifications</h3>
@@ -106,8 +106,8 @@ export function NotificationBell() {
               </div>
 
               {notifications.length === 0 ? (
-                <div className="text-center py-12 text-white/70">
-                  <Bell className="h-8 w-8 mx-auto mb-2 text-white/70" />
+                <div className="text-center py-12 v-fg-muted">
+                  <Bell className="h-8 w-8 mx-auto mb-2 v-fg-muted" />
                   <p className="text-sm">Aucune notification</p>
                 </div>
               ) : (
@@ -116,18 +116,18 @@ export function NotificationBell() {
                     <div
                       key={n.id}
                       className={`flex items-start gap-3 rounded-2xl p-3 transition ${
-                        n.read ? "v-surface-1" : "v-surface-1 ring-1 ring-white/10"
+                        n.read ? "v-surface-1" : "v-surface-1 ring-1 ring-[var(--v-divider)]"
                       }`}
                     >
                       <span className="text-2xl shrink-0 mt-0.5">{n.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-semibold ${n.read ? "text-white/70" : "text-white"}`}>
+                        <p className={`text-sm font-semibold ${n.read ? "v-fg-muted" : "v-fg"}`}>
                           {n.title}
                         </p>
-                        <p className={`text-xs ${n.read ? "text-white/70" : "text-white/70"}`}>
+                        <p className={`text-xs v-fg-muted`}>
                           {n.body}
                         </p>
-                        <p className="text-[9px] text-white/70 mt-0.5">{formatTime(n.createdAt)}</p>
+                        <p className="text-[9px] v-fg-muted mt-0.5">{formatTime(n.createdAt)}</p>
                       </div>
                       {!n.read && (
                         <span className="h-2 w-2 rounded-full bg-vibe-purple shrink-0 mt-2" />
@@ -140,7 +140,7 @@ export function NotificationBell() {
               {notifications.length > 0 && unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="mt-3 w-full h-9 rounded-xl v-surface-1 ring-1 ring-white/10 text-xs text-white/70 hover:v-surface-2 transition flex items-center justify-center gap-1.5"
+                  className="mt-3 w-full h-9 rounded-xl v-surface-1 ring-1 ring-[var(--v-divider)] text-xs v-fg-muted hover:v-surface-2 transition flex items-center justify-center gap-1.5"
                 >
                   <Check className="h-3.5 w-3.5" /> Tout marquer comme lu
                 </button>

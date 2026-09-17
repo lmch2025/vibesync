@@ -157,7 +157,7 @@ export function SwipeScreen({
   const top = deck[0];
 
   return (
-    <div className="absolute inset-0 v-bg-app text-white overflow-hidden">
+    <div className="absolute inset-0 v-bg-app v-fg overflow-hidden">
       {/* top bar */}
       <div className="absolute top-9 inset-x-0 z-20 flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-2">
@@ -167,11 +167,11 @@ export function SwipeScreen({
             onClick={() => { sfx.play("pop"); setFilterOpen(true); }}
             whileTap={{ scale: 0.85 }}
             aria-label="Filtres de découverte"
-            className="relative h-8 w-8 grid place-items-center rounded-full v-surface-1 ring-1 ring-white/10 text-white/70 hover:text-white hover:v-surface-2 transition"
+            className="relative h-8 w-8 grid place-items-center rounded-full v-surface-1 ring-1 ring-[var(--v-divider)] v-fg-muted hover:v-fg hover:v-surface-2 transition"
           >
             <SlidersHorizontal className="h-4 w-4" />
             {filtersActive && (
-              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-vibe-pink ring-2 ring-zinc-950" />
+              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-vibe-pink ring-2 ring-[var(--v-bg-app)]" />
             )}
           </motion.button>
         </div>
@@ -192,14 +192,14 @@ export function SwipeScreen({
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="absolute inset-0 rounded-3xl overflow-hidden ring-1 ring-white/10 v-surface-1"
+                className="absolute inset-0 rounded-3xl overflow-hidden ring-1 ring-[var(--v-divider)] v-surface-1"
                 style={{
                   transform: `scale(${1 - i * 0.045}) translateY(${i * 12}px)`,
                   opacity: 1 - i * 0.25,
                 }}
               >
                 <Shimmer />
-                <div className="absolute inset-0 animate-pulse bg-gradient-to-t from-white/10 via-transparent to-white/5" />
+                <div className="absolute inset-0 animate-pulse bg-gradient-to-t from-[var(--v-surface-3)] via-transparent to-[var(--v-surface-1)]" />
                 {/* bloc vibe check factice */}
                 <div className="absolute top-16 inset-x-4 h-28 rounded-2xl v-surface-1 animate-pulse" />
                 {/* bloc infos factices */}
@@ -234,7 +234,7 @@ export function SwipeScreen({
       </div>
 
       {/* action bar — sits above the bottom nav */}
-      <div className="absolute bottom-[76px] inset-x-0 z-20 pb-1 pt-2 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+      <div className="absolute bottom-[76px] inset-x-0 z-20 pb-1 pt-2 v-fade-bottom">
         <div className="flex items-center justify-center gap-3">
           <ActionButton onClick={rewind} label="Rewind" cost={GEM_ACTIONS.rewind} tone="amber">
             <RotateCcw className="h-5 w-5" />
@@ -321,7 +321,7 @@ function SwipeCard({
 
   return (
     <motion.div
-      className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/10"
+      className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-[var(--v-divider)] v-fg-media"
       style={{ x, y, rotate, zIndex: isTop ? 10 : 1 }}
       drag={isTop}
       dragSnapToOrigin
@@ -426,11 +426,11 @@ function ActionButton({
   sound?: SfxName;
 }) {
   const tones: Record<string, string> = {
-    red: "text-red-400 ring-red-400/40 hover:bg-red-400/10",
-    green: "text-green-400 ring-green-400/40 hover:bg-green-400/10",
-    blue: "text-cyan-300 ring-cyan-300/40 hover:bg-cyan-300/10",
-    amber: "text-amber-300 ring-amber-300/40 hover:bg-amber-300/10",
-    purple: "text-fuchsia-300 ring-fuchsia-300/40 hover:bg-fuchsia-300/10",
+    red: "text-red-500 dark:text-red-400 ring-red-400/60 dark:ring-red-400/40 hover:bg-red-400/10",
+    green: "text-green-600 dark:text-green-400 ring-green-500/60 dark:ring-green-400/40 hover:bg-green-400/10",
+    blue: "text-cyan-600 dark:text-cyan-300 ring-cyan-400/60 dark:ring-cyan-300/40 hover:bg-cyan-300/10",
+    amber: "text-amber-600 dark:text-amber-300 ring-amber-400/60 dark:ring-amber-300/40 hover:bg-amber-300/10",
+    purple: "text-fuchsia-600 dark:text-fuchsia-300 ring-fuchsia-400/60 dark:ring-fuchsia-300/40 hover:bg-fuchsia-300/10",
   };
   return (
     <motion.button
@@ -447,7 +447,7 @@ function ActionButton({
       >
         {children}
       </span>
-      <span className="text-[9px] text-white/70 font-medium flex items-center gap-0.5">
+      <span className="text-[9px] v-fg-muted font-medium flex items-center gap-0.5">
         {label}{cost ? `·${cost}` : ""}
       </span>
     </motion.button>
@@ -460,7 +460,7 @@ function EmptyDeck({ onReload }: { onReload: () => void }) {
       <div>
         <div className="text-5xl mb-3">🎉</div>
         <h3 className="font-display text-xl font-bold mb-1">C&apos;est tout pour aujourd&apos;hui !</h3>
-        <p className="text-sm text-white/70 mb-4">Reviens demain ou élargis ta zone. En attendant, booste ton profil.</p>
+        <p className="text-sm v-fg-muted mb-4">Reviens demain ou élargis ta zone. En attendant, booste ton profil.</p>
         <button onClick={onReload} className="h-10 px-5 rounded-full vibe-gradient text-white font-semibold text-sm">
           Recharger la file
         </button>
@@ -551,7 +551,7 @@ function FilterSheet({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end"
+          className="absolute inset-0 z-50 v-veil backdrop-blur-sm flex items-end"
           onClick={() => !saving && onOpenChange(false)}
         >
           <motion.div
@@ -559,7 +559,7 @@ function FilterSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 38 }}
-            className="w-full rounded-t-3xl v-surface-solid ring-1 ring-white/10 p-5 pb-8"
+            className="w-full rounded-t-3xl v-surface-solid ring-1 ring-[var(--v-divider)] p-5 pb-8"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Filtres de découverte"
@@ -568,7 +568,7 @@ function FilterSheet({
             <div className="mx-auto h-1 w-10 rounded-full v-surface-3 mb-4" />
 
             <h3 className="font-display font-bold text-lg mb-1">Filtres de découverte</h3>
-            <p className="text-[11px] text-white/70 mb-5">
+            <p className="text-[11px] v-fg-muted mb-5">
               Affine les profils recommandés. Les changements s'appliquent immédiatement à ta file.
             </p>
 
@@ -588,7 +588,7 @@ function FilterSheet({
                 step={1}
                 aria-label="Distance maximum"
               />
-              <div className="flex justify-between text-[10px] text-white/70 mt-1.5">
+              <div className="flex justify-between text-[10px] v-fg-muted mt-1.5">
                 <span>1 km</span>
                 <span>500 km</span>
               </div>
@@ -598,7 +598,7 @@ function FilterSheet({
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2.5">
                 <span className="text-sm font-medium flex items-center gap-1.5">
-                  <Star className="h-3.5 w-3.5 text-amber-300" /> Âge recherché
+                  <Star className="h-3.5 w-3.5 text-amber-500 dark:text-amber-300" /> Âge recherché
                 </span>
                 <span className="text-sm font-bold tabular-nums vibe-text-gradient">
                   {ageRange[0]} – {ageRange[1] === 99 ? "99+" : ageRange[1]} ans
@@ -612,7 +612,7 @@ function FilterSheet({
                 step={1}
                 aria-label="Tranche d'âge"
               />
-              <div className="flex justify-between text-[10px] text-white/70 mt-1.5">
+              <div className="flex justify-between text-[10px] v-fg-muted mt-1.5">
                 <span>18 ans</span>
                 <span>99+</span>
               </div>
@@ -632,7 +632,7 @@ function FilterSheet({
                     className={`h-11 rounded-xl text-xs font-semibold flex flex-col items-center justify-center gap-0.5 transition ${
                       lookingFor === g.v
                         ? "vibe-gradient text-white vibe-glow"
-                        : "v-surface-1 text-white/70 ring-1 ring-white/10 hover:v-surface-2"
+                        : "v-surface-1 v-fg-muted ring-1 ring-[var(--v-divider)] hover:v-surface-2"
                     }`}
                   >
                     <span className="text-base leading-none">{g.e}</span> {g.l}
@@ -651,7 +651,7 @@ function FilterSheet({
                   setLookingFor("all");
                   sfx.play("pop");
                 }}
-                className="flex-1 h-12 rounded-2xl v-surface-1 ring-1 ring-white/10 text-white/70 font-semibold hover:v-surface-2 transition"
+                className="flex-1 h-12 rounded-2xl v-surface-1 ring-1 ring-[var(--v-divider)] v-fg-muted font-semibold hover:v-surface-2 transition"
               >
                 Tout afficher
               </motion.button>

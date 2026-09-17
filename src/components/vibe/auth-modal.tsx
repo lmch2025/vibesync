@@ -138,7 +138,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-[420px] p-0 gap-0 overflow-hidden rounded-3xl border-white/10 v-bg-app! text-white">
+      <DialogContent className="immersive max-w-[420px] p-0 gap-0 overflow-hidden rounded-3xl border-white/10 v-bg-app! text-white">
         {/* Gradient header */}
         <div className="relative vibe-gradient px-6 pt-6 pb-7 overflow-hidden">
           <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
@@ -304,7 +304,7 @@ function CountryCodeSelect({ value, onChange }: { value: Country; onChange: (c: 
           <ChevronDown className="h-3.5 w-3.5 text-white/70" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[280px] p-0 v-bg-app! text-white border-white/10" align="start">
+      <PopoverContent className="immersive w-[280px] p-0 v-bg-app! text-white border-white/10" align="start">
         <Command className="[&_input]:bg-transparent [&_input]:text-white [&_input]:placeholder:text-white/50">
           <div className="flex items-center border-b border-white/10 px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 text-white/50" />

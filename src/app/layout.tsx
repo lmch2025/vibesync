@@ -76,6 +76,10 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  // Le clavier redimensionne le contenu (pas de recouvrement des inputs) —
+  // combiné aux hauteurs dvh, la barre d'URL du navigateur mobile reste
+  // visible et fixe : tout le contenu tient dans le viewport sans scroll.
+  interactiveWidget: "resizes-content",
 };
 
 const jsonLd = {

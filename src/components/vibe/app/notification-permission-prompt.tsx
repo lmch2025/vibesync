@@ -45,21 +45,21 @@ const NOTIF_PREVIEWS: NotifPreview[] = [
     label: "Messages",
     desc: "Quelqu'un t'écrit",
     icon: <MessageCircle className="h-3.5 w-3.5" />,
-    accent: "text-sky-300",
+    accent: "text-sky-500 dark:text-sky-300",
   },
   {
     emoji: "🎁",
     label: "Cadeaux",
     desc: "Tu reçois un cadeau",
     icon: <Gift className="h-3.5 w-3.5" />,
-    accent: "text-emerald-300",
+    accent: "text-emerald-500 dark:text-emerald-300",
   },
   {
     emoji: "🔥",
     label: "Série",
     desc: "Rappel streak quotidien",
     icon: <Flame className="h-3.5 w-3.5" />,
-    accent: "text-amber-300",
+    accent: "text-amber-500 dark:text-amber-300",
   },
 ];
 
@@ -160,12 +160,12 @@ export function NotificationPermissionPrompt() {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.85, opacity: 0, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="relative w-full max-w-sm rounded-3xl bg-[#0a0612] ring-1 ring-white/10 p-6 shadow-2xl"
+            className="relative w-full max-w-sm rounded-3xl v-surface-solid ring-1 ring-[var(--v-divider)] p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={dismiss}
-              className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full v-surface-2 text-white hover:v-surface-3 transition"
+              className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full v-surface-2 v-fg hover:v-surface-3 transition"
               aria-label="Fermer"
             >
               <X className="h-4 w-4" />
@@ -181,10 +181,10 @@ export function NotificationPermissionPrompt() {
               <Bell className="h-8 w-8 text-white" fill="currentColor" />
             </motion.div>
 
-            <h3 className="font-display text-xl font-bold text-center text-white">
+            <h3 className="font-display text-xl font-bold text-center v-fg">
               Reste connecté·e
             </h3>
-            <p className="text-sm text-white/70 text-center mt-1 mb-5">
+            <p className="text-sm v-fg-muted text-center mt-1 mb-5">
               Active les notifications pour ne rien manquer de tes
               rencontres. On ne spamme jamais — promis.
             </p>
@@ -197,14 +197,14 @@ export function NotificationPermissionPrompt() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 + i * 0.05 }}
-                  className="flex items-center gap-2 rounded-2xl v-surface-1 ring-1 ring-white/10 px-3 py-2"
+                  className="flex items-center gap-2 rounded-2xl v-surface-1 ring-1 ring-[var(--v-divider)] px-3 py-2"
                 >
                   <span className="text-xl">{p.emoji}</span>
                   <div className="min-w-0">
                     <p className={`text-xs font-bold ${p.accent} flex items-center gap-1`}>
                       {p.label}
                     </p>
-                    <p className="text-[9px] text-white/70 truncate">{p.desc}</p>
+                    <p className="text-[9px] v-fg-muted truncate">{p.desc}</p>
                   </div>
                 </motion.div>
               ))}
@@ -229,7 +229,7 @@ export function NotificationPermissionPrompt() {
             </button>
             <button
               onClick={dismiss}
-              className="w-full text-center text-[11px] text-white/70 hover:text-white/70 transition mt-3"
+              className="w-full text-center text-[11px] v-fg-muted hover:v-fg transition mt-3"
             >
               Plus tard
             </button>

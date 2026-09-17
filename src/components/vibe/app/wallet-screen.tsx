@@ -150,9 +150,9 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
   }, []);
 
   return (
-    <div className="absolute inset-0 v-bg-app text-white overflow-hidden flex flex-col">
+    <div className="absolute inset-0 v-bg-app v-fg overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="pt-9 px-3 py-2 flex items-center gap-2 border-b border-white/5 v-surface-solid/60 backdrop-blur z-20">
+      <div className="pt-9 px-3 py-2 flex items-center gap-2 border-b v-divider v-surface-solid backdrop-blur z-20">
         <button onClick={onBack} className="h-9 w-9 grid place-items-center rounded-full hover:v-surface-2">
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -162,7 +162,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
       </div>
 
       {/* Tabs */}
-      <div className="px-3 py-2 flex gap-1.5 v-surface-solid/40">
+      <div className="px-3 py-2 flex gap-1.5 v-surface-1">
         {([
           { id: "vibes", label: "Vibes", icon: <Gem className="h-3.5 w-3.5" /> },
           { id: "gains", label: "Gains", icon: <TrendingUp className="h-3.5 w-3.5" /> },
@@ -173,7 +173,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
             onClick={() => { sfx.play("pop"); setTab(t.id); }}
             whileTap={{ scale: 0.94 }}
             className={`relative isolate flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-xs font-semibold transition-colors ${
-              tab === t.id ? "text-white" : "text-white/70 hover:text-white/80 v-surface-1"
+              tab === t.id ? "text-white" : "v-fg-muted hover:v-fg v-surface-1"
             }`}
           >
             {tab === t.id && <TabIndicator id="wallet-tab-indicator" />}
@@ -188,8 +188,8 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
           {/* ===== TAB: VIBES ===== */}
           {tab === "vibes" && (
             <motion.div key="vibes" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4 pt-2">
-              {/* Balance card */}
-              <div className="rounded-3xl p-5 vibe-gradient vibe-glow relative overflow-hidden">
+              {/* Balance card — fond de marque : le texte reste blanc dans les deux modes */}
+              <div className="rounded-3xl p-5 vibe-gradient vibe-glow relative overflow-hidden text-white">
                 <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full v-surface-3 blur-2xl" />
                 <p className="text-white/80 text-xs font-medium uppercase tracking-wide">Solde Vibes</p>
                 <div className="flex items-center gap-2 mt-1">
@@ -240,7 +240,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                       className={`relative w-full rounded-2xl p-3.5 ring-1 flex items-center gap-3 transition disabled:opacity-60 ${
                         pack.popular ? "bg-accent/10 ring-accent/40"
                         : pack.bestValue ? "bg-fuchsia-500/10 ring-fuchsia-400/40"
-                        : "v-surface-1 ring-white/10"
+                        : "v-surface-1 ring-(--v-divider)"
                       }`}
                     >
                       {(pack.popular || pack.bestValue) && (
@@ -266,12 +266,12 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                       <div className="flex-1 text-left">
                         <div className="flex items-baseline gap-1.5">
                           <span className="font-display text-xl font-black tabular-nums">{pack.gems}</span>
-                          <span className="text-[11px] text-white/70">Vibes</span>
+                          <span className="text-[11px] v-fg-muted">Vibes</span>
                           {pack.bonus > 0 && (
-                            <span className="text-[10px] bg-emerald-400/20 text-emerald-200 rounded-full px-1.5 py-0.5">+{pack.bonus}</span>
+                            <span className="text-[10px] bg-emerald-400/20 text-emerald-700 dark:text-emerald-200 rounded-full px-1.5 py-0.5">+{pack.bonus}</span>
                           )}
                         </div>
-                        <p className="text-[10px] text-white/70">{total} Vibes au total</p>
+                        <p className="text-[10px] v-fg-muted">{total} Vibes au total</p>
                       </div>
                       <div className="text-right shrink-0">
                         <div className="font-display font-bold text-sm">{formatIn(tier.amount, tier.currency)}</div>
@@ -282,17 +282,17 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
               </div>
 
               {/* What Vibes buy — compact */}
-              <div className="rounded-2xl v-surface-1 ring-1 ring-white/10 p-3.5">
-                <p className="text-[11px] font-semibold text-white/70 mb-2 flex items-center gap-1">
+              <div className="rounded-2xl v-surface-1 ring-1 ring-(--v-divider) p-3.5">
+                <p className="text-[11px] font-semibold v-fg-muted mb-2 flex items-center gap-1">
                   <Gem className="h-3.5 w-3.5 text-accent" /> Tes Vibes te donnent accès à
                 </p>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-white/70">
-                  <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-amber-400" /> Super-Like · {GEM_ACTIONS.superlike}</span>
-                  <span className="flex items-center gap-1"><TrendingUp className="h-3 w-3 text-fuchsia-400" /> Boost · {GEM_ACTIONS.boost}</span>
-                  <span className="flex items-center gap-1"><Gift className="h-3 w-3 text-pink-400" /> Cadeaux · {GEM_ACTIONS.superlike}+</span>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] v-fg-muted">
+                  <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-amber-600 dark:text-amber-400" /> Super-Like · {GEM_ACTIONS.superlike}</span>
+                  <span className="flex items-center gap-1"><TrendingUp className="h-3 w-3 text-fuchsia-600 dark:text-fuchsia-400" /> Boost · {GEM_ACTIONS.boost}</span>
+                  <span className="flex items-center gap-1"><Gift className="h-3 w-3 text-pink-600 dark:text-pink-400" /> Cadeaux · {GEM_ACTIONS.superlike}+</span>
                   <span className="flex items-center gap-1"><Wand2 className="h-3 w-3 text-vibe-purple" /> Icebreaker · {GEM_ACTIONS.icebreaker}</span>
-                  <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-cyan-400" /> Rewind · {GEM_ACTIONS.rewind}</span>
-                  <span className="flex items-center gap-1"><Gem className="h-3 w-3 text-orange-400" /> Passport · {GEM_ACTIONS.passport}</span>
+                  <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-cyan-600 dark:text-cyan-400" /> Rewind · {GEM_ACTIONS.rewind}</span>
+                  <span className="flex items-center gap-1"><Gem className="h-3 w-3 text-orange-600 dark:text-orange-400" /> Passport · {GEM_ACTIONS.passport}</span>
                 </div>
               </div>
             </motion.div>
@@ -304,24 +304,24 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
               {/* Wallet balance card */}
               <div className="rounded-3xl p-5 bg-emerald-500/10 ring-1 ring-emerald-400/30 relative overflow-hidden">
                 <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-emerald-400/20 blur-2xl" />
-                <p className="text-emerald-300/80 text-xs font-medium uppercase tracking-wide flex items-center gap-1">
+                <p className="text-emerald-600 dark:text-emerald-300/80 text-xs font-medium uppercase tracking-wide flex items-center gap-1">
                   <WalletIcon className="h-3 w-3" /> Gains cadeaux
                 </p>
                 <div className="font-display text-4xl font-black mt-1 tabular-nums">{moneyCents(me?.walletEurCents ?? 0)}</div>
-                <p className="text-emerald-200/60 text-[11px] mt-1">
+                <p className="text-emerald-700 dark:text-emerald-200/60 text-[11px] mt-1">
                   Cumulé via cadeaux reçus (70% après commission {PLATFORM_COMMISSION * 100}%)
                 </p>
               </div>
 
               {/* Progress to threshold */}
-              <div className="rounded-2xl v-surface-1 ring-1 ring-white/10 p-4">
+              <div className="rounded-2xl v-surface-1 ring-1 ring-(--v-divider) p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-white/70 flex items-center gap-1">
+                  <span className="text-xs font-medium v-fg-muted flex items-center gap-1">
                     <Lock className="h-3.5 w-3.5" /> Seuil de retrait
                   </span>
-                  <span className="text-xs tabular-nums text-white/70">{moneyCents(me?.walletEurCents ?? 0)} / {moneyCents(WITHDRAWAL_THRESHOLD_EUR * 100)}</span>
+                  <span className="text-xs tabular-nums v-fg-muted">{moneyCents(me?.walletEurCents ?? 0)} / {moneyCents(WITHDRAWAL_THRESHOLD_EUR * 100)}</span>
                 </div>
-                <div className="h-2.5 rounded-full v-surface-1 overflow-hidden">
+                <div className="h-2.5 rounded-full v-surface-3 overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progressPct}%` }}
@@ -329,7 +329,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                     className={`h-full rounded-full ${thresholdReached ? "bg-emerald-400" : "bg-gradient-to-r from-vibe-purple to-vibe-pink"}`}
                   />
                 </div>
-                <p className="text-[10px] text-white/70 text-center mt-1.5">
+                <p className="text-[10px] v-fg-muted text-center mt-1.5">
                   {thresholdReached
                     ? "✓ Seuil atteint ! Tu peux retirer tes gains."
                     : `Plus que ${(WITHDRAWAL_THRESHOLD_EUR - walletEur).toFixed(2)}€ avant de pouvoir retirer.`}
@@ -346,22 +346,22 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                   <Banknote className="h-5 w-5" /> Retirer mes gains
                 </button>
               ) : (
-                <div className="w-full h-13 py-3.5 rounded-2xl v-surface-1 ring-1 ring-white/10 flex items-center justify-center gap-2 text-white/70 text-sm">
+                <div className="w-full h-13 py-3.5 rounded-2xl v-surface-1 ring-1 ring-(--v-divider) flex items-center justify-center gap-2 v-fg-muted text-sm">
                   <Lock className="h-4 w-4" /> Retrait disponible à {moneyCents(WITHDRAWAL_THRESHOLD_EUR * 100)}
                 </div>
               )}
 
               {/* Info card */}
-              <div className="rounded-2xl v-surface-1 ring-1 ring-white/5 p-3.5">
-                <p className="text-[11px] text-white/70 leading-relaxed">
+              <div className="rounded-2xl v-surface-1 ring-1 ring-(--v-divider) p-3.5">
+                <p className="text-[11px] v-fg-muted leading-relaxed">
                   💡 Les cadeaux reçus des autres membres sont convertis en euros sur ton portefeuille.
                   Une fois le seuil de {moneyCents(WITHDRAWAL_THRESHOLD_EUR * 100)} atteint, tu peux retirer
                   via virement bancaire (Stripe Connect) ou Mobile Money.
                 </p>
                 <div className="mt-2.5 rounded-xl bg-amber-400/10 ring-1 ring-amber-300/20 px-3 py-2">
-                  <p className="text-[10px] text-amber-100/80 leading-relaxed">
-                    ⚠️ <span className="font-semibold">Important :</span> Seules les Vibes <span className="font-semibold text-emerald-300">achetées</span> peuvent être utilisées pour envoyer des cadeaux.
-                    Les Vibes <span className="font-semibold text-amber-300">bonus</span> (série quotidienne, bienvenue, parrainage) servent uniquement pour les actions premium (super-like, boost, etc.).
+                  <p className="text-[10px] text-amber-700 dark:text-amber-100/80 leading-relaxed">
+                    ⚠️ <span className="font-semibold">Important :</span> Seules les Vibes <span className="font-semibold text-emerald-600 dark:text-emerald-300">achetées</span> peuvent être utilisées pour envoyer des cadeaux.
+                    Les Vibes <span className="font-semibold text-amber-600 dark:text-amber-300">bonus</span> (série quotidienne, bienvenue, parrainage) servent uniquement pour les actions premium (super-like, boost, etc.).
                   </p>
                 </div>
               </div>
@@ -387,8 +387,8 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                     whileTap={{ scale: 0.92 }}
                     className={`shrink-0 flex items-center gap-1 h-7 px-2.5 rounded-full text-[11px] font-semibold ring-1 transition ${
                       filter === f.id
-                        ? "vibe-gradient text-white ring-white/20"
-                        : "v-surface-1 text-white/70 ring-white/10 hover:text-white/80"
+                        ? "vibe-gradient text-white ring-(--v-divider)"
+                        : "v-surface-1 v-fg-muted ring-(--v-divider) hover:v-fg"
                     }`}
                   >
                     {f.label}
@@ -399,7 +399,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                   onClick={() => loadTxs(true)}
                   whileTap={{ scale: 0.85, rotate: 90 }}
                   aria-label="Rafraîchir l'historique"
-                  className="shrink-0 ml-auto h-7 w-7 grid place-items-center rounded-full v-surface-1 ring-1 ring-white/10 text-white/70 hover:text-white/80"
+                  className="shrink-0 ml-auto h-7 w-7 grid place-items-center rounded-full v-surface-1 ring-1 ring-(--v-divider) v-fg-muted hover:v-fg"
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
                 </motion.button>
@@ -412,7 +412,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="text-[10px] text-white/70 text-center overflow-hidden"
+                    className="text-[10px] v-fg-muted text-center overflow-hidden"
                   >
                     Actualisation…
                   </motion.p>
@@ -421,12 +421,12 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
 
               {loadingTx ? (
                 <div className="grid place-items-center py-12">
-                  <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-vibe-purple animate-spin" />
+                  <div className="h-8 w-8 rounded-full border-2 v-divider border-t-vibe-purple animate-spin" />
                 </div>
               ) : filteredTxs.length === 0 ? (
                 <div className="text-center py-12">
-                  <History className="h-8 w-8 mx-auto mb-2 text-white/70" />
-                  <p className="text-sm text-white/70">
+                  <History className="h-8 w-8 mx-auto mb-2 v-fg-muted" />
+                  <p className="text-sm v-fg-muted">
                     {filter === "all" ? "Aucune transaction pour l'instant" : "Aucune transaction de ce type"}
                   </p>
                 </div>
@@ -434,7 +434,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                 groupedTxs.map(([day, dayTxs]) => (
                   <div key={day} className="mb-2">
                     {/* Sticky day header */}
-                    <p className="sticky top-0 z-10 v-bg-app/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wide text-white/70 px-2 py-1.5">
+                    <p className="sticky top-0 z-10 bg-background/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wide v-fg-muted px-2 py-1.5">
                       {day}
                     </p>
                     <div className="space-y-0.5">
@@ -469,10 +469,10 @@ function TxRow({ tx, index = 0, reloadKey = 0 }: { tx: Tx; index?: number; reloa
 
   const isIncoming = tx.delta > 0 || tx.type === "gift_received";
   const statusColors: Record<string, string> = {
-    pending: "text-amber-400",
-    processing: "text-cyan-400",
-    completed: "text-emerald-400",
-    rejected: "text-red-400",
+    pending: "text-amber-600 dark:text-amber-400",
+    processing: "text-cyan-600 dark:text-cyan-400",
+    completed: "text-emerald-600 dark:text-emerald-400",
+    rejected: "text-red-500 dark:text-red-400",
   };
   const statusLabels: Record<string, string> = {
     pending: "En attente",
@@ -484,7 +484,7 @@ function TxRow({ tx, index = 0, reloadKey = 0 }: { tx: Tx; index?: number; reloa
   // Type-aware visual identity — each operation family gets its own colour.
   const iconStyles: Record<Tx["type"], string> = {
     vibe_purchase: "bg-vibe-purple/15 ring-1 ring-vibe-purple/30",
-    vibe_spend: "v-surface-1 ring-1 ring-white/10",
+    vibe_spend: "v-surface-1 ring-1 ring-(--v-divider)",
     vibe_reward: "bg-amber-400/10 ring-1 ring-amber-300/25",
     gift_sent: "bg-pink-500/10 ring-1 ring-pink-400/25",
     gift_received: "bg-emerald-500/15 ring-1 ring-emerald-400/25",
@@ -507,24 +507,24 @@ function TxRow({ tx, index = 0, reloadKey = 0 }: { tx: Tx; index?: number; reloa
       {/* Label + time */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{tx.label}</p>
-        <p className="text-[10px] text-white/70">{time}{tx.status && <span className={`ml-1.5 ${statusColors[tx.status]}`}>· {statusLabels[tx.status]}</span>}</p>
+        <p className="text-[10px] v-fg-muted">{time}{tx.status && <span className={`ml-1.5 ${statusColors[tx.status]}`}>· {statusLabels[tx.status]}</span>}</p>
       </div>
 
       {/* Amounts — Vibes delta + € semantics per type */}
       <div className="text-right shrink-0">
         {tx.delta !== 0 && (
-          <p className={`text-sm font-bold tabular-nums ${isIncoming ? "text-emerald-400" : "text-white/70"}`}>
+          <p className={`text-sm font-bold tabular-nums ${isIncoming ? "text-emerald-600 dark:text-emerald-400" : "v-fg"}`}>
             {isIncoming ? "+" : ""}{tx.delta} <span className="text-[10px]">💎</span>
           </p>
         )}
         {tx.type === "vibe_purchase" && tx.amountEurCents ? (
           // A purchase: the € line is what was PAID (neutral, not a gain).
-          <p className="text-[11px] tabular-nums text-white/70">{moneyCents(tx.amountEurCents)} payés</p>
+          <p className="text-[11px] tabular-nums v-fg-muted">{moneyCents(tx.amountEurCents)} payés</p>
         ) : tx.type === "gift_received" && tx.amountEurCents ? (
           // A received gift: real money credited to the wallet.
-          <p className="text-[11px] tabular-nums text-emerald-400/80">+{moneyCents(tx.amountEurCents)} crédités</p>
+          <p className="text-[11px] tabular-nums text-emerald-600 dark:text-emerald-400/80">+{moneyCents(tx.amountEurCents)} crédités</p>
         ) : tx.type === "withdrawal" && tx.amountEurCents ? (
-          <p className="text-[11px] tabular-nums text-cyan-300/80">−{moneyCents(Math.abs(tx.amountEurCents))}</p>
+          <p className="text-[11px] tabular-nums text-cyan-600 dark:text-cyan-300/80">−{moneyCents(Math.abs(tx.amountEurCents))}</p>
         ) : null}
       </div>
     </motion.div>

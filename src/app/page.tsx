@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, getCurrentUser } from "@/lib/vibe/session";
+import { getSettings } from "@/lib/vibe/settings";
 import { db } from "@/lib/db";
 import { ClientHome } from "./client-page";
 
@@ -9,6 +10,10 @@ export default async function Home() {
   
   let initialUser: any = null;
   let initialRates: Record<string, number> | null = null;
+  // Vidéo de fond de l'accueil administrable (Vercel Blob) — lue côté serveur
+  // pour éviter tout flash : "" ⇒ vidéo locale par défaut (/profiles/swipe-bg.webm).
+  const settings = await getSettings();
+  const initialLandingVideo = settings.landingVideoUrl || "";
   
   if (session) {
     const user = await getCurrentUser();
@@ -62,5 +67,5 @@ export default async function Home() {
   // profile tab button, NOT on boot) resume straight into the app on refresh.
   const initialView = initialUser ? "app" : "landing";
 
-  return <ClientHome initialView={initialView as any} initialUser={initialUser} initialRates={initialRates} />;
+  return <ClientHome initialView={initialView as any} initialUser={initialUser} initialRates={initialRates} initialLandingVideo={initialLandingVideo} />;
 }

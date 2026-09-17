@@ -114,7 +114,7 @@ export function ActionSuccessModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.85, opacity: 0, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="relative w-full max-w-sm rounded-3xl bg-[#0a0612] ring-1 ring-white/10 p-6 shadow-2xl overflow-hidden"
+            className="relative w-full max-w-sm rounded-3xl bg-[#0a0612] immersive ring-1 ring-white/10 p-6 shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close */}

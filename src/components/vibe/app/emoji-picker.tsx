@@ -114,7 +114,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
         {!closing && (
           <motion.div
             key="emoji-sheet"
-            className="relative w-full max-w-md v-surface-solid ring-1 ring-white/10 rounded-t-3xl shadow-2xl flex flex-col"
+            className="relative w-full max-w-md v-surface-solid ring-1 ring-[var(--v-divider)] rounded-t-3xl shadow-2xl flex flex-col"
             style={{ maxHeight: "55vh" }}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
@@ -138,8 +138,8 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
             {/* Header */}
             <div className="flex items-center justify-between px-4 pb-2">
               <div className="flex items-baseline gap-2">
-                <h2 className="text-base font-semibold text-white tracking-tight">Emojis</h2>
-                <span className="text-[11px] text-white/70 font-medium">
+                <h2 className="text-base font-semibold v-fg tracking-tight">Emojis</h2>
+                <span className="text-[11px] v-fg-muted font-medium">
                   Choisis un vibe · {TOTAL_EMOJIS}
                 </span>
               </div>
@@ -147,7 +147,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
                 type="button"
                 onClick={close}
                 aria-label="Fermer"
-                className="h-8 w-8 grid place-items-center rounded-full v-surface-1 text-white/70 hover:v-surface-2 hover:text-white active:scale-90 transition"
+                className="h-8 w-8 grid place-items-center rounded-full v-surface-1 v-fg-muted hover:v-surface-2 hover:v-fg active:scale-90 transition"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -165,7 +165,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
                       onClick={() => setActiveIdx(i)}
                       aria-pressed={isActive}
                       className={`relative shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
-                        isActive ? "text-white" : "text-white/70 hover:text-white/85"
+                        isActive ? "text-white" : "v-fg-muted hover:v-fg"
                       }`}
                     >
                       {isActive && (

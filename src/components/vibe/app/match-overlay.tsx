@@ -68,7 +68,7 @@ export function MatchOverlay({
           ))}
           <ConfettiBurst />
 
-          <button onClick={onClose} className="absolute top-10 right-5 z-10 h-9 w-9 grid place-items-center rounded-full v-surface-3 backdrop-blur text-white">
+          <button onClick={onClose} className="absolute top-10 right-5 z-10 h-9 w-9 grid place-items-center rounded-full bg-black/20 backdrop-blur text-white">
             <X className="h-5 w-5" />
           </button>
 
@@ -93,7 +93,7 @@ export function MatchOverlay({
             <div className="relative flex items-center justify-center gap-4 mb-8">
               {/* pulse rings */}
               <span className="absolute h-32 w-32 rounded-full bg-white/30 animate-pulse-ring" />
-              <span className="absolute h-32 w-32 rounded-full v-surface-3 animate-pulse-ring" style={{ animationDelay: "0.6s" }} />
+              <span className="absolute h-32 w-32 rounded-full bg-white/20 animate-pulse-ring" style={{ animationDelay: "0.6s" }} />
               {myPoster && (
                 <motion.div
                   initial={{ x: -60, rotate: -12, opacity: 0 }}
@@ -135,7 +135,7 @@ export function MatchOverlay({
               </button>
               <button
                 onClick={onClose}
-                className="h-11 rounded-2xl v-surface-3 backdrop-blur text-white font-semibold active:scale-95 transition"
+                className="h-11 rounded-2xl bg-black/20 backdrop-blur text-white font-semibold active:scale-95 transition"
               >
                 Continuer à swiper
               </button>

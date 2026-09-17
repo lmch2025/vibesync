@@ -165,7 +165,7 @@ export function VideoPlayer({
         {activePoster ? (
           <img src={activePoster} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-white/70 text-xs">
+          <div className="absolute inset-0 flex items-center justify-center v-fg-muted text-xs">
             Aucune vidéo
           </div>
         )}

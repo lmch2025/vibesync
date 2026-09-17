@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, MapPin, MessageSquare, Percent, Wallet, Gift, Video, Check, Loader2, Sparkles } from "lucide-react";
+import { Save, MapPin, MessageSquare, Percent, Wallet, Gift, Video, Check, Loader2, Sparkles, Upload, Trash2, Film } from "lucide-react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -398,6 +398,9 @@ export function Settings() {
 
       <Separator />
 
+      {/* ===== APPARENCE — VIDÉO DE FOND DE L'ACCUEIL (Vercel Blob) ===== */}
+      <LandingVideoCard />
+
       {/* ===== ALGORITHME DE RECOMMANDATION ===== */}
       <div className="rounded-2xl bg-card ring-1 ring-border shadow-sm divide-y divide-border">
         <div className="p-5">
@@ -618,5 +621,153 @@ export function Settings() {
         </motion.button>
       </div>
     </form>
+  );
+}
+
+/// Carte d'administration de la vidéo de fond de la page d'accueil.
+/// Upload/suppression via Vercel Blob (route /api/vibe/admin/landing-video).
+/// Auto-contenue : son propre état, indépendante du bouton « Enregistrer »
+/// du formulaire (chaque action est persistée immédiatement).
+function LandingVideoCard() {
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/vibe/admin/landing-video");
+        const data = await res.json();
+        if (res.ok) setUrl(data.url ?? "");
+      } catch {
+        /* ignore */
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  async function upload(file: File) {
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/vibe/admin/landing-video", {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Échec de l'upload");
+      setUrl(data.url);
+      toast.success("Vidéo d'accueil mise à jour", {
+        description: "La page d'accueil utilise désormais cette vidéo (sous ~15 s de cache).",
+      });
+    } catch (e: any) {
+      toast.error("Upload impossible", { description: e.message });
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function remove() {
+    setRemoving(true);
+    try {
+      const res = await fetch("/api/vibe/admin/landing-video", { method: "DELETE" });
+      if (!res.ok) throw new Error("Échec de la suppression");
+      setUrl("");
+      toast.success("Vidéo d'accueil supprimée", {
+        description: "Retour à la vidéo locale par défaut.",
+      });
+    } catch (e: any) {
+      toast.error("Suppression impossible", { description: e.message });
+    } finally {
+      setRemoving(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl bg-card ring-1 ring-border shadow-sm divide-y divide-border">
+      <div className="p-5">
+        <h3 className="font-display font-semibold text-base flex items-center gap-2">
+          <Film className="h-4 w-4 text-primary" /> Vidéo de fond — page d'accueil
+        </h3>
+        <p className="text-xs text-muted-foreground mt-1">
+          Vidéo plein écran diffusée en boucle derrière le titre de l'accueil. Stockage Vercel Blob.
+          Recommandé : WebM vertical, 6-10 s en boucle, ≤ 12 Mo.
+        </p>
+      </div>
+
+      <div className="p-5 space-y-4">
+        {loading ? (
+          <div className="h-28 rounded-xl bg-muted animate-pulse" />
+        ) : url ? (
+          <div className="space-y-3">
+            <div className="relative rounded-xl overflow-hidden ring-1 ring-border bg-black">
+              <video
+                src={url}
+                controls
+                muted
+                loop
+                playsInline
+                className="w-full aspect-video object-contain"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground break-all">{url}</p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border bg-muted/40 p-4 text-center">
+            <p className="text-sm font-medium">Vidéo locale par défaut en cours</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              /profiles/swipe-bg.webm — importez une vidéo personnalisée pour la remplacer.
+            </p>
+          </div>
+        )}
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="video/webm,video/mp4,video/quicktime,.webm,.mp4,.mov,.mkv"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) upload(f);
+          }}
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <motion.button
+            type="button"
+            whileTap={uploading ? undefined : { scale: 0.97 }}
+            disabled={uploading || removing}
+            onClick={() => fileRef.current?.click()}
+            className={cn(buttonVariants({ className: "rounded-xl gap-1.5" }))}
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Import en cours…
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4" /> {url ? "Remplacer la vidéo" : "Importer une vidéo"}
+              </>
+            )}
+          </motion.button>
+          {url && (
+            <motion.button
+              type="button"
+              whileTap={removing ? undefined : { scale: 0.97 }}
+              disabled={uploading || removing}
+              onClick={remove}
+              className={cn(buttonVariants({ variant: "destructive", className: "rounded-xl gap-1.5" }))}
+            >
+              {removing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Supprimer
+            </motion.button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

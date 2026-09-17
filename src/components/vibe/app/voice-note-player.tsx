@@ -80,7 +80,7 @@ export function VoiceNotePlayer({
       <button
         onClick={togglePlay}
         className={`h-9 w-9 grid place-items-center rounded-full shrink-0 transition active:scale-90 ${
-          mine ? "v-surface-3" : "bg-vibe-purple/30"
+          mine ? "v-surface-3" : "bg-vibe-purple"
         }`}
         aria-label={playing ? "Pause" : "Lire"}
       >
@@ -111,7 +111,7 @@ export function VoiceNotePlayer({
       </div>
 
       {/* Duration / current time */}
-      <span className="text-[10px] tabular-nums text-white/70 shrink-0 font-mono">
+      <span className={`text-[10px] tabular-nums shrink-0 font-mono ${mine ? "text-white/70" : "v-fg-muted"}`}>
         {fmt(displaySec)}
       </span>
     </div>

@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* dark: répond à .dark (shadcn) ET à .sombre (mode nuit opt-in de Vivilov) */
+@custom-variant dark (&:is(.dark *, .sombre *));
 
 /* ===== Utilitaires du thème Vivilov (directive @utility : les variantes
    Tailwind — hover:, active:, … — sont générées automatiquement) ===== */
@@ -46,6 +47,42 @@
 /* Halo violet signature (respiration de la page d'accueil, version statique). */
 @utility v-glow-cta {
   box-shadow: 0 10px 30px -5px var(--v-glow-purple);
+}
+
+/* ===== Encre du thème — bascule clair (défaut) ↔ sombre (opt-in) =====
+   Utilisé à la place de text-white* sur les surfaces de l'app :
+   v-fg = texte principal · v-fg-muted = secondaire · v-fg-faint = discret.
+   v-fg-media = blanc constant, pour du texte posé sur vidéo/photo. */
+@utility v-fg {
+  color: var(--v-fg);
+}
+@utility v-fg-muted {
+  color: var(--v-fg-muted);
+}
+@utility v-fg-faint {
+  color: var(--v-fg-faint);
+}
+@utility v-fg-media {
+  color: var(--v-fg-media);
+}
+
+/* Verre thème-aware — remplace glass-dark dans l'app (barre de navigation,
+   chips flottantes…) : blanc translucide en clair, zinc translucide en sombre. */
+@utility v-glass {
+  background: var(--v-glass-bg);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--v-glass-border);
+}
+
+/* Voile de transition entre onglets — discret en clair, prononcé en sombre. */
+@utility v-veil {
+  background-color: var(--v-veil);
+}
+
+/* Fondu de fond derrière la barre de navigation (vers le haut). */
+@utility v-fade-bottom {
+  background-image: linear-gradient(to top, var(--v-fade-strong) 0%, var(--v-fade-mid) 55%, transparent 100%);
 }
 
 @theme inline {
@@ -103,21 +140,31 @@
   --vibe-orange-soft: oklch(0.8 0.16 55);
   --vibe-pink: oklch(0.65 0.24 350);
 
-  /* ===== Thème immersif Vivilov (récupéré de la page d'accueil) =====
-     Fond #09090B + vidéo, textes blancs /95→/70, dégradé signature
-     #FF7E67 → #9B51E0, halo violet #9B51E0. Appliqué par défaut
-     dans toute l'app. L'utilisateur peut opter pour le mode sombre
-     profond via .sombre (voir plus bas). */
-  --v-bg-page: #0a0612;            /* fond ambiant derrière la colonne */
-  --v-bg-app: #09090b;             /* fond exact de la page d'accueil */
-  --v-surface-1: oklch(1 0 0 / 5%);
-  --v-surface-2: oklch(1 0 0 / 10%);
-  --v-surface-3: oklch(1 0 0 / 16%);
-  --v-surface-solid: oklch(0.19 0.01 295);  /* ≈ zinc-900, cartes pleines */
-  --v-divider: oklch(1 0 0 / 8%);
-  --v-glow-purple: oklch(0.55 0.24 295 / 0.55);
-  --v-glow-orange: oklch(0.72 0.19 55 / 0.35);
-  --v-ambient-opacity: 1;
+  /* ===== Thème Vivilov CLAIR (défaut dans toute l'app) =====
+     Fond doux lavande, encre violette profonde, surfaces blanches — le
+     dégradé signature #FF7E67 → #9B51E0 est conservé (il reste lisible sur
+     fond clair). Le mode sombre est un OPT-IN utilisateur (.sombre) et le
+     funnel pré-app (accueil + auth + onboarding) reste immersif sombre
+     (.immersive), indépendamment du thème choisi. */
+  --v-bg-page: #f4f3f8;            /* fond ambiant derrière la colonne */
+  --v-bg-app: #fdfcfe;             /* fond de la colonne app, quasi blanc */
+  --v-fg: oklch(0.22 0.02 295);    /* encre principale (violet très sombre) */
+  --v-fg-muted: oklch(0.45 0.02 295);
+  --v-fg-faint: oklch(0.57 0.015 295);
+  --v-fg-media: #ffffff;           /* texte sur vidéo/photo — blanc constant */
+  --v-surface-1: oklch(0.22 0.02 295 / 4%);
+  --v-surface-2: oklch(0.22 0.02 295 / 7%);
+  --v-surface-3: oklch(0.22 0.02 295 / 12%);
+  --v-surface-solid: #ffffff;      /* cartes pleines */
+  --v-divider: oklch(0.22 0.02 295 / 10%);
+  --v-glass-bg: oklch(1 0 0 / 0.74);
+  --v-glass-border: oklch(0.22 0.02 295 / 8%);
+  --v-veil: oklch(0.22 0.02 295 / 14%);
+  --v-fade-strong: oklch(0.99 0.005 295);
+  --v-fade-mid: oklch(0.99 0.005 295 / 0.85);
+  --v-glow-purple: oklch(0.55 0.24 295 / 0.4);
+  --v-glow-orange: oklch(0.72 0.19 55 / 0.3);
+  --v-ambient-opacity: 0.5;
 
   --background: oklch(0.99 0.005 295);
   --foreground: oklch(0.18 0.02 295);
@@ -152,7 +199,12 @@
   --sidebar-ring: oklch(0.55 0.24 295);
 }
 
-.dark {
+/* ===== MODE NUIT (opt-in utilisateur) =====
+   Le thème par défaut est le clair ci-dessus (:root). L'utilisateur peut
+   activer le mode nuit depuis son profil : la classe .sombre est posée sur
+   <html> par next-themes — elle bascule les tokens Vivilov ET les tokens
+   shadcn (les composants ui/* suivent le mode nuit automatiquement). */
+:is(.dark, .sombre) {
   --background: oklch(0.13 0.02 295);
   --foreground: oklch(0.97 0.005 295);
   --card: oklch(0.18 0.025 295);
@@ -186,28 +238,69 @@
   --sidebar-ring: oklch(0.62 0.2 295);
 }
 
-/* ===== MODE SOMBRE (opt-in utilisateur, « lights-out » AMOLED) =====
-   Le thème par défaut reste le thème immersif de la page d'accueil
-   (:root ci-dessus). L'utilisateur peut opter pour le mode sombre
-   profond depuis son profil : noir pur #000, ambiance éteinte,
-   surfaces encore plus discrètes — idéal écrans AMOLED. */
+/* ===== MODE NUIT (opt-in utilisateur) — tokens Vivilov =====
+   Retrouve l'ambiance sombre historique de l'app : fond #09090B, textes
+   blancs /95→/70, surfaces zinc translucides. */
 .sombre {
-  --v-bg-page: #000;
-  --v-bg-app: #000;
-  --v-surface-1: oklch(1 0 0 / 4%);
-  --v-surface-2: oklch(1 0 0 / 8%);
-  --v-surface-3: oklch(1 0 0 / 13%);
-  --v-surface-solid: oklch(0.1 0.005 295);
-  --v-divider: oklch(1 0 0 / 7%);
-  --v-glow-purple: oklch(0.55 0.24 295 / 0.28);
-  --v-glow-orange: oklch(0.72 0.19 55 / 0.25);
-  --v-ambient-opacity: 0.18;
+  --v-bg-page: #0a0612;
+  --v-bg-app: #09090b;
+  --v-fg: #ffffff;
+  --v-fg-muted: oklch(1 0 0 / 72%);
+  --v-fg-faint: oklch(1 0 0 / 55%);
+  --v-fg-media: #ffffff;
+  --v-surface-1: oklch(1 0 0 / 5%);
+  --v-surface-2: oklch(1 0 0 / 10%);
+  --v-surface-3: oklch(1 0 0 / 16%);
+  --v-surface-solid: oklch(0.19 0.01 295);  /* ≈ zinc-900, cartes pleines */
+  --v-divider: oklch(1 0 0 / 8%);
+  --v-glass-bg: oklch(0.13 0.02 295 / 0.6);
+  --v-glass-border: oklch(1 0 0 / 12%);
+  --v-veil: oklch(0 0 0 / 40%);
+  --v-fade-strong: #09090b;
+  --v-fade-mid: oklch(0.04 0.005 295 / 0.9);
+  --v-glow-purple: oklch(0.55 0.24 295 / 0.55);
+  --v-glow-orange: oklch(0.72 0.19 55 / 0.35);
+  --v-ambient-opacity: 1;
 }
 .sombre .glass-dark {
   background: oklch(0 0 0 / 0.72);
   border-color: oklch(1 0 0 / 8%);
 }
 .sombre .vibe-glow {
+  box-shadow: 0 10px 34px -12px var(--v-glow-purple), 0 4px 14px -6px var(--v-glow-orange);
+}
+
+/* ===== FUNNEL IMERSIF (toujours sombre, quel que soit le thème) =====
+   Page d'accueil (vidéo de fond), écran/modal d'auth et onboarding :
+   ces écrans « pré-app » gardent l'ambiance cinématique de la vidéo
+   même quand l'utilisateur a choisi le mode nuit — ou le clair. Les
+   valeurs reprennent celles du mode nuit. */
+.immersive {
+  --v-bg-page: #0a0612;
+  --v-bg-app: #09090b;
+  --v-fg: #ffffff;
+  --v-fg-muted: oklch(1 0 0 / 72%);
+  --v-fg-faint: oklch(1 0 0 / 55%);
+  --v-fg-media: #ffffff;
+  --v-surface-1: oklch(1 0 0 / 5%);
+  --v-surface-2: oklch(1 0 0 / 10%);
+  --v-surface-3: oklch(1 0 0 / 16%);
+  --v-surface-solid: oklch(0.19 0.01 295);
+  --v-divider: oklch(1 0 0 / 8%);
+  --v-glass-bg: oklch(0.13 0.02 295 / 0.6);
+  --v-glass-border: oklch(1 0 0 / 12%);
+  --v-veil: oklch(0 0 0 / 40%);
+  --v-fade-strong: #09090b;
+  --v-fade-mid: oklch(0.04 0.005 295 / 0.9);
+  --v-glow-purple: oklch(0.55 0.24 295 / 0.55);
+  --v-glow-orange: oklch(0.72 0.19 55 / 0.35);
+  --v-ambient-opacity: 1;
+}
+.immersive .glass-dark {
+  background: oklch(0 0 0 / 0.72);
+  border-color: oklch(1 0 0 / 8%);
+}
+.immersive .vibe-glow {
   box-shadow: 0 10px 34px -12px var(--v-glow-purple), 0 4px 14px -6px var(--v-glow-orange);
 }
 

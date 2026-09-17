@@ -585,7 +585,7 @@ export function EmojiBurst({
 /// label. Drops into chat headers or message lists.
 export function TypingDots({
   label,
-  dotClassName = "bg-white/70",
+  dotClassName = "bg-(--v-fg-muted)",
   className = "",
 }: {
   label?: string;

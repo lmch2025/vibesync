@@ -121,13 +121,13 @@ export function PwaInstallPrompt() {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.85, opacity: 0, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="relative w-full max-w-sm rounded-3xl bg-[#0a0612] ring-1 ring-white/10 p-6 shadow-2xl"
+            className="relative w-full max-w-sm rounded-3xl v-surface-solid ring-1 ring-[var(--v-divider)] p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close */}
             <button
               onClick={dismiss}
-              className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full v-surface-2 text-white hover:v-surface-3 transition"
+              className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full v-surface-2 v-fg hover:v-surface-3 transition"
               aria-label="Fermer"
             >
               <X className="h-4 w-4" />
@@ -143,10 +143,10 @@ export function PwaInstallPrompt() {
               <Smartphone className="h-8 w-8 text-white" />
             </motion.div>
 
-            <h3 className="font-display text-xl font-bold text-center text-white">
+            <h3 className="font-display text-xl font-bold text-center v-fg">
               Installe Vivilov
             </h3>
-            <p className="text-sm text-white/70 text-center mt-1 mb-5">
+            <p className="text-sm v-fg-muted text-center mt-1 mb-5">
               Lance-toi en 1 tap — pas de store, pas d'attente. Ton app
               plein écran, notifications incluses.
             </p>
@@ -155,7 +155,7 @@ export function PwaInstallPrompt() {
             <div className="space-y-2 mb-5">
               {platform === "ios" && (
                 <Instruction
-                  icon={<Share className="h-4 w-4 text-sky-300" />}
+                  icon={<Share className="h-4 w-4 text-sky-500 dark:text-sky-300" />}
                   text="Tape le bouton Partager"
                 />
               )}
@@ -167,7 +167,7 @@ export function PwaInstallPrompt() {
               )}
               {platform === "android" && !deferred && (
                 <Instruction
-                  icon={<MoreVertical className="h-4 w-4 text-white/70" />}
+                  icon={<MoreVertical className="h-4 w-4 v-fg-muted" />}
                   text="Menu ⋮ → Installer l'application"
                 />
               )}
@@ -194,7 +194,7 @@ export function PwaInstallPrompt() {
                   e.preventDefault();
                   dismiss();
                 }}
-                className="block w-full h-12 rounded-2xl v-surface-2 ring-1 ring-white/15 text-white font-display font-bold text-sm active:scale-95 transition text-center leading-[3rem]"
+                className="block w-full h-12 rounded-2xl v-surface-2 ring-1 ring-[var(--v-divider)] v-fg font-display font-bold text-sm active:scale-95 transition text-center leading-[3rem]"
               >
                 J'ai compris
               </a>
@@ -202,7 +202,7 @@ export function PwaInstallPrompt() {
 
             <button
               onClick={dismiss}
-              className="w-full text-center text-[11px] text-white/70 hover:text-white/70 transition mt-3"
+              className="w-full text-center text-[11px] v-fg-muted hover:v-fg transition mt-3"
             >
               Plus tard
             </button>
@@ -221,11 +221,11 @@ function Instruction({
   text: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl v-surface-1 ring-1 ring-white/10 px-3 py-2.5">
+    <div className="flex items-center gap-3 rounded-2xl v-surface-1 ring-1 ring-[var(--v-divider)] px-3 py-2.5">
       <span className="grid place-items-center h-7 w-7 rounded-full v-surface-2 shrink-0">
         {icon}
       </span>
-      <span className="text-sm text-white/80">{text}</span>
+      <span className="text-sm v-fg-muted">{text}</span>
     </div>
   );
 }
@@ -234,7 +234,7 @@ function PlusIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-4 w-4 text-emerald-300"
+      className="h-4 w-4 text-emerald-500 dark:text-emerald-300"
       fill="none"
       stroke="currentColor"
       strokeWidth="2.5"

@@ -96,7 +96,7 @@ export default function SocialShare({
     {
       key: "twitter",
       label: "Twitter / X",
-      color: "v-bg-app",
+      color: "bg-black",
       icon: <Send className="h-5 w-5" />,
       onClick: handleTwitter,
     },
@@ -111,7 +111,7 @@ export default function SocialShare({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[400px] p-0 gap-0 overflow-hidden rounded-3xl border-white/10 v-bg-app! text-white">
+      <DialogContent className="max-w-[400px] p-0 gap-0 overflow-hidden rounded-3xl v-divider v-bg-app! v-fg">
         {/* Header — vibe-gradient with floating gift emoji */}
         <div className="relative vibe-gradient px-6 pt-8 pb-8 overflow-hidden text-center">
           <div className="absolute -top-12 -right-12 h-40 w-40 rounded-full v-surface-3 blur-2xl" />
@@ -147,7 +147,7 @@ export default function SocialShare({
         {/* Body */}
         <div className="v-bg-app px-5 py-5">
           {/* Section label */}
-          <p className="text-xs font-semibold text-white/75 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+          <p className="text-xs font-semibold v-fg-muted uppercase tracking-wide mb-2 flex items-center gap-1.5">
             <Share2 className="h-3.5 w-3.5 text-primary" /> Aperçu du partage
           </p>
 
@@ -156,7 +156,7 @@ export default function SocialShare({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12, duration: 0.35 }}
-            className="rounded-2xl ring-1 ring-white/10 v-surface-1 overflow-hidden shadow-sm"
+            className="rounded-2xl ring-1 ring-[var(--v-divider)] v-surface-1 overflow-hidden shadow-sm"
           >
             {/* Preview image area: gift emoji large on gradient bg (no real OG image) */}
             <div className="relative aspect-[1.91/1] vibe-gradient overflow-hidden">
@@ -181,17 +181,17 @@ export default function SocialShare({
             {/* Meta block */}
             <div className="px-3.5 py-3">
               <div className="mb-1.5">
-                <VibeLogo className="scale-90 origin-left [&_span:last-child]:text-white" />
+                <VibeLogo className="scale-90 origin-left [&_span:last-child]:v-fg" />
               </div>
-              <p className="font-semibold text-sm text-white leading-snug line-clamp-2">
+              <p className="font-semibold text-sm v-fg leading-snug line-clamp-2">
                 {fromName} t&apos;a offert un cadeau sur Vivilov 🎁
               </p>
-              <p className="text-xs text-white/75 leading-snug mt-1 line-clamp-2">
+              <p className="text-xs v-fg-muted leading-snug mt-1 line-clamp-2">
                 Découvre Vivilov — la rencontre authentique en vidéo. Rejoins
                 l&apos;aventure !
               </p>
               {/* Fake URL bar */}
-              <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-white/75">
+              <div className="mt-2.5 flex items-center gap-1.5 text-[11px] v-fg-muted">
                 <Link2 className="h-3 w-3 shrink-0" />
                 <span className="truncate">vivilov.app</span>
               </div>
@@ -222,7 +222,7 @@ export default function SocialShare({
                 >
                   {b.icon}
                 </span>
-                <span className="text-[10.5px] font-medium text-white/75 text-center leading-tight max-w-[68px] line-clamp-2">
+                <span className="text-[10.5px] font-medium v-fg-muted text-center leading-tight max-w-[68px] line-clamp-2">
                   {b.label}
                 </span>
               </motion.button>
@@ -230,14 +230,14 @@ export default function SocialShare({
           </div>
 
           {/* Marketing CTA */}
-          <p className="mt-5 text-center text-sm text-white/80 leading-relaxed">
+          <p className="mt-5 text-center text-sm v-fg-muted leading-relaxed">
             Plus tu partages, plus tu rencontres des personnes authentiques. 💜
           </p>
 
           {/* Dismiss */}
           <button
             onClick={() => onOpenChange(false)}
-            className="mt-3 w-full h-10 rounded-2xl bg-transparent ring-1 ring-white/15 text-white/75 hover:text-white hover:v-surface-2 text-sm font-medium flex items-center justify-center gap-1.5 transition"
+            className="mt-3 w-full h-10 rounded-2xl bg-transparent ring-1 ring-[var(--v-divider)] v-fg-muted hover:v-fg hover:v-surface-2 text-sm font-medium flex items-center justify-center gap-1.5 transition"
           >
             <Clock className="h-4 w-4" /> Plus tard
           </button>

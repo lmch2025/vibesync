@@ -37,15 +37,15 @@ export function GemBadge({
     <Comp
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-md px-2.5 py-1 text-sm font-semibold text-white ring-1 ring-white/20",
-        onClick && "transition hover:bg-white/20 active:scale-95 cursor-pointer",
+        "inline-flex items-center gap-1.5 rounded-full bg-(--v-surface-2) backdrop-blur-md px-2.5 py-1 text-sm font-semibold v-fg ring-1 ring-(--v-divider)",
+        onClick && "transition hover:bg-(--v-surface-3) active:scale-95 cursor-pointer",
         className
       )}
     >
       <GemIcon className="h-3.5 w-3.5" />
       <span className="tabular-nums">{new Intl.NumberFormat("fr-FR").format(gems)}</span>
       <span className="text-xs font-medium ml-0.5">Vibes</span>
-      {onClick && <span className="text-white/60 text-xs ml-0.5">+</span>}
+      {onClick && <span className="v-fg-muted text-xs ml-0.5">+</span>}
     </Comp>
   );
 }

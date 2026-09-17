@@ -48,7 +48,7 @@ export function InsufficientVibesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[400px] p-0 gap-0 overflow-hidden rounded-3xl border-white/10 v-bg-app! text-white">
+      <DialogContent className="max-w-[400px] p-0 gap-0 overflow-hidden rounded-3xl v-divider v-bg-app! v-fg [&_[data-slot=dialog-close]]:text-white">
         {/* Header */}
         <div className="relative vibe-gradient px-6 pt-6 pb-7 overflow-hidden">
           <div className="absolute -top-10 -right-10 h-36 w-36 rounded-full bg-white/15 blur-2xl" />
@@ -79,7 +79,7 @@ export function InsufficientVibesModal({
 
         {/* Recommended pack */}
         <div className="v-bg-app px-5 py-5">
-          <p className="text-xs font-semibold text-white/75 uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
+          <p className="text-xs font-semibold v-fg-muted uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
             <ThumbsUp className="h-3.5 w-3.5 text-vibe-orange" /> Pack recommandé
           </p>
 
@@ -99,21 +99,21 @@ export function InsufficientVibesModal({
               </span>
             )}
             <div className="flex items-center gap-3">
-              <div className="grid place-items-center h-12 w-12 rounded-xl bg-white/10 shrink-0">
+              <div className="grid place-items-center h-12 w-12 rounded-xl v-surface-2 shrink-0">
                 <GemIcon className="h-7 w-7" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-1.5">
                   <span className="font-display text-2xl font-black tabular-nums">{recommended.gems}</span>
-                  <span className="text-xs text-white/75">Vibes</span>
+                  <span className="text-xs v-fg-muted">Vibes</span>
                   {recommended.bonus > 0 && (
-                    <span className="text-[11px] bg-emerald-400/20 text-emerald-300 rounded-full px-1.5 py-0.5">
+                    <span className="text-[11px] bg-emerald-400/20 text-emerald-600 dark:text-emerald-300 rounded-full px-1.5 py-0.5">
                       +{recommended.bonus} bonus
                     </span>
                   )}
                 </div>
                 {leftover > 0 && (
-                  <p className="text-[11px] text-white/75 mt-0.5">
+                  <p className="text-[11px] v-fg-muted mt-0.5">
                     Après cet achat, il te restera {leftover} Vibes pour la suite.
                   </p>
                 )}
@@ -122,7 +122,7 @@ export function InsufficientVibesModal({
                 <div className="font-display text-xl font-bold vibe-text-gradient">
                   {formatIn(tier.amount, tier.currency)}
                 </div>
-                <div className="text-[10px] text-white/75">{tier.currency}</div>
+                <div className="text-[10px] v-fg-muted">{tier.currency}</div>
               </div>
             </div>
           </motion.div>
@@ -146,12 +146,12 @@ export function InsufficientVibesModal({
               onViewAllPacks();
               onOpenChange(false);
             }}
-            className="mt-2.5 w-full h-11 rounded-2xl bg-transparent ring-1 ring-white/15 text-white/80 font-medium text-sm flex items-center justify-center gap-1.5 hover:v-surface-2 transition"
+            className="mt-2.5 w-full h-11 rounded-2xl bg-transparent ring-1 ring-(--v-divider) v-fg-muted font-medium text-sm flex items-center justify-center gap-1.5 hover:v-surface-2 transition"
           >
             Voir tous les packs <ArrowRight className="h-4 w-4" />
           </button>
 
-          <p className="text-[11px] text-white/70 text-center mt-3 leading-relaxed">
+          <p className="text-[11px] v-fg-muted text-center mt-3 leading-relaxed">
             Pas d&apos;abonnement. Tes Vibes ne expirent jamais. 💎
           </p>
         </div>

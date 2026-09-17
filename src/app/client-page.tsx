@@ -9,10 +9,11 @@ import { toast } from "sonner";
 
 // Branded splash shown during the initial session-hydration fetch.
 // Prevents ANY flash of the landing page for authenticated users.
-// Thème immersif de la page d'accueil : fond #0a0612, texte blanc lisible.
+// Funnel pré-app : ambiance immersif sombre permanente (classe .immersive),
+// quel que soit le thème choisi par l'utilisateur dans l'app.
 function AuthSplash() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center v-bg-page gap-4">
+    <div className="immersive min-h-dvh flex flex-col items-center justify-center v-bg-page gap-4">
       <div className="relative flex items-center justify-center">
         {/* Outer glow ring */}
         <span className="absolute h-20 w-20 rounded-full bg-[#9B51E0]/30 animate-ping" />
@@ -26,7 +27,7 @@ function AuthSplash() {
   );
 }
 
-export function ClientHome({ initialView, initialUser, initialRates }: { initialView: View, initialUser?: any, initialRates?: any }) {
+export function ClientHome({ initialView, initialUser, initialRates, initialLandingVideo }: { initialView: View, initialUser?: any, initialRates?: any, initialLandingVideo?: string }) {
   const view = useVibe((s) => s.view);
   const setView = useVibe((s) => s.setView);
   const setMe = useVibe((s) => s.setMe);
@@ -98,9 +99,9 @@ export function ClientHome({ initialView, initialUser, initialRates }: { initial
   const activeView = view;
 
   return (
-    <div className="min-h-screen flex flex-col v-bg-page">
+    <div className="min-h-dvh flex flex-col v-bg-page">
       {activeView === "landing" && (
-        <ImmersiveLanding onEnterApp={() => setView("app")} />
+        <ImmersiveLanding videoUrl={initialLandingVideo} onEnterApp={() => setView("app")} />
       )}
       {activeView === "app" && <AppDemo onExit={() => setView("landing")} />}
       {activeView === "admin" && <AdminDashboard onExit={() => setView("app")} />}

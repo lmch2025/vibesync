@@ -130,7 +130,7 @@ export function PremiumActionsSheet({
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl v-surface-solid ring-1 ring-white/10 p-4 pb-6 max-h-[70vh] overflow-y-auto no-scrollbar"
+              className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl v-surface-solid v-fg ring-1 ring-(--v-divider) p-4 pb-6 max-h-[70vh] overflow-y-auto no-scrollbar"
             >
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-display font-bold text-lg flex items-center gap-1.5">
@@ -141,15 +141,15 @@ export function PremiumActionsSheet({
                 </motion.button>
               </div>
 
-              <div className="flex items-center gap-1.5 mb-4 rounded-full v-surface-1 ring-1 ring-white/10 px-3 py-1.5">
+              <div className="flex items-center gap-1.5 mb-4 rounded-full v-surface-1 ring-1 ring-(--v-divider) px-3 py-1.5">
                 <GemIcon className="h-4 w-4" />
                 <span className="text-sm font-bold tabular-nums">{me?.gems ?? 0}</span>
-                <span className="text-xs text-white/70">Vibes</span>
+                <span className="text-xs v-fg-muted">Vibes</span>
               </div>
 
               {Object.entries(grouped).map(([cat, items]) => items.length > 0 && (
                 <div key={cat} className="mb-4">
-                  <p className="text-[10px] uppercase tracking-wide text-white/70 font-semibold mb-2">
+                  <p className="text-[10px] uppercase tracking-wide v-fg-muted font-semibold mb-2">
                     {cat === "swipe" ? "🎯 Swipe" : cat === "social" ? "💬 Social" : cat === "profile" ? "👤 Profil" : "⚙️ Méta"}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -159,12 +159,12 @@ export function PremiumActionsSheet({
                         onClick={() => execute(action)}
                         disabled={busy === action.key}
                         whileTap={{ scale: 0.95 }}
-                        className="relative flex flex-col items-start gap-1 rounded-2xl v-surface-1 ring-1 ring-white/10 p-3 hover:v-surface-2 transition disabled:opacity-50 text-left"
+                        className="relative flex flex-col items-start gap-1 rounded-2xl v-surface-1 ring-1 ring-(--v-divider) p-3 hover:v-surface-2 transition disabled:opacity-50 text-left"
                       >
                         <span className="text-2xl">{action.emoji}</span>
                         <span className="text-xs font-bold leading-tight">{action.label}</span>
-                        <span className="text-[10px] text-white/70 leading-tight">{action.description}</span>
-                        <span className="flex items-center gap-0.5 text-[10px] text-fuchsia-300 font-semibold mt-1">
+                        <span className="text-[10px] v-fg-muted leading-tight">{action.description}</span>
+                        <span className="flex items-center gap-0.5 text-[10px] text-fuchsia-600 dark:text-fuchsia-300 font-semibold mt-1">
                           <GemIcon className="h-2.5 w-2.5" /> {action.cost}
                         </span>
                         {busy === action.key && (

@@ -139,7 +139,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
   return (
     <motion.div
       animate={shakeControls}
-      className="relative w-full max-w-md h-[600px] sm:h-[680px] rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10 v-bg-page text-white"
+      className="immersive relative w-full max-w-md h-[600px] sm:h-[680px] rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10 v-bg-page text-white"
     >
       <div className="absolute inset-0 vibe-gradient-soft" />
       <div className="absolute inset-0 overflow-hidden">

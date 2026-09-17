@@ -1,12 +1,13 @@
 "use client";
 // ThemeProvider — gestion du thème de l'app.
 //
-// Par défaut, toute l'app porte le thème immersif de la page d'accueil
-// (« vivi » : fond #09090B, textes blancs /95→/70, dégradé signature
-// corail → violet, halo #9B51E0). Il revient à l'utilisateur d'opter
-// pour le mode sombre profond (« sombre » : noir pur AMOLED) depuis
-// son profil — choix persistant, appliqué avant le premier rendu
-// (aucun flash).
+// Par défaut, toute l'app est en thème CLAIR (« vivi » : fond lavande/blanc,
+// encre violette profonde, dégradé signature corail → violet conservé).
+// Il revient à l'utilisateur d'opter pour le mode nuit (« sombre » :
+// fond #09090B + composants shadcn assombris) depuis son profil — choix
+// persistant, appliqué avant le premier rendu (aucun flash).
+// Le funnel pré-app (accueil vidéo, auth, onboarding) reste immersif sombre
+// en toutes circonstances (classe .immersive posée sur ces écrans).
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 

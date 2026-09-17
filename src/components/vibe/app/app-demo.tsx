@@ -90,7 +90,7 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
         <div className="grid place-items-center h-full">
           <div className="relative grid place-items-center">
             {/* Anneau tournant autour du logo */}
-            <span className="absolute h-14 w-14 rounded-full border-2 border-white/10 border-t-violet-400 animate-spin" />
+            <span className="absolute h-14 w-14 rounded-full border-2 v-divider border-t-violet-400 animate-spin" />
             {/* Logo VS — même marque que l'AuthSplash */}
             <motion.div
               animate={{ scale: [1, 1.08, 1] }}
@@ -108,7 +108,7 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
   // Not authenticated — show the auth flow (centered card, no phone bezel).
   if (!me) {
     return (
-      <div className="relative min-h-screen grid place-items-center px-4 py-10">
+      <div className="relative min-h-dvh grid place-items-center px-4 py-10">
         <AuthScreen onSuccess={handleAuthSuccess} />
       </div>
     );
@@ -138,14 +138,15 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
       </div>
 
       {/* Voile de transition — remonté à chaque changement d'onglet (key={tab}),
-          donne l'impression que le nouvel écran « émerge » du noir. La stratégie
-          hidden/block des onglets est préservée (aucun unmount). */}
+          donne l'impression que le nouvel écran « émerge » du fond. La stratégie
+          hidden/block des onglets est préservée (aucun unmount). v-veil s'adapte
+          au thème : discret en clair, marqué en mode nuit. */}
       <motion.div
         key={tab}
         initial={{ opacity: 0.55, scale: 1.015 }}
         animate={{ opacity: 0, scale: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="absolute inset-0 z-10 pointer-events-none bg-black/40 backdrop-blur-[2px]"
+        className="absolute inset-0 z-10 pointer-events-none v-veil backdrop-blur-[2px]"
       />
 
       {/* Écran de chat en superposition */}
@@ -169,10 +170,12 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
         )}
       </AnimatePresence>
 
-      {/* bottom nav (hidden in chat) */}
+      {/* bottom nav (hidden in chat) — safe-area iOS/Android respectée :
+          la barre reste entièrement visible au-dessus de la barre système,
+          et v-fade-bottom fond la nav dans le fond de l'app (clair ou nuit). */}
       {!chatTarget && (
-        <div className="absolute bottom-0 inset-x-0 z-30 pb-2 pt-1 bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none">
-          <div className="mx-3 rounded-2xl glass-dark flex items-center justify-around p-1.5 pointer-events-auto">
+        <div className="absolute bottom-0 inset-x-0 z-30 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 v-fade-bottom pointer-events-none">
+          <div className="mx-3 rounded-2xl v-glass flex items-center justify-around p-1.5 pointer-events-auto shadow-lg">
             <NavBtn icon={<Heart className="h-5 w-5" />} label="Découvrir" active={tab === "swipe"} onClick={() => selectTab("swipe")} />
             <NavBtn icon={<MessageCircle className="h-5 w-5" />} label="Matchs" active={tab === "matches"} onClick={() => selectTab("matches")} />
             <NavBtn icon={<WalletIcon className="h-5 w-5" />} label="Boutique" active={tab === "wallet"} onClick={() => selectTab("wallet")} />
@@ -283,11 +286,12 @@ function InsufficientVibesHandler({ onGoWallet }: { onGoWallet: () => void }) {
 }
 
 /// Full-screen app shell — NO phone bezel. Centers content in a mobile-width
-/// column on a dark ambient background.
+/// column on an ambient background. Hauteurs en dvh : le contenu tient dans
+/// le viewport visible (barre d'URL mobile maintenue fixe, pas de scroll).
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <MotionConfig reducedMotion="user">
-      <div className="relative min-h-screen overflow-hidden flex flex-col items-center v-bg-page">
+      <div className="relative min-h-dvh overflow-hidden flex flex-col items-center v-bg-page">
         {/* ambient background */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="v-ambient-orb absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl animate-float-slow" />
@@ -295,7 +299,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Mobile-width column — full height, no phone bezel */}
-        <div className="relative z-10 w-full max-w-md h-screen flex-1 flex flex-col v-bg-app shadow-2xl overflow-hidden">
+        <div className="relative z-10 w-full max-w-md h-dvh flex-1 flex flex-col v-bg-app shadow-2xl overflow-hidden">
           {children}
         </div>
       </div>
@@ -323,7 +327,7 @@ function NavBtn({
       }}
       whileTap={{ scale: 0.88 }}
       className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition relative ${
-        active ? "text-white" : "text-white/70"
+        active ? "text-white" : "v-fg-muted"
       }`}
     >
       {active && (

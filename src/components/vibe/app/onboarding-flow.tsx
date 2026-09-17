@@ -160,7 +160,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   const stepTitles = ["Ton identité", "Toi en bref", "Ta recherche", "Ta vidéo 15s"];
 
   return (
-    <div className="dark relative min-h-screen w-full flex items-center justify-center bg-[#0a0612] text-white overflow-hidden px-4 py-6">
+    <div className="dark relative min-h-dvh w-full flex items-center justify-center bg-[#0a0612] text-white overflow-hidden px-4 py-6">
       {/* Ambient background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-20 -left-20 h-80 w-80 rounded-full bg-vibe-purple/25 blur-3xl animate-float-slow" />

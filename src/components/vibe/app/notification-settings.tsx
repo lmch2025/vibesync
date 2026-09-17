@@ -114,19 +114,19 @@ export function NotificationSettings() {
   }
 
   return (
-    <div className="rounded-2xl v-surface-1 ring-1 ring-white/10 p-4">
+    <div className="rounded-2xl v-surface-1 ring-1 ring-[var(--v-divider)] p-4">
       <h3 className="font-display font-bold text-sm mb-3 flex items-center gap-1.5">
         <BellRing className="h-4 w-4 text-accent" /> Notifications
       </h3>
 
       {/* Push permission status + Test button */}
-      <div className="rounded-xl v-surface-1 ring-1 ring-white/10 p-3 mb-3">
+      <div className="rounded-xl v-surface-2 ring-1 ring-[var(--v-divider)] p-3 mb-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <Bell className="h-4 w-4 text-white/70 shrink-0" />
+            <Bell className="h-4 w-4 v-fg-muted shrink-0" />
             <div className="min-w-0">
               <p className="text-xs font-semibold">Push navigateur</p>
-              <p className="text-[10px] text-white/70">
+              <p className="text-[10px] v-fg-muted">
                 {permission === "granted"
                   ? "✅ Accordé"
                   : permission === "denied"
@@ -141,7 +141,7 @@ export function NotificationSettings() {
             {permission === "default" && (
               <button
                 onClick={requestPermission}
-                className="h-7 px-2.5 rounded-lg v-surface-2 ring-1 ring-white/15 text-[10px] font-semibold hover:v-surface-3 transition"
+                className="h-7 px-2.5 rounded-lg v-surface-2 ring-1 ring-[var(--v-divider)] text-[10px] font-semibold hover:v-surface-3 transition"
               >
                 Autoriser
               </button>
@@ -173,7 +173,7 @@ export function NotificationSettings() {
           onChange={(v) => updatePref("matchesEnabled", v)}
         />
         <ToggleRow
-          icon={<MessageCircle className="h-3.5 w-3.5 text-sky-300" />}
+          icon={<MessageCircle className="h-3.5 w-3.5 text-sky-500 dark:text-sky-300" />}
           label="Messages"
           desc="Quelqu'un t'écrit"
           checked={prefs.messagesEnabled}
@@ -181,7 +181,7 @@ export function NotificationSettings() {
           onChange={(v) => updatePref("messagesEnabled", v)}
         />
         <ToggleRow
-          icon={<Gift className="h-3.5 w-3.5 text-emerald-300" />}
+          icon={<Gift className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-300" />}
           label="Cadeaux"
           desc="Tu reçois un cadeau"
           checked={prefs.giftsEnabled}
@@ -189,7 +189,7 @@ export function NotificationSettings() {
           onChange={(v) => updatePref("giftsEnabled", v)}
         />
         <ToggleRow
-          icon={<ThumbsUp className="h-3.5 w-3.5 text-amber-300" />}
+          icon={<ThumbsUp className="h-3.5 w-3.5 text-amber-500 dark:text-amber-300" />}
           label="Likes"
           desc="Quelqu'un t'a liké"
           checked={prefs.likesEnabled}
@@ -197,7 +197,7 @@ export function NotificationSettings() {
           onChange={(v) => updatePref("likesEnabled", v)}
         />
         <ToggleRow
-          icon={<Megaphone className="h-3.5 w-3.5 text-fuchsia-300" />}
+          icon={<Megaphone className="h-3.5 w-3.5 text-fuchsia-500 dark:text-fuchsia-300" />}
           label="Marketing"
           desc="News, promos, nouveautés"
           checked={prefs.marketingEnabled}
@@ -226,12 +226,12 @@ function ToggleRow({
 }) {
   return (
     <div className="flex items-center gap-3 py-2">
-      <span className="grid place-items-center h-7 w-7 rounded-full v-surface-1 shrink-0">
+      <span className="grid place-items-center h-7 w-7 rounded-full v-surface-2 shrink-0">
         {icon}
       </span>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold">{label}</p>
-        <p className="text-[10px] text-white/70">{desc}</p>
+        <p className="text-[10px] v-fg-muted">{desc}</p>
       </div>
       <motion.div
         whileTap={{ scale: 0.9 }}

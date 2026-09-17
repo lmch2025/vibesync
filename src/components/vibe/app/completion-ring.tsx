@@ -66,7 +66,7 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative rounded-3xl v-surface-1 ring-1 ring-white/10 p-5 overflow-hidden"
+      className="relative rounded-3xl v-surface-1 ring-1 ring-(--v-divider) p-5 overflow-hidden"
     >
       {/* Confetti Explosion (Triggered on 100%) */}
       <AnimatePresence>
@@ -91,7 +91,7 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
       <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-vibe-orange/15 blur-3xl pointer-events-none" />
 
       <div className="relative flex flex-col items-center gap-4">
-        <h3 className="font-display font-bold text-sm text-white/80 self-start flex items-center gap-1.5">
+        <h3 className="font-display font-bold text-sm v-fg self-start flex items-center gap-1.5">
           <span className="text-base">🎯</span> Complétion du profil
         </h3>
 
@@ -127,7 +127,7 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
                 cy={size / 2}
                 r={radius}
                 fill="none"
-                stroke="rgba(255,255,255,0.08)"
+                className="stroke-(--v-divider)"
                 strokeWidth={strokeWidth}
               />
               <motion.circle
@@ -156,7 +156,7 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
                 className="font-display text-3xl font-black vibe-text-gradient"
                 format={(n) => `${Math.round(n)}%`}
               />
-                <span className="text-[10px] text-white/70 mt-0.5">
+                <span className="text-[10px] v-fg-muted mt-0.5">
                   {completedCount}/{totalCount}
                 </span>
               </div>
@@ -176,7 +176,7 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
                 className={`flex flex-col items-center gap-0.5 rounded-xl p-1.5 text-center transition ${
                   t.done
                     ? "bg-emerald-500/10 ring-1 ring-emerald-400/20 cursor-default"
-                    : `v-surface-1 ring-1 ring-white/10 ${onTaskClick ? "cursor-pointer hover:v-surface-2 hover:ring-white/20 active:scale-95" : ""}`
+                    : `v-surface-1 ring-1 ring-(--v-divider) ${onTaskClick ? "cursor-pointer hover:v-surface-2 hover:ring-primary/25 active:scale-95" : ""}`
                 }`}
                 title={t.label}
               >
@@ -191,7 +191,7 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
                 </span>
                 <span
                   className={`text-[8px] leading-tight ${
-                    t.done ? "text-emerald-300/80" : "text-white/70"
+                    t.done ? "text-emerald-600 dark:text-emerald-300" : "v-fg-muted"
                   }`}
                 >
                   {t.label}
@@ -202,7 +202,7 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
         )}
 
         {!loading && percentage < 100 && (
-          <p className="text-[11px] text-white/70 text-center">
+          <p className="text-[11px] v-fg-muted text-center">
             {percentage >= 80
               ? "Presque parfait ! 🎉"
               : percentage >= 50
@@ -211,7 +211,7 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
             </p>
           )}
           {!loading && percentage === 100 && (
-            <p className="text-[11px] text-emerald-300 text-center font-semibold">
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-300 text-center font-semibold">
               Profil complet ! Tu rayonnes ✨
             </p>
           )}

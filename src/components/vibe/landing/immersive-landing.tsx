@@ -6,8 +6,10 @@ import { AuthModal } from "@/components/vibe/auth-modal";
 import { useVibe } from "@/lib/vibe/store";
 
 export function ImmersiveLanding({
+  videoUrl,
   onEnterApp,
 }: {
+  videoUrl?: string; // vidéo de fond administrable (Vercel Blob) — fallback local
   onEnterApp: () => void;
 }) {
   const setView = useVibe((s) => s.setView);
@@ -58,7 +60,9 @@ export function ImmersiveLanding({
           <div className="h-8 w-8 rounded-full border border-white/10 border-t-white/60 animate-spin" />
         </div>
 
-        {/* Video: Respects save-data by conditionally rendering autoPlay */}
+        {/* Video: Respects save-data by conditionally rendering autoPlay.
+            Source : vidéo administrable via le panel admin (Vercel Blob),
+            avec repli sur la vidéo locale par défaut. */}
         <video
           ref={videoRef}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
@@ -73,7 +77,7 @@ export function ImmersiveLanding({
           onLoadedData={() => setVideoLoaded(true)}
           style={{ filter: "contrast(1.05) saturate(1.1)" }}
         >
-          <source src="/profiles/swipe-bg.webm" type="video/webm" />
+          <source src={videoUrl || "/profiles/swipe-bg.webm"} type={videoUrl?.endsWith(".mp4") ? "video/mp4" : "video/webm"} />
         </video>
 
         {/* OVERLAY: vignette + gradient for legibility without uniform veil */}

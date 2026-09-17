@@ -32,6 +32,8 @@ export type AppSettings = {
   recWeightPopularity: number; // likes/superlikes received
   recBoostMultiplier: number; // score multiplier for boosted profiles
   deckSize: number; // profiles returned per deck fetch
+  // ── Apparence — page d'accueil ──
+  landingVideoUrl: string; // vidéo de fond (Vercel Blob), "" ⇒ vidéo locale par défaut
 };
 
 const DEFAULTS: AppSettings = {
@@ -54,6 +56,7 @@ const DEFAULTS: AppSettings = {
   recWeightPopularity: 10,
   recBoostMultiplier: 2,
   deckSize: 12,
+  landingVideoUrl: "",
 };
 
 /// Cache settings in-memory with a SHORT TTL (15s). A process-lifetime cache
@@ -100,6 +103,7 @@ export async function getSettings(): Promise<AppSettings> {
       recWeightPopularity: numOr(map.recWeightPopularity, DEFAULTS.recWeightPopularity),
       recBoostMultiplier: numOr(map.recBoostMultiplier, DEFAULTS.recBoostMultiplier),
       deckSize: Math.min(50, Math.max(4, numOr(map.deckSize, DEFAULTS.deckSize))),
+      landingVideoUrl: typeof map.landingVideoUrl === "string" ? map.landingVideoUrl : "",
     };
     cachedAt = Date.now();
     return cached;
