@@ -1,8 +1,8 @@
 {
   "version": 1,
   "algorithm": "sha256",
-  "generatedAt": "2026-09-17T16:22:32.882Z",
-  "headCommit": "bb9ae10",
+  "generatedAt": "2026-09-17T16:31:39.657Z",
+  "headCommit": "833afe4",
   "fileCount": 208,
   "files": {
     ".github/CODEOWNERS": "57e8796aaf9e0aac4c3cc2e0a6907ca5628e67b516b2158251b3b2cc9afcc98d",
@@ -18,7 +18,7 @@
     "docs/FEATURES.md": "1d91ae2549da196828e4692aeb0eeeb531a2600568ba1dda3e2cd55a3c6c8f12",
     "eslint.config.mjs": "de48c15b2ca2513f2be108fc04fd0c42147d12c708b9d2b2ae50d9bed6fb4a51",
     "next.config.ts": "06f56e62a3f30980dd16536762759facadcab43138ee105bea55e807dfac7467",
-    "package.json": "8b1dec6524deddb814904ecde98531cecde7dedc8e46d2477fe6ac497fd83bfe",
+    "package.json": "ab57e8a025dc03a275d9ed85d12d20c479b16b844ed994a43c7e06814be4e3c8",
     "postcss.config.mjs": "141ef24ca27a99d08962210fdf20212d3435fdcfa21b46cd88b44d22f751dfae",
     "prisma/schema.prisma": "10a12338a919a07b63e7c759b1329d34054a60cf2c5ecf88d0dcfeb7fc8d495e",
     "prisma/seed.js": "9535cecafb6477f363ad348edc8c8b3550740005a3b18065c289d380c629d5c4",
