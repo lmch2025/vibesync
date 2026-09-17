@@ -88,6 +88,7 @@ export function CountdownRing({
   size = 64,
   strokeWidth = 5,
   showTime = true,
+  tone = "auto",
 }: {
   type: BuffType;
   remainingMs: number;
@@ -96,6 +97,10 @@ export function CountdownRing({
   size?: number;
   strokeWidth?: number;
   showTime?: boolean;
+  /// "auto" = couleur de texte du thème (cartes normales) ;
+  /// "media" = blanc constant (posé sur fond sombre immersif, p.ex.
+  /// ActionSuccessModal — sinon l'encre du thème clair y serait illisible).
+  tone?: "auto" | "media";
 }) {
   // Live countdown — recompute remaining every second so the time
   // label ticks down even between API polls.
@@ -150,13 +155,15 @@ export function CountdownRing({
             <stop offset="100%" stopColor={gradient.to} />
           </linearGradient>
         </defs>
-        {/* Track */}
+        {/* Track — couleur de séparateur du thème : visible en clair
+            comme en sombre (un blanc fixe serait invisible en clair).
+            En mode « media » (fond sombre immersif), piste blanche fixe. */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.08)"
+          className={tone === "media" ? "stroke-white/10" : "stroke-(--v-divider)"}
           strokeWidth={strokeWidth}
         />
         {/* Progress */}
@@ -169,6 +176,10 @@ export function CountdownRing({
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
+          // initial={false} : pas d'animation « undefined → valeur » au
+          // montage (warning framer-motion) — l'anneau démarre directement
+          // à la position cible, puis s'anime à chaque poll.
+          initial={false}
           animate={{ strokeDashoffset: dashOffset }}
           transition={{ duration: 0.6, ease: "easeOut" }}
           style={{
@@ -178,7 +189,10 @@ export function CountdownRing({
       </svg>
       {showTime && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-display font-bold v-fg tabular-nums leading-none"
+          <span
+            className={`font-display font-bold tabular-nums leading-none ${
+              tone === "media" ? "v-fg-media" : "v-fg"
+            }`}
             style={{ fontSize: Math.max(8, size / 6) }}
           >
             {formatDuration(liveRemaining)}

@@ -58,11 +58,17 @@ export async function POST(req: Request) {
         break;
       }
       case "dailyDouble": {
-        // Mark streak reward as doubled for today.
+        // Mark streak reward as doubled for today + persist the buff
+        // timestamp so it shows in the profile's active-buffs section.
+        const ddUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await tx.user.update({
           where: { id: user.id },
-          data: { streakRewardClaimed: false }, // allow re-claim with double
+          data: {
+            streakRewardClaimed: false, // allow re-claim with double
+            dailyDoubleUntil: ddUntil,
+          },
         });
+        effect.until = ddUntil;
         effect.message = "Ta prochaine récompense streak sera doublée !";
         effect.doubled = true;
         break;
@@ -103,6 +109,13 @@ export async function POST(req: Request) {
           },
         });
         effect.peek = next3;
+        // Persist the buff timestamp (15 min) for the profile section.
+        const tfUntil = new Date(Date.now() + 15 * 60 * 1000);
+        await tx.user.update({
+          where: { id: user.id },
+          data: { timeFreezeUntil: tfUntil },
+        });
+        effect.until = tfUntil;
         break;
       }
       case "vibeRadar": {
@@ -172,6 +185,13 @@ export async function POST(req: Request) {
       }
       case "crushAlert": {
         // Record a "crush alert" — in production this sends a push notification.
+        // Timestamp persisté (1 h) pour la section « Actions actives » du profil.
+        const caUntil = new Date(Date.now() + 60 * 60 * 1000);
+        await tx.user.update({
+          where: { id: user.id },
+          data: { crushAlertUntil: caUntil },
+        });
+        effect.until = caUntil;
         effect.message = "Alerte crush envoyée ! Il/elle recevra une notification spéciale.";
         effect.sent = true;
         break;
@@ -188,6 +208,13 @@ export async function POST(req: Request) {
             });
           }
         }
+        // Buff persisté (1 h) pour la section « Actions actives » du profil.
+        const ghUntil = new Date(Date.now() + 60 * 60 * 1000);
+        await tx.user.update({
+          where: { id: user.id },
+          data: { goldenHeartUntil: ghUntil },
+        });
+        effect.until = ghUntil;
         effect.message = "💛 Cœur d'Or envoyé ! Tu es maintenant en tête de sa file avec un badge doré.";
         effect.golden = true;
         break;
@@ -235,7 +262,14 @@ export async function POST(req: Request) {
         break;
       }
       case "passport": {
-        // In production: set a passport expiry timestamp. Sandbox: simulate.
+        // Passport actif 24 h — timestamp persisté pour la section
+        // « Actions actives » du profil (et la géolocalisation du deck).
+        const ppUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await tx.user.update({
+          where: { id: user.id },
+          data: { passportUntil: ppUntil },
+        });
+        effect.until = ppUntil;
         effect.message = "✈️ Passport activé ! Tu peux swiper dans une autre ville pendant 24h.";
         effect.active = true;
         break;

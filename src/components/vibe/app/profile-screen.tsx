@@ -14,6 +14,8 @@ import { useCurrency } from "@/lib/vibe/use-currency";
 import { GEM_ACTIONS } from "@/lib/vibe/constants";
 import { toast } from "sonner";
 import { CompletionRing } from "./completion-ring";
+import { ActiveBuffsSection } from "./active-buffs-section";
+import { PremiumActionsSheet } from "./premium-actions-sheet";
 import { Input } from "@/components/ui/input";
 import { ConfettiBurst, AnimatedNumber, haptic, sfx, useSfxEnabled } from "./interactive-animations";
 
@@ -44,6 +46,9 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
   const [activeSlot, setActiveSlot] = useState(firstFilledSlot);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null); // slot à supprimer
   const [deleting, setDeleting] = useState(false);
+  // Ouvre le catalogue complet des actions premium (CTA de la section
+  // « Actions actives » : état vide ou « Prolonger » d'une action active).
+  const [premiumOpen, setPremiumOpen] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editSaving, setEditSaving] = useState(false);
@@ -198,7 +203,12 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         if (!res.ok) throw new Error(data.error);
         patchMe({ gems: data.gems, freeGems: data.freeGems });
         if (action === "seeLikes") toast.success("👁️ Likes reçus dévoilés");
-        if (action === "passport") toast.success("✈️ Passport activé 24h");
+        if (action === "passport") {
+          toast.success("✈️ Passport activé 24h");
+          // Rafraîchit instantanément la section « Actions actives »
+          // (le Passport vient d'y apparaître avec son compte à rebours).
+          window.dispatchEvent(new CustomEvent("vivilov:buff-activated"));
+        }
       } catch (e: any) { toast.error(e.message || "Erreur"); }
       finally { setBusy(null); }
     });
@@ -463,6 +473,13 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           <Stat label="Vibe" value={me?.profile?.vibeAnswer ?? "—"} icon={<Waves className="h-3.5 w-3.5 text-accent" />} />
         </div>
 
+        {/* ── ESPACE RÉSERVÉ : actions premium actives ──
+            Chaque action à durée activée (depuis n'importe quel onglet :
+            Découvrir, Premium, ou ici) apparaît automatiquement avec son
+            anneau de compte à rebours au dégradé. Interaction : toc →
+            panneau de détail + « Prolonger ». */}
+        <ActiveBuffsSection onOpenPremium={() => setPremiumOpen(true)} />
+
         {/* premium actions */}
         <h3 className="font-display font-bold text-sm mb-2 px-1">Premium</h3>
         <div className="space-y-2 mb-4">
@@ -673,6 +690,10 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Catalogue complet des actions premium — ouvert par la section
+          « Actions actives » (état vide → « Découvrir », détail → « Prolonger »). */}
+      <PremiumActionsSheet open={premiumOpen} onOpenChange={setPremiumOpen} />
     </motion.div>
   );
 }

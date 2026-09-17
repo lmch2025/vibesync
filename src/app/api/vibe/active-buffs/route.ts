@@ -140,14 +140,11 @@ export async function GET() {
     // Schema-backed fields (these always exist).
     pushIfActive("ghostMode", user.ghostModeUntil);
     pushIfActive("spotlight", user.spotlightUntil);
-
-    // Fields that may exist on a future schema migration — access via cast.
-    const u = user as unknown as Record<string, unknown>;
-    pushIfActive("dailyDouble", (u.dailyDoubleUntil as Date | string) ?? null);
-    pushIfActive("passport", (u.passportUntil as Date | string) ?? null);
-    pushIfActive("timeFreeze", (u.timeFreezeUntil as Date | string) ?? null);
-    pushIfActive("crushAlert", (u.crushAlertUntil as Date | string) ?? null);
-    pushIfActive("goldenHeart", (u.goldenHeartUntil as Date | string) ?? null);
+    pushIfActive("passport", user.passportUntil);
+    pushIfActive("timeFreeze", user.timeFreezeUntil);
+    pushIfActive("dailyDouble", user.dailyDoubleUntil);
+    pushIfActive("crushAlert", user.crushAlertUntil);
+    pushIfActive("goldenHeart", user.goldenHeartUntil);
 
     // Boost model — one or more active boosts may exist.
     try {

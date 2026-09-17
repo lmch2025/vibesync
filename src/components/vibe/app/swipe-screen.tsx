@@ -148,6 +148,9 @@ export function SwipeScreen({
         if (!res.ok) throw new Error(data.error);
         patchMe({ gems: data.gems, freeGems: data.freeGems });
         toast.success("🚀 Boost activé ! Top de la file pendant 30 min.");
+        // Rafraîchit instantanément la section « Actions actives » du profil
+        // (le Boost y apparaît avec son compte à rebours dégradé).
+        window.dispatchEvent(new CustomEvent("vivilov:buff-activated"));
       } catch (e: any) {
         toast.error(e.message || "Erreur");
       }

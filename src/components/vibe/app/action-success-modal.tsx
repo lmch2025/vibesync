@@ -184,6 +184,7 @@ export function ActionSuccessModal({
                     progress={0}
                     size={72}
                     strokeWidth={6}
+                    tone="media"
                   />
                   <p className="text-[11px] text-white/70 -mt-1">
                     {buffMeta?.emoji} {buffMeta?.label} actif — reste{" "}
