@@ -16,6 +16,7 @@ export function ImmersiveLanding({
   const me = useVibe((s) => s.me);
   const [authOpen, setAuthOpen] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const [saveData, setSaveData] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -28,6 +29,14 @@ export function ImmersiveLanding({
     ) {
       setSaveData(true);
     }
+  }, []);
+
+  useEffect(() => {
+    // Filet de sécurité : si la vidéo ne charge pas (réseau faible, asset
+    // indisponible), on masque le spinner après 8 s pour ne jamais laisser
+    // la page bloquée sur un état de chargement — le poster reste affiché.
+    const t = setTimeout(() => setVideoFailed(true), 8000);
+    return () => clearTimeout(t);
   }, []);
 
   function handleAuthSuccess() {
@@ -50,12 +59,13 @@ export function ImmersiveLanding({
     >
       {/* ===== BACKGROUND VIDEO LAYER (z-0) ===== */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* Loading state */}
+        {/* Loading state — masqué dès que la vidéo a des données OU qu'elle
+            a échoué (le poster prend le relais : jamais de spinner infini). */}
         <div
           className={`absolute inset-0 bg-zinc-950 flex items-center justify-center transition-opacity duration-700 ${
-            videoLoaded || saveData ? "opacity-0" : "opacity-100"
+            videoLoaded || videoFailed || saveData ? "opacity-0" : "opacity-100"
           }`}
-          style={{ zIndex: 1 }}
+          style={{ zIndex: 1, pointerEvents: "none" }}
         >
           <div className="h-8 w-8 rounded-full border border-white/10 border-t-white/60 animate-spin" />
         </div>
@@ -66,18 +76,23 @@ export function ImmersiveLanding({
         <video
           ref={videoRef}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-            videoLoaded || saveData ? "opacity-100" : "opacity-0"
+            videoLoaded || videoFailed || saveData ? "opacity-100" : "opacity-0"
           } ${!saveData ? "animate-ken-burns" : ""}`}
           autoPlay={!saveData}
           loop
           muted
           playsInline
           preload={saveData ? "none" : "auto"}
-          poster="/verify-landing.png"
+          poster="/landing-poster.jpg"
           onLoadedData={() => setVideoLoaded(true)}
+          onError={() => setVideoFailed(true)}
           style={{ filter: "contrast(1.05) saturate(1.1)" }}
         >
-          <source src={videoUrl || "/profiles/swipe-bg.webm"} type={videoUrl?.endsWith(".mp4") ? "video/mp4" : "video/webm"} />
+          <source
+            src={videoUrl || "/profiles/swipe-bg.webm"}
+            type={videoUrl?.endsWith(".mp4") ? "video/mp4" : "video/webm"}
+            onError={() => setVideoFailed(true)}
+          />
         </video>
 
         {/* OVERLAY: vignette + gradient for legibility without uniform veil */}

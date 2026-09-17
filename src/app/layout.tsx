@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ChunkErrorRecovery } from "@/components/chunk-error-recovery";
 
 const geistSans = { variable: "--font-geist-sans" };
 const geistMono = { variable: "--font-geist-mono" };
@@ -165,6 +166,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${display.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider>
+          {/* Auto-réparation ChunkLoadError (cache périmé / réseau mobile) */}
+          <ChunkErrorRecovery />
           {children}
           <Toaster />
           <SonnerToaster position="top-center" richColors />
