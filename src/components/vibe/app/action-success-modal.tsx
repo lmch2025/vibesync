@@ -63,6 +63,7 @@ export function ActionSuccessModal({
   message,
   buffType,
   result,
+  tip,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -74,6 +75,10 @@ export function ActionSuccessModal({
   buffType?: BuffType;
   /// Extra result content (free-form, e.g. icebreaker text, score, peek list).
   result?: React.ReactNode;
+  /// Optional subtle cross-sell line (« 💡 Astuce ») — a complementary
+  /// premium action suggested at the moment of highest delight. One muted
+  /// line only, never a button: the sheet stays one tap away.
+  tip?: string;
 }) {
   const isBuff = !!buffType && BUFF_TYPES.includes(buffType);
 
@@ -205,6 +210,18 @@ export function ActionSuccessModal({
                 >
                   {result}
                 </motion.div>
+              )}
+
+              {/* Subtle combo tip — one muted line, never pushy */}
+              {tip && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.55 }}
+                  className="mt-3 max-w-[300px] text-[11px] leading-relaxed text-white/55"
+                >
+                  {tip}
+                </motion.p>
               )}
 
               {/* CTA */}

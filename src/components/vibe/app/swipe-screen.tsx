@@ -1,13 +1,14 @@
 "use client";
 // Swipe deck: Tinder-like drag with spring physics, Ken Burns video posters,
-// Vibe Check overlay, action bar (rewind/pass/gift/like/boost — the Super-Like
-// stays available via the swipe-up gesture and the contextual nudges), match
+// Vibe Check overlay, action bar (rewind/pass/gift/like — the Super-Like
+// stays available via the swipe-up gesture and the contextual nudges, the
+// Boost via the ✨/👑 premium sheet and the like-streak nudge), match
 // overlay. Includes the non-intrusive discovery FILTERS (distance, age range,
 // gender) — a discreet button in the top bar opens a bottom sheet; filters are
 // saved to the profile and enforced server-side by the recommendation algorithm.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { RotateCcw, X, Star, Heart, Zap, BadgeCheck, Waves, MapPin, SlidersHorizontal, Check, Loader2, Sparkles, Plane, Gift } from "lucide-react";
+import { RotateCcw, X, Star, Heart, BadgeCheck, Waves, MapPin, SlidersHorizontal, Check, Loader2, Sparkles, Plane, Gift } from "lucide-react";
 import { GemBadge, GemIcon } from "@/components/vibe/gem-badge";
 import { sfx, haptic, celebrate, EmojiBurst, Shimmer, type SfxName } from "@/components/vibe/app/interactive-animations";
 import { VideoPlayer } from "./video-player";
@@ -71,8 +72,13 @@ export function SwipeScreen({
   const [cardActions, setCardActions] = useState<Profile | null>(null);
   // Passport flow from the empty deck (« explore une autre ville »).
   const [passportSheet, setPassportSheet] = useState(false);
-  // Passport destination from the deck API (active → chip in the top bar).
+  // Passport — destination + expiry from the deck API. The header shows a
+  // DISCREET "✈️ Passport" indicator only: the destination (pays/ville) is
+  // deliberately NOT displayed in the header (privacy + sobriety) — tapping
+  // the chip reveals it on demand through a toast; the full status lives in
+  // the Profile tab's active-actions area.
   const [passportCity, setPassportCity] = useState<string | null>(null);
+  const [passportUntil, setPassportUntil] = useState<string | null>(null);
   // Gift tray — opens from the 🎁 action button, targets the top card.
   const [giftTarget, setGiftTarget] = useState<Profile | null>(null);
   const [giftNote, setGiftNote] = useState("");
@@ -80,6 +86,8 @@ export function SwipeScreen({
   const { nudge, dismiss, offer } = useNudgeSlot();
   const passStreakRef = useRef(0);
   const swipeCountRef = useRef(0);
+  // Consecutive "like" swipes without a match — the Boost nudge trigger.
+  const likeStreakRef = useRef(0);
   const pref = me?.profile as any;
   const filtersActive =
     !!pref &&
@@ -96,6 +104,7 @@ export function SwipeScreen({
       if (res.ok) {
         setDeck(data.profiles ?? []);
         setPassportCity(data.passport?.city ?? null);
+        setPassportUntil(data.passport?.until ?? null);
       }
     } finally {
       setLoading(false);
@@ -134,6 +143,22 @@ export function SwipeScreen({
 
     const openPremium = () =>
       window.dispatchEvent(new Event("vivilov:open-premium"));
+
+    // Low balance → proactive (and gentle) recharge suggestion. Only when
+    // the user can't even afford a Super-Like anymore — once/day max, and
+    // after the circumstantial suggestions so it never steals their slot.
+    if ((me?.gems ?? 0) < GEM_ACTIONS.superlike) {
+      offer(
+        {
+          id: "low-balance-recharge",
+          emoji: "💎",
+          text: "Ton stock de Vibes est presque à sec — garde ton élan pour les Super-Likes et cadeaux.",
+          ctaLabel: "Recharger",
+          onCta: onOpenWallet,
+        },
+        "day",
+      );
+    }
 
     if (compatible) {
       offer(
@@ -214,7 +239,7 @@ export function SwipeScreen({
         /* non-critical */
       }
     })();
-  }, [loading, deck.length]);
+  }, [loading, deck.length, me?.gems]);
 
   async function swipe(profile: Profile, direction: "pass" | "like" | "superlike") {
     const cost = direction === "superlike" ? GEM_ACTIONS.superlike : 0;
@@ -257,6 +282,24 @@ export function SwipeScreen({
       } else {
         passStreakRef.current = 0;
       }
+      // Likes without a match → visibility suggestion. After 4 likes that
+      // didn't convert, the Boost (top of the queue) is the natural next
+      // step — once per session, replaces the action-bar Boost button with
+      // a circumstantial, high-intent moment.
+      if (direction === "like") likeStreakRef.current += 1;
+      if (likeStreakRef.current >= 4) {
+        offer(
+          {
+            id: "boost-like-streak",
+            emoji: "🚀",
+            text: `${likeStreakRef.current} likes sans match ? Les profils Boostés sont vus en premier — passe devant tout le monde.`,
+            ctaLabel: "Booster (50 💎)",
+            onCta: () => window.dispatchEvent(new Event("vivilov:open-premium")),
+            tone: "gold",
+          },
+          "session",
+        );
+      }
       // 6+ swipes this session → visibility suggestion (once/day).
       swipeCountRef.current += 1;
       if (swipeCountRef.current >= 6) {
@@ -285,7 +328,11 @@ export function SwipeScreen({
           return;
         }
         if (data.gems !== undefined) patchMe({ gems: data.gems, freeGems: data.freeGems });
-        if (data.match) onMatch(data.match);
+        if (data.match) {
+          // A match converts the efforts — reset the like streak.
+          likeStreakRef.current = 0;
+          onMatch(data.match);
+        }
       } catch {
         /* ignore */
       }
@@ -316,27 +363,6 @@ export function SwipeScreen({
         setHistory((h) => h.slice(0, -1));
         setDeck((d) => [last.profile, ...d]);
         toast.success("Swipe annulé ↩");
-      } catch (e: any) {
-        toast.error(e.message || "Erreur");
-      }
-    });
-  }
-
-  function boost() {
-    requireVibes(GEM_ACTIONS.boost, "Boost profil (50 Vibes)", async () => {
-      try {
-        const res = await fetch("/api/vibe/gems/spend", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "boost" }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        patchMe({ gems: data.gems, freeGems: data.freeGems });
-        toast.success("🚀 Boost activé ! Top de la file pendant 30 min.");
-        // Rafraîchit instantanément la section « Actions actives » du profil
-        // (le Boost y apparaît avec son compte à rebours dégradé).
-        window.dispatchEvent(new CustomEvent("vivilov:buff-activated"));
       } catch (e: any) {
         toast.error(e.message || "Erreur");
       }
@@ -406,15 +432,28 @@ export function SwipeScreen({
               <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-vibe-pink ring-2 ring-[var(--v-bg-app)]" />
             )}
           </motion.button>
-          {/* Passport destination chip — visible while the buff is active */}
+          {/* Passport indicator — discreet, destination deliberately hidden
+              in the header (tapped → on-demand toast). See comment above. */}
           {passportCity && (
-            <motion.span
+            <motion.button
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              className="inline-flex items-center gap-1 rounded-full vibe-gradient-soft ring-1 ring-accent/30 px-2.5 py-1 text-[10px] font-bold text-vibe-purple dark:text-vibe-pink"
+              whileTap={{ scale: 0.92 }}
+              onClick={() => {
+                sfx.play("pop");
+                const leftH = passportUntil
+                  ? Math.max(1, Math.round((new Date(passportUntil).getTime() - Date.now()) / 3600000))
+                  : null;
+                toast.info(`✈️ Passport actif — tu découvres ${passportCity}${leftH ? ` · encore ${leftH} h` : ""}`, {
+                  description: "Ta destination et son compte à rebours restent visibles dans Profil → Actions premium.",
+                  duration: 5000,
+                });
+              }}
+              aria-label="Passport actif — afficher la destination"
+              className="inline-flex items-center gap-1 rounded-full vibe-gradient-soft ring-1 ring-accent/30 px-2.5 py-1 text-[10px] font-bold text-vibe-purple dark:text-vibe-pink hover:ring-accent/60 transition"
             >
-              <Plane className="h-3 w-3" /> {passportCity}
-            </motion.span>
+              <Plane className="h-3 w-3" /> Passport
+            </motion.button>
           )}
         </div>
         <GemBadge gems={me?.gems ?? 0} onClick={onOpenWallet} />
@@ -548,9 +587,6 @@ export function SwipeScreen({
             </ActionButton>
             <EmojiBurst trigger={likeBurst} emojis={["❤️", "💜", "💖"]} />
           </div>
-          <ActionButton onClick={boost} label="Boost" cost={GEM_ACTIONS.boost} tone="purple">
-            <Zap className="h-5 w-5" />
-          </ActionButton>
         </div>
       </div>
     </div>

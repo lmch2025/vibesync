@@ -56,6 +56,19 @@ type ActiveEffect = {
   result: ActionResult;
 } | null;
 
+/// Subtle combo tips (« 💡 Astuce ») shown inside the success modal at the
+/// moment of highest delight — one muted line suggesting the complementary
+/// action, never a button. Only the natural pairs are mapped; everything
+/// else stays clean (no forced cross-sell).
+const COMBO_TIPS: Partial<Record<PremiumAction["key"], string>> = {
+  boost: "💡 Astuce : le Projecteur (40 💎) ajoute ton profil à 20 decks — le combo idéal avec ton Boost.",
+  spotlight: "💡 Astuce : le Boost (50 💎) te place en tête de la file pendant ton Projecteur — visibilité doublée.",
+  superlike: "💡 Astuce : le Cœur d'Or (60 💎) est un super-like doré avec badge spécial — impossible à manquer.",
+  passport: "💡 Astuce : le Vibe Radar (25 💎) montre qui est en ligne maintenant, où que tu voyages.",
+  rewind: "💡 Astuce : le Super Rewind (15 💎) annule tes 5 derniers swipes d'un coup.",
+  seeLikes: "💡 Astuce : un Super-Like (5 💎) te place en haut de SA file quand tu aimes quelqu'un.",
+};
+
 /// Premium actions that grant a timed buff — mapped onto the shared BuffType
 /// union so ActionSuccessModal shows its countdown ring preview.
 const BUFF_ACTION_KEYS: Partial<Record<PremiumAction["key"], BuffType>> = {
@@ -366,6 +379,7 @@ export function PremiumActionsSheet({
         message={activeEffect?.action.description}
         buffType={activeEffect ? BUFF_ACTION_KEYS[activeEffect.action.key] : undefined}
         result={activeEffect ? <EffectResult result={activeEffect.result} /> : undefined}
+        tip={activeEffect ? COMBO_TIPS[activeEffect.action.key] : undefined}
       />
     </>
   );

@@ -9,7 +9,7 @@ import { useVibe } from "@/lib/vibe/store";
 import { prefetchChat } from "./chat-screen";
 import { Floating, sfx } from "./interactive-animations";
 import { SmartNudgeBanner, type SmartNudge } from "./smart-nudge";
-import { canShowNudge } from "@/lib/vibe/nudges";
+import { canShowNudge, markNudgeShown } from "@/lib/vibe/nudges";
 
 type MatchRow = {
   id: string;
@@ -81,12 +81,17 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
   // the conversation). Offered when the user actually OPENS the Matches tab
   // (the screen stays mounted in the background — offering on load alone
   // would consume the nudge without anyone seeing it).
+  // Secondary moment: a "cold" match (no message yet) → a gift breaks the
+  // ice with impact (once/day). The locked-list nudge keeps priority.
   const [boostNudge, setBoostNudge] = useState<SmartNudge | null>(null);
   useEffect(() => {
     const offerOnTabOpen = () => {
       if (lockedMatches.length === 0) return;
       if (!canShowNudge("message-boost-locked-list", "session")) return;
       const first = lockedMatches[0];
+      // Mark as shown the moment it is displayed — the "session" scope then
+      // prevents it from re-appearing on every tab re-open.
+      markNudgeShown("message-boost-locked-list", "session");
       setBoostNudge({
         id: "message-boost-locked-list",
         emoji: "⚡",
@@ -104,6 +109,41 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
     window.addEventListener("vivilov:refresh-matches", offerOnTabOpen);
     return () => window.removeEventListener("vivilov:refresh-matches", offerOnTabOpen);
   }, [lockedMatches.length]);
+
+  // Cold match (matched but nobody wrote yet) → gift suggestion, once/day.
+  // A 🎁 with the sender's name gets attention before the first message —
+  // and reactivates conversations that would otherwise expire in silence.
+  const [giftNudge, setGiftNudge] = useState<SmartNudge | null>(null);
+  useEffect(() => {
+    const offerOnTabOpen = () => {
+      // The locked-list nudge has priority for the single banner slot — skip
+      // if it is about to claim it (otherwise this nudge's cooldown would be
+      // consumed without anyone seeing it).
+      if (boostNudge) return;
+      if (lockedMatches.length > 0 && canShowNudge("message-boost-locked-list", "session")) return;
+      if (!canShowNudge("gift-cold-match", "day")) return;
+      // Cold = nobody ever wrote (counts are the source of truth — the API
+      // returns an epoch date, not null, for message-less matches).
+      const cold = active.find(
+        (m) => !m.locked && m.myMessagesCount === 0 && m.theirMessagesCount === 0,
+      );
+      if (!cold || !cold.other) return;
+      // Mark as shown the moment it is displayed (once/day scope).
+      markNudgeShown("gift-cold-match", "day");
+      setGiftNudge({
+        id: "gift-cold-match",
+        emoji: "🎁",
+        text: `Ton match avec ${cold.other.displayName} attend un premier signe — un cadeau fait toujours mouche avant le premier mot.`,
+        ctaLabel: "Ouvrir",
+        onCta: () => {
+          onOpenChat({ id: cold.id, name: cold.other!.displayName, poster: cold.other!.posterUrl });
+        },
+        tone: "gold",
+      });
+    };
+    window.addEventListener("vivilov:refresh-matches", offerOnTabOpen);
+    return () => window.removeEventListener("vivilov:refresh-matches", offerOnTabOpen);
+  }, [active, boostNudge, lockedMatches.length]);
 
   return (
     <div className="absolute inset-0 v-bg-app v-fg overflow-hidden">
@@ -128,9 +168,13 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
       </div>
 
       <div className="absolute inset-0 pt-20 pb-24 overflow-y-auto no-scrollbar px-4">
-        {/* contextual recommendation — first element of the inbox */}
+        {/* contextual recommendation — first element of the inbox
+            (locked-conversation boost > cold-match gift, never both) */}
         <div className="mb-2.5">
-          <SmartNudgeBanner nudge={boostNudge} onDismiss={() => setBoostNudge(null)} />
+          <SmartNudgeBanner
+            nudge={boostNudge ?? giftNudge}
+            onDismiss={() => { setBoostNudge(null); setGiftNudge(null); }}
+          />
         </div>
 
         {loading ? (
