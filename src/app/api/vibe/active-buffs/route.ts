@@ -119,6 +119,7 @@ export async function GET() {
     const pushIfActive = (
       type: BuffType,
       expiresAtField: Date | string | null | undefined,
+      descOverride?: string,
     ) => {
       if (!expiresAtField) return;
       const d = new Date(expiresAtField);
@@ -131,6 +132,7 @@ export async function GET() {
       const progress = Math.max(0, Math.min(1, elapsedMs / meta.totalMs));
       buffs.push({
         ...meta,
+        ...(descOverride ? { desc: descOverride } : {}),
         expiresAt: d.toISOString(),
         remainingMs,
         progress,
@@ -140,7 +142,11 @@ export async function GET() {
     // Schema-backed fields (these always exist).
     pushIfActive("ghostMode", user.ghostModeUntil);
     pushIfActive("spotlight", user.spotlightUntil);
-    pushIfActive("passport", user.passportUntil);
+    pushIfActive(
+      "passport",
+      user.passportUntil,
+      (user as any).passportCity ? `Tu découvres ${(user as any).passportCity}` : undefined,
+    );
     pushIfActive("timeFreeze", user.timeFreezeUntil);
     pushIfActive("dailyDouble", user.dailyDoubleUntil);
     pushIfActive("crushAlert", user.crushAlertUntil);

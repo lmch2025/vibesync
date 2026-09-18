@@ -35,6 +35,7 @@ model User {
   ghostModeUntil DateTime?
   spotlightUntil DateTime?
   passportUntil DateTime?
+  passportCity  String? // city being explored while Passport is active
   timeFreezeUntil DateTime?
   dailyDoubleUntil DateTime?
   crushAlertUntil DateTime?

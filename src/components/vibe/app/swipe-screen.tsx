@@ -4,12 +4,14 @@
 // Includes the non-intrusive discovery FILTERS (distance, age range, gender)
 // — a discreet button in the top bar opens a bottom sheet; filters are saved
 // to the profile and enforced server-side by the recommendation algorithm.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { RotateCcw, X, Star, Heart, Zap, BadgeCheck, Waves, MapPin, SlidersHorizontal, Check, Loader2 } from "lucide-react";
+import { RotateCcw, X, Star, Heart, Zap, BadgeCheck, Waves, MapPin, SlidersHorizontal, Check, Loader2, Sparkles, Plane } from "lucide-react";
 import { GemBadge } from "@/components/vibe/gem-badge";
 import { sfx, haptic, EmojiBurst, Shimmer, type SfxName } from "@/components/vibe/app/interactive-animations";
 import { VideoPlayer } from "./video-player";
+import { PremiumActionsSheet } from "./premium-actions-sheet";
+import { SmartNudgeBanner, useNudgeSlot, type SmartNudge } from "./smart-nudge";
 import { useVibe } from "@/lib/vibe/store";
 import { GEM_ACTIONS, VIBE_QUESTIONS } from "@/lib/vibe/constants";
 import { toast } from "sonner";
@@ -29,6 +31,10 @@ type Profile = {
   vibeAnswer: string;
   verified: boolean;
   distanceKm: number | null;
+  boosted?: boolean;
+  goldenHeart?: boolean;
+  spotlight?: boolean;
+  passport?: boolean;
 };
 
 type SwipeResult = {
@@ -59,6 +65,16 @@ export function SwipeScreen({
   const vibeQ = VIBE_QUESTIONS[vibeIndex];
   // Discovery filters sheet — collapsed by default (non-intrusive).
   const [filterOpen, setFilterOpen] = useState(false);
+  // Contextual premium sheet — targets the profile of the card that opened it.
+  const [cardActions, setCardActions] = useState<Profile | null>(null);
+  // Passport flow from the empty deck (« explore une autre ville »).
+  const [passportSheet, setPassportSheet] = useState(false);
+  // Passport destination from the deck API (active → chip in the top bar).
+  const [passportCity, setPassportCity] = useState<string | null>(null);
+  // Contextual premium-action recommendations (elegant, cooldown-guarded).
+  const { nudge, dismiss, offer } = useNudgeSlot();
+  const passStreakRef = useRef(0);
+  const swipeCountRef = useRef(0);
   const pref = me?.profile as any;
   const filtersActive =
     !!pref &&
@@ -72,7 +88,10 @@ export function SwipeScreen({
     try {
       const res = await fetch("/api/vibe/profiles/deck");
       const data = await res.json();
-      if (res.ok) setDeck(data.profiles ?? []);
+      if (res.ok) {
+        setDeck(data.profiles ?? []);
+        setPassportCity(data.passport?.city ?? null);
+      }
     } finally {
       setLoading(false);
     }
@@ -82,11 +101,150 @@ export function SwipeScreen({
     loadDeck();
   }, [loadDeck]);
 
+  // Instant reload when a premium action changed the deck (rewind,
+  // superRewind, passport, boost — dispatched by the premium sheet).
+  useEffect(() => {
+    const onRefresh = () => loadDeck();
+    window.addEventListener("vivilov:deck-refresh", onRefresh);
+    return () => window.removeEventListener("vivilov:deck-refresh", onRefresh);
+  }, [loadDeck]);
+
+  /// Circumstantial recommendations — the deck loaded is the best moment to
+  /// suggest a discovery action. One at a time, cooldown-guarded.
+  useEffect(() => {
+    if (loading || deck.length === 0) return;
+    const topCard = deck[0];
+    const compatible =
+      topCard.vibeAnswer === vibeQ.a || topCard.vibeAnswer === vibeQ.b;
+    const hour = new Date().getHours();
+
+    const openPremium = () =>
+      window.dispatchEvent(new Event("vivilov:open-premium"));
+
+    if (compatible) {
+      offer(
+        {
+          id: "superlike-vibe",
+          emoji: "⭐",
+          text: `Ta vibe matche avec ${topCard.displayName} — un Super-Like te place en haut de sa file.`,
+          ctaLabel: "Super-Liker (5 💎)",
+          onCta: () => swipe(topCard, "superlike"),
+        },
+        "session",
+      );
+    } else {
+      offer(
+        {
+          id: "compat-check",
+          emoji: "🧬",
+          text: `${topCard.displayName} garde son mystère — vérifie votre compatibilité avant de swiper.`,
+          ctaLabel: "Analyser (20 💎)",
+          onCta: () => setCardActions(topCard),
+          tone: "cool",
+        },
+        "session",
+      );
+    }
+
+    // Evening → someone might be online right next to you.
+    if (hour >= 18 || hour <= 1) {
+      offer(
+        {
+          id: "vibe-radar-evening",
+          emoji: "📍",
+          text: "C'est l'heure où le monde est en ligne — vois qui est près de toi en ce moment.",
+          ctaLabel: "Radar (25 💎)",
+          onCta: openPremium,
+          tone: "cool",
+        },
+        "day",
+      );
+    }
+
+    // An unread like → the seeLikes tease.
+    (async () => {
+      try {
+        const res = await fetch("/api/vibe/notifications");
+        const data = await res.json();
+        const hasUnreadLike = (data.notifications || []).some(
+          (n: any) => !n.read && (n.type === "like" || n.type === "superlike"),
+        );
+        if (hasUnreadLike) {
+          offer(
+            {
+              id: "see-likes-tease",
+              emoji: "👁️",
+              text: "Quelqu'un t'a liké récemment — dévoile qui.",
+              ctaLabel: "Dévoiler (20 💎)",
+              onCta: openPremium,
+              tone: "gold",
+            },
+            "day",
+          );
+        }
+      } catch {
+        /* non-critical */
+      }
+    })();
+  }, [loading, deck.length]);
+
   async function swipe(profile: Profile, direction: "pass" | "like" | "superlike") {
     const cost = direction === "superlike" ? GEM_ACTIONS.superlike : 0;
     const doSwipe = async () => {
       setHistory((h) => [...h, { profile, direction }]);
       setDeck((d) => d.filter((p) => p.id !== profile.id));
+
+      // ── Circumstantial recommendations on swipe rhythm ────────────────
+      const compatible =
+        profile.vibeAnswer === vibeQ.a || profile.vibeAnswer === vibeQ.b;
+      if (direction === "pass") {
+        passStreakRef.current += 1;
+        // Passed on a highly compatible profile → Rewind rescue.
+        if (compatible) {
+          offer(
+            {
+              id: "rewind-rescue",
+              emoji: "↩️",
+              text: `${profile.displayName} était très compatible… un Rewind le/la ramène dans ton deck.`,
+              ctaLabel: "Annuler (2 💎)",
+              onCta: () => rewind(),
+            },
+            "session",
+          );
+        }
+        // 3+ passes in a row → Time Freeze to preview what's coming.
+        if (passStreakRef.current >= 3) {
+          offer(
+            {
+              id: "time-freeze-passes",
+              emoji: "❄️",
+              text: "Trois passes d'affilée ? Aperçois les 3 prochains profils avant de décider.",
+              ctaLabel: "Apercevoir (45 💎)",
+              onCta: () => window.dispatchEvent(new Event("vivilov:open-premium")),
+              tone: "cool",
+            },
+            "session",
+          );
+        }
+      } else {
+        passStreakRef.current = 0;
+      }
+      // 6+ swipes this session → visibility suggestion (once/day).
+      swipeCountRef.current += 1;
+      if (swipeCountRef.current >= 6) {
+        offer(
+          {
+            id: "spotlight-visibility",
+            emoji: "🔦",
+            text: "Tu swipes beaucoup — fais-toi voir : ton profil en tête de 20 decks pendant 1h.",
+            ctaLabel: "Briller (40 💎)",
+            onCta: () => window.dispatchEvent(new Event("vivilov:open-premium")),
+            tone: "gold",
+          },
+          "day",
+        );
+      }
+
       try {
         const res = await fetch("/api/vibe/swipe", {
           method: "POST",
@@ -177,6 +335,16 @@ export function SwipeScreen({
               <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-vibe-pink ring-2 ring-[var(--v-bg-app)]" />
             )}
           </motion.button>
+          {/* Passport destination chip — visible while the buff is active */}
+          {passportCity && (
+            <motion.span
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="inline-flex items-center gap-1 rounded-full vibe-gradient-soft ring-1 ring-accent/30 px-2.5 py-1 text-[10px] font-bold text-vibe-purple dark:text-vibe-pink"
+            >
+              <Plane className="h-3 w-3" /> {passportCity}
+            </motion.span>
+          )}
         </div>
         <GemBadge gems={me?.gems ?? 0} onClick={onOpenWallet} />
       </div>
@@ -186,6 +354,23 @@ export function SwipeScreen({
         open={filterOpen}
         onOpenChange={setFilterOpen}
         onSaved={() => loadDeck()}
+      />
+
+      {/* Contextual premium sheet — targets the card that opened it */}
+      <PremiumActionsSheet
+        open={cardActions !== null}
+        onOpenChange={(o) => { if (!o) setCardActions(null); }}
+        category="all"
+        profileId={cardActions?.id}
+        profileName={cardActions?.displayName}
+      />
+
+      {/* Passport sheet from the empty deck — no target, city picker first */}
+      <PremiumActionsSheet
+        open={passportSheet}
+        onOpenChange={setPassportSheet}
+        category="profile"
+        startInPassportPick
       />
 
       {/* deck */}
@@ -215,7 +400,7 @@ export function SwipeScreen({
             ))}
           </div>
         ) : deck.length === 0 ? (
-          <EmptyDeck onReload={loadDeck} />
+          <EmptyDeck onReload={loadDeck} onPassport={() => { sfx.play("pop"); setPassportSheet(true); }} />
         ) : (
           <div className="relative h-full w-full">
             <AnimatePresence>
@@ -228,12 +413,18 @@ export function SwipeScreen({
                     isTop={isTop}
                     vibeQ={vibeQ}
                     onSwipe={(dir) => swipe(p, dir)}
+                    onOpenActions={isTop ? () => { sfx.play("pop"); haptic(8); setCardActions(p); } : undefined}
                   />
                 );
               })}
             </AnimatePresence>
           </div>
         )}
+      </div>
+
+      {/* contextual premium recommendation — floating just above the action bar */}
+      <div className="absolute bottom-[152px] inset-x-4 z-30 pointer-events-auto">
+        <SmartNudgeBanner nudge={nudge} onDismiss={dismiss} />
       </div>
 
       {/* action bar — sits above the bottom nav */}
@@ -291,11 +482,14 @@ function SwipeCard({
   isTop,
   vibeQ,
   onSwipe,
+  onOpenActions,
 }: {
   profile: Profile;
   isTop: boolean;
   vibeQ: { id: string; q: string; a: string; b: string };
   onSwipe: (dir: "pass" | "like" | "superlike") => void;
+  /// Opens the contextual premium sheet for THIS profile (top card only).
+  onOpenActions?: () => void;
 }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -322,9 +516,19 @@ function SwipeCard({
 
   const vibeMatch = profile.vibeAnswer === vibeQ.a ? "a" : profile.vibeAnswer === vibeQ.b ? "b" : null;
 
+  // Premium visibility chips (from the deck API — each flag is a real,
+  // paid premium effect, not decoration).
+  const chips: { emoji: string; label: string; cls: string }[] = [];
+  if (profile.goldenHeart) chips.push({ emoji: "💛", label: "Cœur d'Or", cls: "bg-amber-400/25 ring-amber-300/60 text-amber-100" });
+  if (profile.spotlight) chips.push({ emoji: "🔦", label: "Projecteur", cls: "bg-fuchsia-500/25 ring-fuchsia-300/50 text-fuchsia-100" });
+  if (profile.boosted) chips.push({ emoji: "🚀", label: "Boost", cls: "bg-orange-500/25 ring-orange-300/50 text-orange-100" });
+  if (profile.passport) chips.push({ emoji: "✈️", label: "Passport", cls: "bg-sky-500/25 ring-sky-300/50 text-sky-100" });
+
   return (
     <motion.div
-      className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-[var(--v-divider)] v-fg-media"
+      className={`absolute inset-0 rounded-3xl overflow-hidden shadow-2xl v-fg-media ${
+        profile.goldenHeart ? "ring-2 ring-amber-300/80 shadow-amber-400/20" : "ring-1 ring-[var(--v-divider)]"
+      }`}
       style={{ x, y, rotate, zIndex: isTop ? 10 : 1 }}
       drag={isTop}
       dragSnapToOrigin
@@ -359,16 +563,29 @@ function SwipeCard({
         <span className="text-3xl font-black text-cyan-300 ring-4 ring-cyan-300 rounded-xl px-3 py-1">SUPER</span>
       </motion.div>
 
-      {/* verified + vibe badges */}
+      {/* verified + vibe badges + contextual premium actions */}
       <div className="absolute top-4 inset-x-4 flex items-start justify-between">
         <div className="glass-dark rounded-full px-2.5 py-1 text-xs font-medium flex items-center gap-1">
           <Waves className="h-3 w-3 text-accent" /> Vibe Check
         </div>
-        {profile.verified && (
-          <div className="glass-dark rounded-full p-1">
-            <BadgeCheck className="h-4 w-4 text-cyan-300" />
-          </div>
-        )}
+        <div className="flex items-center gap-1.5">
+          {profile.verified && (
+            <div className="glass-dark rounded-full p-1">
+              <BadgeCheck className="h-4 w-4 text-cyan-300" />
+            </div>
+          )}
+          {onOpenActions && (
+            <motion.button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onOpenActions(); }}
+              whileTap={{ scale: 0.85 }}
+              aria-label={`Actions premium pour ${profile.displayName}`}
+              className="glass-dark rounded-full p-1.5 vibe-glow"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+            </motion.button>
+          )}
+        </div>
       </div>
 
       {/* vibe check overlay */}
@@ -404,6 +621,19 @@ function SwipeCard({
             </p>
           </div>
         </div>
+        {/* premium visibility chips — real effects from the deck API */}
+        {chips.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {chips.map((c) => (
+              <span
+                key={c.label}
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${c.cls}`}
+              >
+                {c.emoji} {c.label}
+              </span>
+            ))}
+          </div>
+        )}
         <p className="text-xs text-white/70 mt-2 line-clamp-2">{profile.bio}</p>
         <p className="text-[10px] text-white/70 mt-2">Glisse ← pass · → like · ↑ super-like</p>
       </div>
@@ -457,16 +687,21 @@ function ActionButton({
   );
 }
 
-function EmptyDeck({ onReload }: { onReload: () => void }) {
+function EmptyDeck({ onReload, onPassport }: { onReload: () => void; onPassport: () => void }) {
   return (
     <div className="h-full grid place-items-center text-center px-6">
       <div>
         <div className="text-5xl mb-3">🎉</div>
         <h3 className="font-display text-xl font-bold mb-1">C&apos;est tout pour aujourd&apos;hui !</h3>
-        <p className="text-sm v-fg-muted mb-4">Reviens demain ou élargis ta zone. En attendant, booste ton profil.</p>
-        <button onClick={onReload} className="h-10 px-5 rounded-full vibe-gradient text-white font-semibold text-sm">
-          Recharger la file
-        </button>
+        <p className="text-sm v-fg-muted mb-4">Reviens demain ou explore une autre ville avec ton Passport.</p>
+        <div className="flex flex-col gap-2">
+          <button onClick={onPassport} className="h-10 px-5 rounded-full vibe-gradient text-white font-semibold text-sm">
+            ✈️ Explorer une autre ville
+          </button>
+          <button onClick={onReload} className="h-10 px-5 rounded-full v-surface-1 ring-1 ring-[var(--v-divider)] v-fg-muted font-semibold text-sm hover:v-surface-2 transition">
+            Recharger la file
+          </button>
+        </div>
       </div>
     </div>
   );

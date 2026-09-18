@@ -1,4 +1,7 @@
 // POST /api/vibe/swipe — record a swipe; super-like costs 5 gems; check for match.
+// Mode Fantôme: when the swiper has an active ghost buff, the target gets NO
+// like/superlike notification (they browsed invisibly) — mutual matches still
+// notify both sides.
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/vibe/session";
@@ -96,8 +99,11 @@ export async function POST(req: Request) {
         match = existingMatch;
       }
     }
-    // Notify the target user about the like/superlike (even without a match).
-    if (!match) {
+    // Notify the target user about the like/superlike (even without a match) —
+    // UNLESS the swiper is in Mode Fantôme: their activity stays invisible
+    // (a real, functional effect of the ghost-mode premium action). A mutual
+    // match is always announced to both sides (consent of both).
+    if (!match && !(user.ghostModeUntil && user.ghostModeUntil.getTime() > Date.now())) {
       const myName = user.profile?.displayName;
       if (direction === "superlike") {
         await notifySuperlike(targetProfile.userId, myName);

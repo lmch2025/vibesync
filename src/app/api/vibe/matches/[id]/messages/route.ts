@@ -158,16 +158,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     where: { matchId: id, senderId: user.id, type: "text" },
   });
 
+  const wantsBoost = !!boost;
+  const cost = wantsBoost ? GEM_ACTIONS.messageBoost : 0;
+
   const { maxMessagesBeforeReply: msgLimit } = await getSettings();
-  if (isInitiator && !match.unlocked && myMessagesCount >= msgLimit && type !== "voice") {
+  // Anti-spam: a BOOSTED message (10 Vibes) always gets through — that is
+  // its premium power: it lands even while awaiting a reply, and the
+  // conversation is pinned to the top of the recipient's inbox for 2 h.
+  if (!wantsBoost && isInitiator && !match.unlocked && myMessagesCount >= msgLimit && type !== "voice") {
     return NextResponse.json(
-      { error: "Anti-spam: attends une réponse pour continuer. Envoie un cadeau pour te démarquer !", locked: true },
+      { error: "Anti-spam: attends une réponse pour continuer. Envoie un cadeau ou booste ton message (⚡ 10 Vibes) pour percer !", locked: true },
       { status: 403 }
     );
   }
 
-  const wantsBoost = !!boost;
-  const cost = wantsBoost ? GEM_ACTIONS.messageBoost : 0;
   if (cost > 0 && user.gems < cost) {
     return NextResponse.json({ error: "Pas assez de Vibes pour le boost" }, { status: 402 });
   }

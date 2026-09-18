@@ -13,8 +13,16 @@
 //   • verified  — candidate's account is verified (0/1)
 //   • recency   — profile freshness (linear decay over 30 days)
 //   • popularity— likes/superlikes received (log-scaled: 10 likes ≈ 0.6)
-// A profile with an active Boost gets its score × recBoostMultiplier, then
-// the list is sorted by descending score and truncated to deckSize.
+//
+// PREMIUM ACTION EFFECTS (real, visible in the deck):
+//   • Boost       — candidate's score × recBoostMultiplier + `boosted` flag
+//   • Projecteur  — owners with an active spotlight are INJECTED at the top
+//                   of decks (bypassing distance) with a `spotlight` flag
+//   • Cœur d'Or   — profiles whose owner sent ME a golden heart are pinned
+//                   at the very top with a `goldenHeart` flag (gold badge)
+//   • Passport    — when MY passport is active, profiles from my passport
+//                   city are blended in (distance bypassed) with a
+//                   `passport` flag, and the response carries `passport` meta
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/vibe/session";
@@ -37,6 +45,7 @@ export async function GET() {
 
   const me = user.profile;
   const settings = await getSettings();
+  const now = new Date();
 
   // Profiles the viewer already swiped on
   const swiped = await db.swipe.findMany({
@@ -46,7 +55,6 @@ export async function GET() {
   const swipedIds = swiped.map((s) => s.toProfileId);
 
   // ── USER FILTERS (gender preference) ──
-  // "all" or a missing preference shows everyone.
   const wants = me?.lookingFor && me.lookingFor !== "all" ? me.lookingFor : null;
 
   // Wider candidate pool than the final deck so ranking has room to reorder.
@@ -64,7 +72,7 @@ export async function GET() {
   });
 
   // ── USER FILTERS (age range + distance) need post-fetch computation ──
-  const now = Date.now();
+  const nowMs = Date.now();
   const hasCoords = (lat: number, lng: number) => lat !== 0 || lng !== 0;
   const myLat = me?.lat ?? 0;
   const myLng = me?.lng ?? 0;
@@ -88,7 +96,7 @@ export async function GET() {
   const candidateUserIds = candidates.map((c) => c.userId);
   const boosts = candidateUserIds.length
     ? await db.boost.findMany({
-        where: { userId: { in: candidateUserIds }, expiresAt: { gt: new Date() } },
+        where: { userId: { in: candidateUserIds }, expiresAt: { gt: now } },
         select: { userId: true },
       })
     : [];
@@ -102,7 +110,13 @@ export async function GET() {
     settings.recWeightRecency +
     settings.recWeightPopularity;
 
-  const scored: Array<{ profile: (typeof candidates)[number]; score: number; distanceKm: number | null }> = [];
+  type ScoredProfile = {
+    profile: (typeof candidates)[number];
+    score: number;
+    distanceKm: number | null;
+    boosted: boolean;
+  };
+  const scored: ScoredProfile[] = [];
 
   for (const p of candidates) {
     // Hard user filters — age range
@@ -132,7 +146,7 @@ export async function GET() {
     const verifiedSignal = p.user.verified ? 1 : 0;
 
     // Recency: linear decay over 30 days (fresh profile → 1.0)
-    const daysOld = (now - p.createdAt.getTime()) / 86_400_000;
+    const daysOld = (nowMs - p.createdAt.getTime()) / 86_400_000;
     const recencySignal = Math.max(0, 1 - daysOld / 30);
 
     // Popularity: log-scaled so a few likes already matter, whales don't dominate.
@@ -150,16 +164,163 @@ export async function GET() {
           totalWeight
         : 0;
 
-    // Active Boost → multiplied priority (top of the queue).
-    if (boostedUserIds.has(p.userId)) score *= settings.recBoostMultiplier;
+    const isBoosted = boostedUserIds.has(p.userId);
 
-    scored.push({ profile: p, score, distanceKm });
+    // Active Boost → multiplied priority (top of the queue).
+    if (isBoosted) score *= settings.recBoostMultiplier;
+
+    scored.push({ profile: p, score, distanceKm, boosted: isBoosted });
   }
 
   scored.sort((a, b) => b.score - a.score);
 
+  // ── CŒUR D'OR — profiles whose owner sent me a golden heart get pinned ──
+  // at the very top of MY deck with a golden badge (they paid for exactly
+  // that promise). Golden senders bypass discovery filters by design.
+  const goldenHeartProfiles: ScoredProfile[] = [];
+  try {
+    if (me) {
+      const goldenSwipes = await db.swipe.findMany({
+        where: {
+          toProfileId: me.id,
+          direction: "superlike",
+          fromUser: { goldenHeartUntil: { gt: now } },
+        },
+        select: { fromUserId: true },
+      });
+      const goldenUserIds = goldenSwipes
+        .map((s) => s.fromUserId)
+        .filter((uid) => uid !== user.id);
+      if (goldenUserIds.length > 0) {
+        const goldenProfiles = await db.profile.findMany({
+          where: {
+            userId: { in: goldenUserIds },
+            id: { notIn: swipedIds },
+            modStatus: "approved",
+          },
+          include: { user: { select: { verified: true } } },
+          take: 3,
+        });
+        for (const p of goldenProfiles) {
+          const distanceKm =
+            iHaveCoords && hasCoords(p.lat, p.lng)
+              ? Math.round(haversineKm(myLat, myLng, p.lat, p.lng))
+              : null;
+          goldenHeartProfiles.push({ profile: p, score: 2, distanceKm, boosted: false });
+        }
+      }
+    }
+  } catch {
+    // Defensive — golden heart injection must never break the deck.
+  }
+
+  // ── PROJECTEUR — owners with an active spotlight are injected at the top ──
+  // of decks for the whole hour (bypassing the distance filter — that is the
+  // paid visibility effect). Gender + age preferences stay respected, capped
+  // at 2 per deck so the deck stays diverse.
+  const spotlightProfiles: ScoredProfile[] = [];
+  try {
+    const spotlightUsers = await db.user.findMany({
+      where: {
+        id: { not: user.id },
+        spotlightUntil: { gt: now },
+      },
+      select: { id: true },
+      take: 12,
+    });
+    const spotlightIds = spotlightUsers.map((u) => u.id);
+    if (spotlightIds.length > 0) {
+      const spotProfiles = await db.profile.findMany({
+        where: {
+          userId: { in: spotlightIds },
+          id: { notIn: swipedIds },
+          modStatus: "approved",
+          ...(wants ? { gender: wants } : {}),
+        },
+        include: { user: { select: { verified: true } } },
+        take: 8,
+      });
+      for (const p of spotProfiles) {
+        if (p.age < prefMinAge || p.age > prefMaxAge) continue;
+        if (goldenHeartProfiles.some((g) => g.profile.id === p.id)) continue;
+        const distanceKm =
+          iHaveCoords && hasCoords(p.lat, p.lng)
+            ? Math.round(haversineKm(myLat, myLng, p.lat, p.lng))
+            : null;
+        spotlightProfiles.push({ profile: p, score: 1.5, distanceKm, boosted: false });
+      }
+    }
+  } catch {
+    // Defensive.
+  }
+
+  // ── PASSPORT — blend in profiles from my passport city ──────────────────
+  // Distance filter bypassed (the user explicitly paid to explore that city);
+  // gender + age preferences stay respected.
+  const passportActive =
+    !!user.passportUntil && user.passportUntil.getTime() > nowMs && !!user.passportCity;
+  const passportProfiles: ScoredProfile[] = [];
+  let passportMeta: { city: string; until: string } | null = null;
+  if (passportActive && user.passportCity) {
+    passportMeta = { city: user.passportCity, until: user.passportUntil!.toISOString() };
+    try {
+      const spot = await db.profile.findMany({
+        where: {
+          city: user.passportCity,
+          id: { notIn: swipedIds },
+          userId: { not: user.id },
+          modStatus: "approved",
+          ...(wants ? { gender: wants } : {}),
+        },
+        include: { user: { select: { verified: true } } },
+        take: 8,
+        orderBy: { createdAt: "desc" },
+      });
+      for (const p of spot) {
+        if (p.age < prefMinAge || p.age > prefMaxAge) continue;
+        if (
+          goldenHeartProfiles.some((g) => g.profile.id === p.id) ||
+          spotlightProfiles.some((g) => g.profile.id === p.id)
+        ) {
+          continue;
+        }
+        const distanceKm =
+          iHaveCoords && hasCoords(p.lat, p.lng)
+            ? Math.round(haversineKm(myLat, myLng, p.lat, p.lng))
+            : null;
+        passportProfiles.push({ profile: p, score: 1.2, distanceKm, boosted: false });
+      }
+    } catch {
+      // Defensive.
+    }
+  }
+
+  // Assemble: golden hearts → spotlight → normal ranked → passport extras.
+  const seen = new Set<string>();
+  const final: Array<ScoredProfile & { golden: boolean; spotlight: boolean; passport: boolean }> = [];
+  for (const g of goldenHeartProfiles.slice(0, 3)) {
+    if (seen.has(g.profile.id)) continue;
+    seen.add(g.profile.id);
+    final.push({ ...g, golden: true, spotlight: false, passport: false });
+  }
+  for (const s of spotlightProfiles.slice(0, 2)) {
+    if (seen.has(s.profile.id)) continue;
+    seen.add(s.profile.id);
+    final.push({ ...s, golden: false, spotlight: true, passport: false });
+  }
+  for (const item of scored) {
+    if (seen.has(item.profile.id)) continue;
+    seen.add(item.profile.id);
+    final.push({ ...item, golden: false, spotlight: false, passport: false });
+  }
+  for (const p of passportProfiles.slice(0, 6)) {
+    if (seen.has(p.profile.id)) continue;
+    seen.add(p.profile.id);
+    final.push({ ...p, golden: false, spotlight: false, passport: true });
+  }
+
   return NextResponse.json({
-    profiles: scored.slice(0, settings.deckSize).map(({ profile: p, distanceKm }) => ({
+    profiles: final.slice(0, Math.max(settings.deckSize, passportProfiles.length > 0 ? settings.deckSize + 4 : settings.deckSize)).map(({ profile: p, distanceKm, boosted, golden, spotlight, passport }) => ({
       id: p.id,
       displayName: p.displayName,
       age: p.age,
@@ -173,6 +334,11 @@ export async function GET() {
       vibeAnswer: p.vibeAnswer,
       verified: p.user.verified,
       distanceKm,
+      boosted,
+      goldenHeart: golden,
+      spotlight,
+      passport,
     })),
+    ...(passportMeta ? { passport: passportMeta } : {}),
   });
 }

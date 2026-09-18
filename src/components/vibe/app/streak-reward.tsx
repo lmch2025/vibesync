@@ -17,6 +17,8 @@ type StreakData = {
   todayReward: number;
   nextReward: number;
   streakRewardClaimed: boolean;
+  dailyDoubleActive?: boolean;
+  todayRewardDoubled?: number | null;
   rewards: { day: number; reward: number; claimed: boolean }[];
 };
 
@@ -27,6 +29,8 @@ export function StreakReward() {
   const [open, setOpen] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [justClaimed, setJustClaimed] = useState(false);
+  // Reward actually credited (includes the Daily Double ×2 when active).
+  const [claimedReward, setClaimedReward] = useState<number | null>(null);
   const [showReferral, setShowReferral] = useState(false);
 
   const load = async () => {
@@ -58,6 +62,7 @@ export function StreakReward() {
       }
       const d = await res.json();
       patchMe({ gems: d.gems, freeGems: d.freeGems });
+      setClaimedReward(d.reward ?? data?.todayReward ?? 0);
       // Claim juice — coin sound + haptic pulse (confetti already bursts in
       // the claimed view). Fired once, inside the success handler.
       sfx.play("coin");
@@ -135,7 +140,7 @@ export function StreakReward() {
                     className="flex items-center gap-1.5 rounded-full bg-amber-400/20 ring-1 ring-amber-300/40 px-4 py-2"
                   >
                     <GemIcon className="h-5 w-5" />
-                    <span className="font-display text-xl font-black text-amber-600 dark:text-amber-300">+{data.todayReward}</span>
+                    <span className="font-display text-xl font-black text-amber-600 dark:text-amber-300">+{claimedReward ?? data.todayReward}</span>
                     <span className="text-sm text-amber-700/80 dark:text-amber-200/70">Vibes</span>
                   </motion.div>
                   {/* Confetti */}
@@ -184,15 +189,54 @@ export function StreakReward() {
                     })}
                   </div>
 
-                  {/* Today's reward */}
-                  <div className="rounded-2xl bg-gradient-to-br from-amber-400/10 to-vibe-orange/10 ring-1 ring-amber-300/20 px-4 py-3 mb-4 text-center">
+                  {/* Today's reward — ×2 badge when Daily Double is active */}
+                  <div className="rounded-2xl bg-gradient-to-br from-amber-400/10 to-vibe-orange/10 ring-1 ring-amber-300/20 px-4 py-3 mb-3 text-center">
                     <p className="text-[10px] uppercase tracking-wide text-amber-600/80 dark:text-amber-300/70">Récompense du jour</p>
                     <div className="flex items-center justify-center gap-1.5 mt-1">
                       <GemIcon className="h-5 w-5" />
-                      <span className="font-display text-2xl font-black text-amber-600 dark:text-amber-300">+{data.todayReward}</span>
+                      <span className="font-display text-2xl font-black text-amber-600 dark:text-amber-300">
+                        +{data.dailyDoubleActive ? data.todayRewardDoubled : data.todayReward}
+                      </span>
                       <span className="text-sm text-amber-700/80 dark:text-amber-200/60">Vibes</span>
+                      {data.dailyDoubleActive && (
+                        <motion.span
+                          animate={{ scale: [1, 1.12, 1] }}
+                          transition={{ duration: 1.4, repeat: Infinity }}
+                          className="ml-1 rounded-full bg-amber-400 text-black text-[10px] font-black px-2 py-0.5"
+                        >
+                          ×2 🎲
+                        </motion.span>
+                      )}
                     </div>
+                    {data.dailyDoubleActive && (
+                      <p className="text-[10px] text-amber-700/80 dark:text-amber-200/70 mt-1">
+                        Double Quotidien actif — récompense doublée 🎲
+                      </p>
+                    )}
                   </div>
+
+                  {/* Circumstantial recommendation — Double Quotidien.
+                      Once per day, only while the reward is claimable. */}
+                  {data.canClaim && !data.dailyDoubleActive && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => {
+                        window.dispatchEvent(new Event("vivilov:open-premium"));
+                      }}
+                      className="w-full rounded-2xl v-surface-1 ring-1 ring-(--v-divider) px-4 py-2.5 mb-4 flex items-center gap-2.5 text-left hover:v-surface-2 transition"
+                    >
+                      <span className="text-xl shrink-0">🎲</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-xs font-bold">Double ta récompense du jour</span>
+                        <span className="block text-[10px] v-fg-muted leading-snug">
+                          +{data.todayReward} Vibes en plus pour 10 💎 — avant de réclamer.
+                        </span>
+                      </span>
+                      <span className="text-[10px] font-bold text-vibe-purple dark:text-vibe-pink shrink-0">Doubler →</span>
+                    </motion.button>
+                  )}
 
                   {/* Claim button */}
                   {data.canClaim ? (

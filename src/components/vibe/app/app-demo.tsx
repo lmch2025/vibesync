@@ -74,6 +74,14 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
     setTab("swipe");
   }, []);
 
+  // Any screen can open the premium sheet circumstantially (contextual
+  // recommendations dispatch `vivilov:open-premium`).
+  useEffect(() => {
+    const open = () => setPremiumOpen(true);
+    window.addEventListener("vivilov:open-premium", open);
+    return () => window.removeEventListener("vivilov:open-premium", open);
+  }, []);
+
   // Tab selector — fires the matches-refresh event so the (always-mounted)
   // MatchesScreen reloads its list instead of showing a stale empty state.
   const selectTab = useCallback((t: Tab) => {

@@ -8,6 +8,8 @@ import { Gift, Lock, MessageCircle, BadgeCheck, MapPin, Zap } from "lucide-react
 import { useVibe } from "@/lib/vibe/store";
 import { prefetchChat } from "./chat-screen";
 import { Floating, sfx } from "./interactive-animations";
+import { SmartNudgeBanner, type SmartNudge } from "./smart-nudge";
+import { canShowNudge } from "@/lib/vibe/nudges";
 
 type MatchRow = {
   id: string;
@@ -74,6 +76,35 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
   const lockedMatches = active.filter((m) => m.locked);
   const boostedCount = active.filter((m) => m.lastMessageBoosted).length;
 
+  // Circumstantial recommendation — a locked conversation is the perfect
+  // moment for the Boost Message (it breaks through the anti-spam and pins
+  // the conversation). Offered when the user actually OPENS the Matches tab
+  // (the screen stays mounted in the background — offering on load alone
+  // would consume the nudge without anyone seeing it).
+  const [boostNudge, setBoostNudge] = useState<SmartNudge | null>(null);
+  useEffect(() => {
+    const offerOnTabOpen = () => {
+      if (lockedMatches.length === 0) return;
+      if (!canShowNudge("message-boost-locked-list", "session")) return;
+      const first = lockedMatches[0];
+      setBoostNudge({
+        id: "message-boost-locked-list",
+        emoji: "⚡",
+        text: `Ton message à ${first.other?.displayName ?? "ton match"} attend une réponse — le Boost passe l'anti-spam et l'épingle en tête.`,
+        ctaLabel: "Booster (10 💎)",
+        onCta: () => {
+          if (first.other) {
+            onOpenChat({ id: first.id, name: first.other.displayName, poster: first.other.posterUrl });
+          }
+        },
+        tone: "gold",
+      });
+    };
+    // Fired by the app shell every time the Matches tab is selected.
+    window.addEventListener("vivilov:refresh-matches", offerOnTabOpen);
+    return () => window.removeEventListener("vivilov:refresh-matches", offerOnTabOpen);
+  }, [lockedMatches.length]);
+
   return (
     <div className="absolute inset-0 v-bg-app v-fg overflow-hidden">
       <div className="absolute top-9 inset-x-0 z-20 px-4 py-2 flex items-center justify-between">
@@ -97,6 +128,11 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
       </div>
 
       <div className="absolute inset-0 pt-20 pb-24 overflow-y-auto no-scrollbar px-4">
+        {/* contextual recommendation — first element of the inbox */}
+        <div className="mb-2.5">
+          <SmartNudgeBanner nudge={boostNudge} onDismiss={() => setBoostNudge(null)} />
+        </div>
+
         {loading ? (
           <div className="space-y-2.5" aria-busy="true" aria-label="Chargement des matchs">
             {[0, 1, 2, 3].map((i) => (

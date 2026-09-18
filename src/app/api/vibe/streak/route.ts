@@ -56,6 +56,9 @@ export async function GET() {
     }
   }
 
+  // Daily Double active? (bought via premium actions — the next claim is ×2)
+  const dailyDoubleActive = !!user.dailyDoubleUntil && user.dailyDoubleUntil.getTime() > Date.now();
+
   return NextResponse.json({
     streak,
     streakMax: user.streakMax,
@@ -63,6 +66,8 @@ export async function GET() {
     todayReward,
     nextReward: streakReward(streak + (canClaim ? 2 : 1)),
     streakRewardClaimed: user.streakRewardClaimed,
+    dailyDoubleActive,
+    todayRewardDoubled: dailyDoubleActive ? todayReward * 2 : null,
     rewards: Array.from({ length: 7 }, (_, i) => ({
       day: i + 1,
       reward: streakReward(i + 1),
@@ -91,14 +96,11 @@ export async function POST() {
     newStreak = 1; // start new streak
   }
 
-  // Calculate reward (doubled if dailyDouble was purchased).
+  // Calculate reward — doubled when an active Daily Double buff exists
+  // (premium action «Double Quotidien»). The buff is CONSUMED by the doubled
+  // claim so it applies exactly once, as promised.
   let reward = streakReward(newStreak);
-  const doubled = !user.streakRewardClaimed && user.lastStreakDay !== today && user.streak > 0;
-  // The dailyDouble flag: if user bought it, the reward is doubled.
-  // We check this by looking at whether streakRewardClaimed was set to false
-  // after a dailyDouble purchase (the spend API sets it to false to allow re-claim).
-  // For simplicity in this sandbox: if reward > 0 and the user has gems spent on dailyDouble today.
-  // We'll just double if the flag was specifically toggled.
+  const doubled = !!user.dailyDoubleUntil && user.dailyDoubleUntil.getTime() > Date.now();
   if (doubled) reward *= 2;
 
   await db.user.update({
@@ -110,6 +112,8 @@ export async function POST() {
       streakRewardClaimed: true,
       gems: { increment: reward },
       freeGems: { increment: reward }, // streak rewards are FREE Vibes
+      // Consume the Daily Double buff after the doubled claim.
+      ...(doubled ? { dailyDoubleUntil: null } : {}),
     },
   });
   await db.gemTx.create({

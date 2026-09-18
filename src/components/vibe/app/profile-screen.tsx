@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import {
-  ArrowLeft, BadgeCheck, Eye, Globe, Loader2, LogOut, MapPin, Moon, Plane, Volume2, VolumeX, Waves, Video, X, Check, Pencil, Trash2, Play, ShieldCheck,
+  ArrowLeft, BadgeCheck, Eye, Ghost, Globe, Loader2, LogOut, MapPin, Moon, Plane, Volume2, VolumeX, Waves, Video, X, Check, Pencil, Trash2, Play, ShieldCheck,
 } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { VideoPlayer } from "./video-player";
@@ -15,7 +15,9 @@ import { GEM_ACTIONS } from "@/lib/vibe/constants";
 import { toast } from "sonner";
 import { CompletionRing } from "./completion-ring";
 import { ActiveBuffsSection } from "./active-buffs-section";
-import { PremiumActionsSheet } from "./premium-actions-sheet";
+import { PremiumActionsSheet, EffectResult, type ActionResult } from "./premium-actions-sheet";
+import { ActionSuccessModal } from "./action-success-modal";
+import { canShowNudge, markNudgeShown } from "@/lib/vibe/nudges";
 import { Input } from "@/components/ui/input";
 import { ConfettiBurst, AnimatedNumber, haptic, sfx, useSfxEnabled } from "./interactive-animations";
 
@@ -49,6 +51,22 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
   // Ouvre le catalogue complet des actions premium (CTA de la section
   // « Actions actives » : état vide ou « Prolonger » d'une action active).
   const [premiumOpen, setPremiumOpen] = useState(false);
+  // Résultat « Voir les likes » — affiché dans le modal de succès partagé.
+  const [seeLikesResult, setSeeLikesResult] = useState<ActionResult | null>(null);
+  // Carte de discrétion (Mode Fantôme) — suggérée une fois par jour.
+  // Sémantique « vue » : visible tant qu'elle n'a pas été écartée aujourd'hui
+  // (robuste au rechargement de page — elle ne disparaît jamais sans avoir
+  // été vue ou fermée).
+  const [ghostNudgeVisible, setGhostNudgeVisible] = useState(false);
+
+  useEffect(() => {
+    setGhostNudgeVisible(canShowNudge("ghost-privacy", "day"));
+  }, []);
+
+  const dismissGhostNudge = () => {
+    markNudgeShown("ghost-privacy", "day");
+    setGhostNudgeVisible(false);
+  };
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editSaving, setEditSaving] = useState(false);
@@ -202,12 +220,18 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         patchMe({ gems: data.gems, freeGems: data.freeGems });
-        if (action === "seeLikes") toast.success("👁️ Likes reçus dévoilés");
+        if (action === "seeLikes") {
+          // Résultat complet (likers réels + visiteurs fantômes) via le
+          // modal de succès partagé — pas un simple toast.
+          setSeeLikesResult(data);
+        }
         if (action === "passport") {
           toast.success("✈️ Passport activé 24h");
           // Rafraîchit instantanément la section « Actions actives »
-          // (le Passport vient d'y apparaître avec son compte à rebours).
+          // (le Passport vient d'y apparaître avec son compte à rebours)
+          // ET la file Découvrir (profils de la ville choisie).
           window.dispatchEvent(new CustomEvent("vivilov:buff-activated"));
+          window.dispatchEvent(new Event("vivilov:deck-refresh"));
         }
       } catch (e: any) { toast.error(e.message || "Erreur"); }
       finally { setBusy(null); }
@@ -480,11 +504,40 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
             panneau de détail + « Prolonger ». */}
         <ActiveBuffsSection onOpenPremium={() => setPremiumOpen(true)} />
 
+        {/* Carte de discrétion — Mode Fantôme, suggérée une fois par jour.
+            Effet réel : likes secrets, invisible dans les radars et « Voir les
+            likes » des autres pendant 1h. */}
+        {ghostNudgeVisible && (
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => { dismissGhostNudge(); setPremiumOpen(true); }}
+            className="relative w-full rounded-2xl v-surface-1 ring-1 ring-(--v-divider) overflow-hidden p-3.5 pl-4 mb-4 flex items-center gap-3 text-left hover:v-surface-2 transition"
+          >
+            <span
+              aria-hidden
+              className="absolute left-0 inset-y-0 w-[3px]"
+              style={{ background: "linear-gradient(to bottom, oklch(0.55 0.24 295), transparent 130%)" }}
+            />
+            <span className="relative shrink-0 h-10 w-10 rounded-full grid place-items-center bg-vibe-purple/10 dark:bg-vibe-purple/15 ring-1 ring-(--v-divider)">
+              <Ghost className="h-4.5 w-4.5 text-vibe-purple dark:text-vibe-pink" />
+            </span>
+            <span className="relative flex-1 min-w-0">
+              <span className="block text-[13px] font-bold">Envie de discrétion ?</span>
+              <span className="block text-[11px] v-fg-muted leading-snug mt-0.5">
+                Le Mode Fantôme rend tes likes invisibles pendant 1h — tu explores sans laisser de trace.
+              </span>
+            </span>
+            <span className="relative shrink-0 text-[11px] font-semibold text-vibe-purple dark:text-vibe-pink">Essayer →</span>
+          </motion.button>
+        )}
+
         {/* premium actions */}
         <h3 className="font-display font-bold text-sm mb-2 px-1">Premium</h3>
         <div className="space-y-2 mb-4">
           <PremiumRow icon={<Eye className="h-4 w-4" />} title="Voir les likes reçus" desc="Dévoile un profil qui t'a déjà liké" cost={GEM_ACTIONS.seeLikes} onClick={() => spend("seeLikes")} loading={busy === "seeLikes"} />
-          <PremiumRow icon={<Plane className="h-4 w-4" />} title="Passport" desc="Swipe dans une autre ville 24h" cost={GEM_ACTIONS.passport} onClick={() => spend("passport")} loading={busy === "passport"} />
+          <PremiumRow icon={<Plane className="h-4 w-4" />} title="Passport" desc="Choisis une ville et swipe là-bas 24h" cost={GEM_ACTIONS.passport} onClick={() => setPremiumOpen(true)} loading={false} />
         </div>
 
         {/* settings */}
@@ -693,7 +746,17 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
 
       {/* Catalogue complet des actions premium — ouvert par la section
           « Actions actives » (état vide → « Découvrir », détail → « Prolonger »). */}
-      <PremiumActionsSheet open={premiumOpen} onOpenChange={setPremiumOpen} />
+      <PremiumActionsSheet open={premiumOpen} onOpenChange={setPremiumOpen} startInPassportPick={false} />
+
+      {/* Résultat complet de « Voir les likes » — modal de succès partagé */}
+      <ActionSuccessModal
+        open={seeLikesResult !== null}
+        onOpenChange={(o) => { if (!o) setSeeLikesResult(null); }}
+        emoji="👁️"
+        title="Voir les Likes"
+        message="Les profils qui t'ont déjà liké"
+        result={seeLikesResult ? <EffectResult result={seeLikesResult} /> : undefined}
+      />
     </motion.div>
   );
 }

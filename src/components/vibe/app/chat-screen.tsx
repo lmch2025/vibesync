@@ -32,6 +32,7 @@ import EmojiPicker from "./emoji-picker";
 import { GiftOpenModal } from "./gift-open-modal";
 import { VoiceRecorder } from "./voice-recorder";
 import { VoiceNotePlayer } from "./voice-note-player";
+import { SmartNudgeBanner } from "./smart-nudge";
 import { toast } from "sonner";
 
 type TimelineItem = {
@@ -106,6 +107,8 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
   const { controls: shakeControls, trigger: shakeTrigger } = useShake();
 
   const [openingGift, setOpeningGift] = useState<TimelineItem | null>(null);
+  // Quiet-conversation recommendation shown once per chat session.
+  const [quietNudged, setQuietNudged] = useState(false);
   const [giftNote, setGiftNote] = useState("");
 
   /// Affiche « écrit… » ~2-3 s dans le header (simulé localement, sans websocket).
@@ -161,7 +164,9 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
 
   async function send() {
     if (!text.trim() || !state) return;
-    if (state.locked) return;
+    // Anti-spam : un message BOOSTÉ (⚡ 10 Vibes) passe même en attente —
+    // c'est son pouvoir premium (le serveur l'accepte et l'épingle).
+    if (state.locked && !boost) return;
     const boostCost = boost ? GEM_ACTIONS.messageBoost : 0;
     const doSend = async () => {
       setSending(true);
@@ -384,11 +389,45 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
           <Lock className="h-5 w-5 mx-auto mb-1 text-amber-500 dark:text-amber-300" />
           <p className="text-xs text-amber-800 dark:text-amber-100 font-medium">Anti-spam actif</p>
           <p className="text-[11px] text-amber-800/85 dark:text-amber-100/85 mt-0.5">
-            Tu as envoyé tes {state?.maxMessagesBeforeReply ?? 3} messages. Attends une réponse, ou envoie un cadeau.
+            Tu as envoyé tes {state?.maxMessagesBeforeReply ?? 3} messages. Attends une réponse — ou perç̧e avec le Boost.
           </p>
-          <button onClick={() => setGiftOpen(true)} className="mt-2 h-8 px-3 rounded-full bg-amber-300 text-black text-xs font-bold">
-            Offrir un cadeau
-          </button>
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <button
+              onClick={() => { setBoost(true); setBoostInfo(true); }}
+              className={`h-8 px-3 rounded-full text-xs font-bold transition ${
+                boost ? "bg-gradient-to-r from-amber-300 to-amber-500 text-black" : "bg-amber-300 text-black hover:bg-amber-400"
+              }`}
+            >
+              ⚡ Booster (10 💎)
+            </button>
+            <button onClick={() => setGiftOpen(true)} className="h-8 px-3 rounded-full bg-amber-400/25 text-amber-900 dark:text-amber-100 text-xs font-bold hover:bg-amber-400/35 transition">
+              🎁 Cadeau
+            </button>
+          </div>
+          {boost && (
+            <p className="text-[10px] text-amber-700 dark:text-amber-200/80 mt-2">
+              ✅ Ton prochain message passera et sera épinglé en haut de sa boîte.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ===== QUIET-CONVERSATION RECOMMENDATION ===== */}
+      {/* J'ai écrit 2+ messages sans réponse → le Boost Message remet le
+          match en haut de SA boîte de réception. Une fois par session. */}
+      {state && !locked && state.myMessagesCount >= 2 && state.theirMessagesCount === 0 && !quietNudged && (
+        <div className="mx-3 mb-2">
+          <SmartNudgeBanner
+            nudge={{
+              id: `message-boost-quiet-${matchId}`,
+              emoji: "⚡",
+              text: `${otherName || "Ton match"} ne t'a pas encore répondu — un message boosté repasse en tête de sa boîte.`,
+              ctaLabel: "Booster (10 💎)",
+              onCta: () => { setBoost(true); setBoostInfo(true); },
+              tone: "gold",
+            }}
+            onDismiss={() => setQuietNudged(true)}
+          />
         </div>
       )}
 
@@ -528,8 +567,8 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
-                disabled={locked}
-                placeholder={locked ? "En attente…" : boost ? "✨ Message boosté…" : "Écris un message…"}
+                disabled={locked && !boost}
+                placeholder={locked && !boost ? "En attente…" : boost ? "✨ Message boosté…" : "Écris un message…"}
                 className={`w-full h-10 rounded-full px-4 pr-10 text-sm placeholder:v-fg-muted outline-none ring-1 transition disabled:opacity-50 ${
                   boost
                     ? "bg-amber-400/10 ring-amber-400/60 dark:ring-amber-300/40 focus:ring-amber-500 dark:focus:ring-amber-300/60"
@@ -541,7 +580,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
             {hasText ? (
               <motion.button
                 onClick={send}
-                disabled={sending || locked}
+                disabled={sending || (locked && !boost)}
                 whileTap={{ scale: 0.85 }}
                 className={`h-10 w-10 grid place-items-center rounded-full text-white shrink-0 transition disabled:opacity-40 ${
                   boost
