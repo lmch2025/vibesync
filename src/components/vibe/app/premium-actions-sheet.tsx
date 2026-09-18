@@ -8,7 +8,7 @@
 //   • Profile-targeted actions (Cœur d'Or, Crush Alert, Anneau d'Humeur,
 //     Rapport Compatibilité) only execute WITH a target — in generic mode
 //     they show a "depuis un profil" hint instead of charging for a no-op.
-//   • Super-Like + Boost Message are flow-specific (swipe button / chat ⚡)
+//   • Super-Like + Boost Message are flow-specific (swipe-up gesture / chat ⚡)
 //     and never charge from this sheet.
 //   • Passport opens an inline city picker before activation.
 //   • Actions that change the deck (rewind, superRewind, passport, boost)
@@ -72,7 +72,7 @@ const BUFF_ACTION_KEYS: Partial<Record<PremiumAction["key"], BuffType>> = {
 const NEEDS_PROFILE: PremiumAction["key"][] = ["goldenHeart", "crushAlert", "moodRing", "compatibilityReport"];
 /// Flow-specific actions — always shown as hints, never charged from here.
 const FLOW_HINTS: Partial<Record<PremiumAction["key"], string>> = {
-  superlike: "Utilise le bouton ⭐ sous la carte (ou glisse vers le haut)",
+  superlike: "Glisse la carte vers le haut ⬆️ pour Super-Liker",
   messageBoost: "Active l'éclair ⚡ dans une conversation",
 };
 
@@ -144,9 +144,9 @@ export function PremiumActionsSheet({
   async function execute(action: PremiumAction, extra?: Record<string, unknown>) {
     setBusy(action.key);
     // requireVibes invokes `proceed` synchronously when the balance is enough,
-    // and opens the insufficient-gems modal otherwise. Track which one happened
-    // so busy is released by the async flow's `finally` (the spinner now really
-    // shows) — or immediately when the action never started.
+    // and redirects to the Vibes purchase page otherwise. Track which one
+    // happened so busy is released by the async flow's `finally` (the spinner
+    // now really shows) — or immediately when the action never started.
     let started = false;
     requireVibes(action.cost, `${action.emoji} ${action.label} (${action.cost} Vibes)`, async () => {
       started = true;

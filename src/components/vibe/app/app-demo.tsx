@@ -2,7 +2,7 @@
 // AppDemo — orchestrates auth gate + bottom-nav app shell.
 // Full-screen experience (NO phone bezel — the phone visual lives only on
 // the landing page). Content is centered in a mobile-width column.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { Heart, MessageCircle, Wallet as WalletIcon, User, ArrowLeft, Crown } from "lucide-react";
 import { useVibe } from "@/lib/vibe/store";
@@ -14,7 +14,6 @@ import { ChatScreen } from "./chat-screen";
 import { WalletScreen } from "./wallet-screen";
 import { ProfileScreen } from "./profile-screen";
 import { MatchOverlay } from "./match-overlay";
-import { InsufficientVibesModal } from "@/components/vibe/insufficient-vibes-modal";
 import { PremiumActionsSheet } from "./premium-actions-sheet";
 import { StreakReward } from "./streak-reward";
 import { NotificationBell } from "./notification-bell";
@@ -203,7 +202,7 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
         }}
       />
 
-      <InsufficientVibesHandler
+      <GoBuyVibesRedirect
         onGoWallet={() => {
           setChatTarget(null);
           setMatch(null);
@@ -249,48 +248,33 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
   );
 }
 
-/// Renders the InsufficientVibesModal bound to the store. Handles the purchase
-/// flow: buys the recommended pack, then runs the pending proceed callback so
-/// the original premium action completes automatically after refill.
-function InsufficientVibesHandler({ onGoWallet }: { onGoWallet: () => void }) {
-  const insufficient = useVibe((s) => s.insufficient);
-  const closeInsufficient = useVibe((s) => s.closeInsufficient);
-  const setMe = useVibe((s) => s.setMe);
-  const patchMe = useVibe((s) => s.patchMe);
-  const me = useVibe((s) => s.me);
+/// Redirect-to-purchase handler — when a premium action or a gift can't run
+/// because the balance is insufficient, the store dispatches
+/// `vivilov:go-buy-vibes`; we navigate straight to the Boutique (Vibes purchase
+/// page) with a contextual toast. The pending action is kept in the store and
+/// resumes automatically after a successful pack purchase (wallet-screen).
+function GoBuyVibesRedirect({ onGoWallet }: { onGoWallet: () => void }) {
+  // Keep the latest navigation callback without re-subscribing every render.
+  const goRef = useRef(onGoWallet);
+  useEffect(() => {
+    goRef.current = onGoWallet;
+  }, [onGoWallet]);
 
-  async function buyPack(packId: string) {
-    try {
-      const res = await fetch("/api/vibe/gems/purchase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packId, currency: me?.currency ?? "XAF" }),
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { needed, have, actionLabel } = (e as CustomEvent).detail ?? {};
+      goRef.current();
+      const missing = Math.max(0, (needed ?? 0) - (have ?? 0));
+      toast.info("Plus assez de Vibes 💎", {
+        description: `${actionLabel ?? "Cette action"} — il te manque ${missing} Vibes. Recharge ci-dessous, ton action reprendra automatiquement ✨`,
+        duration: 5000,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      patchMe({ gems: data.gems, freeGems: data.freeGems });
-      toast.success(`+${data.added} Vibes ajoutées ! 💎`);
-      // Run the pending premium action now that balance is sufficient.
-      const proceed = insufficient?.pendingProceed;
-      closeInsufficient();
-      if (proceed) setTimeout(proceed, 300);
-    } catch (e: any) {
-      toast.error(e.message || "Erreur");
-    }
-  }
+    };
+    window.addEventListener("vivilov:go-buy-vibes", handler);
+    return () => window.removeEventListener("vivilov:go-buy-vibes", handler);
+  }, []);
 
-  if (!insufficient) return null;
-  return (
-    <InsufficientVibesModal
-      open={insufficient.open}
-      onOpenChange={(o) => { if (!o) closeInsufficient(); }}
-      needed={insufficient.needed}
-      have={insufficient.have}
-      actionLabel={insufficient.actionLabel}
-      onBuyPack={buyPack}
-      onViewAllPacks={onGoWallet}
-    />
-  );
+  return null;
 }
 
 /// Full-screen app shell — NO phone bezel. Centers content in a mobile-width

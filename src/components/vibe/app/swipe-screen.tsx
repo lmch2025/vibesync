@@ -1,19 +1,21 @@
 "use client";
 // Swipe deck: Tinder-like drag with spring physics, Ken Burns video posters,
-// Vibe Check overlay, action bar (rewind/pass/superlike/like/boost), match overlay.
-// Includes the non-intrusive discovery FILTERS (distance, age range, gender)
-// — a discreet button in the top bar opens a bottom sheet; filters are saved
-// to the profile and enforced server-side by the recommendation algorithm.
+// Vibe Check overlay, action bar (rewind/pass/gift/like/boost — the Super-Like
+// stays available via the swipe-up gesture and the contextual nudges), match
+// overlay. Includes the non-intrusive discovery FILTERS (distance, age range,
+// gender) — a discreet button in the top bar opens a bottom sheet; filters are
+// saved to the profile and enforced server-side by the recommendation algorithm.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { RotateCcw, X, Star, Heart, Zap, BadgeCheck, Waves, MapPin, SlidersHorizontal, Check, Loader2, Sparkles, Plane } from "lucide-react";
-import { GemBadge } from "@/components/vibe/gem-badge";
-import { sfx, haptic, EmojiBurst, Shimmer, type SfxName } from "@/components/vibe/app/interactive-animations";
+import { RotateCcw, X, Star, Heart, Zap, BadgeCheck, Waves, MapPin, SlidersHorizontal, Check, Loader2, Sparkles, Plane, Gift } from "lucide-react";
+import { GemBadge, GemIcon } from "@/components/vibe/gem-badge";
+import { sfx, haptic, celebrate, EmojiBurst, Shimmer, type SfxName } from "@/components/vibe/app/interactive-animations";
 import { VideoPlayer } from "./video-player";
 import { PremiumActionsSheet } from "./premium-actions-sheet";
 import { SmartNudgeBanner, useNudgeSlot, type SmartNudge } from "./smart-nudge";
 import { useVibe } from "@/lib/vibe/store";
-import { GEM_ACTIONS, VIBE_QUESTIONS } from "@/lib/vibe/constants";
+import { GEM_ACTIONS, GIFTS, VIBE_QUESTIONS } from "@/lib/vibe/constants";
+import { useCurrency } from "@/lib/vibe/use-currency";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
 
@@ -58,9 +60,9 @@ export function SwipeScreen({
   const [deck, setDeck] = useState<Profile[]>([]);
   const [history, setHistory] = useState<{ profile: Profile; direction: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  // Burst d'emojis sur les boutons Like / Super-Like (incrémentés pour re-fire)
+  // Burst d'emojis sur les boutons Like / Cadeau (incrémentés pour re-fire)
   const [likeBurst, setLikeBurst] = useState(0);
-  const [superBurst, setSuperBurst] = useState(0);
+  const [giftBurst, setGiftBurst] = useState(0);
   const [vibeIndex] = useState(() => Math.floor(Math.random() * VIBE_QUESTIONS.length));
   const vibeQ = VIBE_QUESTIONS[vibeIndex];
   // Discovery filters sheet — collapsed by default (non-intrusive).
@@ -71,6 +73,9 @@ export function SwipeScreen({
   const [passportSheet, setPassportSheet] = useState(false);
   // Passport destination from the deck API (active → chip in the top bar).
   const [passportCity, setPassportCity] = useState<string | null>(null);
+  // Gift tray — opens from the 🎁 action button, targets the top card.
+  const [giftTarget, setGiftTarget] = useState<Profile | null>(null);
+  const [giftNote, setGiftNote] = useState("");
   // Contextual premium-action recommendations (elegant, cooldown-guarded).
   const { nudge, dismiss, offer } = useNudgeSlot();
   const passStreakRef = useRef(0);
@@ -108,6 +113,15 @@ export function SwipeScreen({
     window.addEventListener("vivilov:deck-refresh", onRefresh);
     return () => window.removeEventListener("vivilov:deck-refresh", onRefresh);
   }, [loadDeck]);
+
+  // When a premium action / gift redirects to the purchase page
+  // (insufficient balance), close the gift tray — the pending gift resumes
+  // automatically after a successful pack purchase.
+  useEffect(() => {
+    const closeGiftTray = () => setGiftTarget(null);
+    window.addEventListener("vivilov:go-buy-vibes", closeGiftTray);
+    return () => window.removeEventListener("vivilov:go-buy-vibes", closeGiftTray);
+  }, []);
 
   /// Circumstantial recommendations — the deck loaded is the best moment to
   /// suggest a discovery action. One at a time, cooldown-guarded.
@@ -160,6 +174,20 @@ export function SwipeScreen({
         "day",
       );
     }
+
+    // Gift suggestion — stands out before the first message (once/day max,
+    // and only when no other nudge already occupies the slot).
+    offer(
+      {
+        id: "gift-standout",
+        emoji: "🎁",
+        text: `Sors du lot auprès de ${topCard.displayName} — un cadeau attire l'œil avant même le premier message.`,
+        ctaLabel: "Offrir (dès 10 💎)",
+        onCta: () => setGiftTarget(topCard),
+        tone: "gold",
+      },
+      "day",
+    );
 
     // An unread like → the seeLikes tease.
     (async () => {
@@ -315,6 +343,49 @@ export function SwipeScreen({
     });
   }
 
+  /// Send a gift DIRECTLY from the deck to the targeted profile (no match
+  /// required — the receiver is notified + credited their share). Uses the
+  /// shared requireVibes gate: insufficient balance redirects to the Vibes
+  /// purchase page and the gift resumes automatically after purchase.
+  function sendDeckGift(giftKey: string) {
+    const target = giftTarget;
+    const gift = GIFTS.find((g) => g.key === giftKey);
+    if (!target || !gift) return;
+    const note = giftNote.trim();
+    requireVibes(gift.gemCost, `${gift.emoji} ${gift.name} (${gift.gemCost} Vibes)`, async () => {
+      try {
+        const res = await fetch("/api/vibe/gifts/send", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profileId: target.id, giftKey, messageText: note || undefined }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          // Gifts require PURCHASED Vibes — redirect to the purchase page;
+          // the pending proceed retries the gift after a successful purchase.
+          if (res.status === 402 && (data.needPurchased || data.needVibes)) {
+            sfx.play("error");
+            useVibe.getState().redirectForVibes(
+              gift.gemCost,
+              data.purchasedGems ?? me?.gems ?? 0,
+              `${gift.emoji} ${gift.name}`,
+              () => sendDeckGift(giftKey),
+            );
+            return;
+          }
+          throw new Error(data.error);
+        }
+        patchMe({ gems: data.gems, freeGems: data.freeGems });
+        celebrate({ sound: "chime", confettiCount: 90, hapticPattern: [12, 30, 12] });
+        setGiftBurst((k) => k + 1);
+        toast.success(`${gift.emoji} ${gift.name} offert à ${data.targetName ?? target.displayName} ! Il/elle reçoit une notification 🎁`);
+        setGiftTarget(null);
+        setGiftNote("");
+      } catch (e: any) {
+        toast.error(e.message || "Erreur");
+      }
+    });
+  }
+
   const top = deck[0];
 
   return (
@@ -371,6 +442,17 @@ export function SwipeScreen({
         onOpenChange={setPassportSheet}
         category="profile"
         startInPassportPick
+      />
+
+      {/* Gift tray — offer a gift directly from the deck (no match needed) */}
+      <GiftTraySheet
+        open={giftTarget !== null}
+        onOpenChange={(o) => { if (!o) { setGiftTarget(null); setGiftNote(""); } }}
+        target={giftTarget}
+        note={giftNote}
+        onNoteChange={setGiftNote}
+        onSend={sendDeckGift}
+        gems={me?.gems ?? 0}
       />
 
       {/* deck */}
@@ -440,18 +522,16 @@ export function SwipeScreen({
             <ActionButton
               onClick={() => {
                 if (!top) return;
-                setSuperBurst((k) => k + 1);
-                swipe(top, "superlike");
+                setGiftTarget(top);
               }}
-              label="Super"
-              cost={GEM_ACTIONS.superlike}
-              tone="blue"
+              label="Cadeau"
+              tone="rose"
               big
               sound="chime"
             >
-              <Star className="h-6 w-6" />
+              <Gift className="h-6 w-6" />
             </ActionButton>
-            <EmojiBurst trigger={superBurst} emojis={["⭐", "✨"]} />
+            <EmojiBurst trigger={giftBurst} emojis={["🎁", "💝", "✨"]} />
           </div>
           <div className="relative">
             <ActionButton
@@ -654,7 +734,7 @@ function ActionButton({
   onClick: () => void;
   label: string;
   cost?: number;
-  tone: "red" | "green" | "blue" | "amber" | "purple";
+  tone: "red" | "green" | "blue" | "amber" | "purple" | "rose";
   big?: boolean;
   sound?: SfxName;
 }) {
@@ -664,6 +744,7 @@ function ActionButton({
     blue: "text-cyan-600 dark:text-cyan-300 ring-cyan-400/60 dark:ring-cyan-300/40 hover:bg-cyan-300/10",
     amber: "text-amber-600 dark:text-amber-300 ring-amber-400/60 dark:ring-amber-300/40 hover:bg-amber-300/10",
     purple: "text-fuchsia-600 dark:text-fuchsia-300 ring-fuchsia-400/60 dark:ring-fuchsia-300/40 hover:bg-fuchsia-300/10",
+    rose: "text-rose-500 dark:text-rose-300 ring-rose-400/60 dark:ring-rose-300/40 hover:bg-rose-400/10",
   };
   return (
     <motion.button
@@ -704,6 +785,144 @@ function EmptyDeck({ onReload, onPassport }: { onReload: () => void; onPassport:
         </div>
       </div>
     </div>
+  );
+}
+
+// ===== GIFT TRAY SHEET (élégant, depuis le deck) =====
+// S'ouvre depuis le bouton 🎁 de la barre d'actions du Découvrir tab.
+// Permet d'offrir un cadeau DIRECTEMENT au profil de la carte du dessus —
+// sans attendre un match. Le destinataire reçoit une notification et touche
+// 70% de la valeur du cadeau. Un cadeau insuffisamment couvert par le solde
+// redirige vers la page d'achat de Vibes (l'envoi reprend après achat).
+function GiftTraySheet({
+  open,
+  onOpenChange,
+  target,
+  note,
+  onNoteChange,
+  onSend,
+  gems,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  target: Profile | null;
+  note: string;
+  onNoteChange: (n: string) => void;
+  onSend: (giftKey: string) => void;
+  gems: number;
+}) {
+  const { moneyCents } = useCurrency();
+
+  return (
+    <AnimatePresence>
+      {open && target && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => onOpenChange(false)}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+          />
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 320, damping: 32 }}
+            role="dialog"
+            aria-label={`Offrir un cadeau à ${target.displayName}`}
+            className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl v-surface-solid v-fg ring-1 ring-(--v-divider) max-h-[78vh] overflow-y-auto no-scrollbar"
+          >
+            {/* Gradient header — receiver identity + balance */}
+            <div className="relative vibe-gradient px-4 pt-4 pb-5 overflow-hidden rounded-t-3xl">
+              <div className="absolute -top-12 -right-12 h-36 w-36 rounded-full bg-white/15 blur-2xl" />
+              <div className="relative flex items-center gap-3">
+                <span className="grid place-items-center h-11 w-11 rounded-2xl bg-white/20 backdrop-blur shrink-0 text-2xl">
+                  🎁
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-display font-bold text-lg text-white leading-tight">
+                    Offrir un cadeau
+                  </h3>
+                  <p className="text-[11px] text-white/80 truncate">
+                    à <span className="font-semibold text-white">{target.displayName}</span>
+                    {" · "}
+                    {target.city}
+                  </p>
+                </div>
+                <motion.button
+                  onClick={() => onOpenChange(false)}
+                  whileTap={{ scale: 0.88 }}
+                  aria-label="Fermer"
+                  className="h-8 w-8 grid place-items-center rounded-full bg-white/15 text-white hover:bg-white/25 transition shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </motion.button>
+              </div>
+              <p className="relative text-[10px] text-white/75 mt-2 leading-relaxed">
+                Il/elle recevra une notification avec ton prénom — un cadeau attire
+                l&apos;œil bien avant le premier message. ✨
+              </p>
+              <div className="relative mt-3 flex items-center gap-1.5 rounded-full bg-white/15 ring-1 ring-white/25 px-3 py-1.5 w-fit">
+                <GemIcon className="h-3.5 w-3.5 text-white" />
+                <span className="text-xs font-bold tabular-nums text-white">{gems}</span>
+                <span className="text-[10px] text-white/75">Vibes</span>
+              </div>
+            </div>
+
+            {/* Body — note + gift grid */}
+            <div className="p-4 pb-6">
+              <input
+                value={note}
+                onChange={(e) => onNoteChange(e.target.value)}
+                maxLength={200}
+                placeholder="Ajoute un petit mot qui accompagnera ton cadeau (optionnel)…"
+                className="w-full h-10 rounded-xl v-surface-1 ring-1 ring-(--v-divider) px-3 text-sm placeholder:v-fg-muted outline-none focus:ring-vibe-purple/50 mb-3"
+              />
+              <div className="grid grid-cols-4 gap-2">
+                {GIFTS.map((g) => {
+                  const affordable = gems >= g.gemCost;
+                  return (
+                    <motion.button
+                      key={g.key}
+                      onClick={() => onSend(g.key)}
+                      whileTap={{ scale: 0.93 }}
+                      aria-label={`Offrir ${g.name} — ${g.gemCost} Vibes`}
+                      className={`relative flex flex-col items-center gap-1 rounded-2xl v-surface-1 ring-1 ring-(--v-divider) p-2.5 hover:v-surface-2 hover:ring-vibe-purple/40 transition text-center ${
+                        affordable ? "" : "opacity-55"
+                      }`}
+                    >
+                      {g.popular && (
+                        <span className="absolute -top-1.5 -right-1.5 text-[8px] bg-accent text-black font-bold rounded-full px-1 py-0.5">
+                          HOT
+                        </span>
+                      )}
+                      <span className="text-[26px] leading-none mt-0.5">{g.emoji}</span>
+                      <span className="text-[10px] font-semibold leading-tight v-fg line-clamp-2 min-h-[2.2em] flex items-center">
+                        {g.name}
+                      </span>
+                      <span className="text-[10px] font-bold text-fuchsia-600 dark:text-fuchsia-300 flex items-center gap-0.5">
+                        <GemIcon className="h-2.5 w-2.5" /> {g.gemCost}
+                      </span>
+                      <span className="text-[8px] text-emerald-600 dark:text-emerald-300/80">
+                        ≈ {moneyCents(g.eurValueCents * 0.7)} pour lui/elle
+                      </span>
+                      {!affordable && (
+                        <span className="text-[8px] v-fg-muted">recharge requise</span>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] v-fg-muted text-center mt-3 leading-relaxed">
+                Les cadeaux s&apos;offrent avec des Vibes achetées (les Vibes gratuites sont
+                réservées aux actions premium). Le destinataire touche 70% de la valeur.
+              </p>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 

@@ -17,28 +17,50 @@
         "src/app/api/vibe/auth/logout/route.ts",
         "src/app/api/vibe/me/route.ts"
       ],
-      "routes_api": ["POST /api/vibe/auth/check-phone", "POST /api/vibe/auth/register", "POST /api/vibe/auth/login", "POST /api/vibe/auth/logout", "GET /api/vibe/me"]
+      "routes_api": [
+        "POST /api/vibe/auth/check-phone",
+        "POST /api/vibe/auth/register",
+        "POST /api/vibe/auth/login",
+        "POST /api/vibe/auth/logout",
+        "GET /api/vibe/me"
+      ]
     },
     {
       "id": "demo-admin-login",
       "nom": "Connexion admin démo (raccourci sandbox)",
       "statut": "implémentée (sandbox-only)",
-      "fichiers": ["src/app/api/vibe/auth/demo-admin/route.ts"],
-      "routes_api": ["POST /api/vibe/auth/demo-admin"]
+      "fichiers": [
+        "src/app/api/vibe/auth/demo-admin/route.ts"
+      ],
+      "routes_api": [
+        "POST /api/vibe/auth/demo-admin"
+      ]
     },
     {
       "id": "orchestration-vues",
       "nom": "Routage des vues + hydratation session serveur",
       "statut": "implémentée",
-      "fichiers": ["src/app/page.tsx", "src/app/client-page.tsx", "src/app/layout.tsx"],
+      "fichiers": [
+        "src/app/page.tsx",
+        "src/app/client-page.tsx",
+        "src/app/layout.tsx"
+      ],
       "routes_api": []
     },
     {
       "id": "onboarding-3-etapes",
       "nom": "Onboarding en 4 étapes (pseudo, âge/ville, relation, vidéo)",
       "statut": "implémentée",
-      "fichiers": ["src/components/vibe/app/onboarding-flow.tsx", "src/lib/vibe/cities.ts", "src/app/api/vibe/onboarding/route.ts", "src/app/api/vibe/cities/route.ts"],
-      "routes_api": ["POST /api/vibe/onboarding", "GET /api/vibe/cities"]
+      "fichiers": [
+        "src/components/vibe/app/onboarding-flow.tsx",
+        "src/lib/vibe/cities.ts",
+        "src/app/api/vibe/onboarding/route.ts",
+        "src/app/api/vibe/cities/route.ts"
+      ],
+      "routes_api": [
+        "POST /api/vibe/onboarding",
+        "GET /api/vibe/cities"
+      ]
     },
     {
       "id": "video-profil-15s",
@@ -55,35 +77,65 @@
         "src/app/api/vibe/upload/route.ts",
         "src/app/api/vibe/video-config/route.ts"
       ],
-      "routes_api": ["POST /api/vibe/profile/video", "DELETE /api/vibe/profile/video", "POST /api/vibe/upload", "GET /api/vibe/video-config"]
+      "routes_api": [
+        "POST /api/vibe/profile/video",
+        "DELETE /api/vibe/profile/video",
+        "POST /api/vibe/upload",
+        "GET /api/vibe/video-config"
+      ]
     },
     {
       "id": "swipe-deck",
       "nom": "Deck de swipe façon Tinder (like/pass/superlike + rewind)",
       "statut": "implémentée",
-      "fichiers": ["src/components/vibe/app/swipe-screen.tsx", "src/components/vibe/app/match-overlay.tsx", "src/app/api/vibe/profiles/deck/route.ts", "src/app/api/vibe/swipe/route.ts"],
-      "routes_api": ["GET /api/vibe/profiles/deck", "POST /api/vibe/swipe"]
+      "fichiers": [
+        "src/components/vibe/app/swipe-screen.tsx",
+        "src/components/vibe/app/match-overlay.tsx",
+        "src/app/api/vibe/profiles/deck/route.ts",
+        "src/app/api/vibe/swipe/route.ts"
+      ],
+      "routes_api": [
+        "GET /api/vibe/profiles/deck",
+        "POST /api/vibe/swipe"
+      ]
     },
     {
       "id": "vibe-check",
       "nom": "Vibe Check (question de compatibilité binaire)",
       "statut": "implémentée (affichage client uniquement)",
-      "fichiers": ["src/components/vibe/app/swipe-screen.tsx", "src/lib/vibe/constants.ts"],
+      "fichiers": [
+        "src/components/vibe/app/swipe-screen.tsx",
+        "src/lib/vibe/constants.ts"
+      ],
       "routes_api": []
     },
     {
       "id": "messagerie-anti-spam",
       "nom": "Messagerie match avec verrou anti-spam (3 messages max avant réponse)",
       "statut": "implémentée",
-      "fichiers": ["src/components/vibe/app/chat-screen.tsx", "src/components/vibe/app/matches-screen.tsx", "src/app/api/vibe/matches/route.ts", "src/app/api/vibe/matches/[id]/messages/route.ts"],
-      "routes_api": ["GET /api/vibe/matches", "GET|POST|PATCH /api/vibe/matches/[id]/messages"]
+      "fichiers": [
+        "src/components/vibe/app/chat-screen.tsx",
+        "src/components/vibe/app/matches-screen.tsx",
+        "src/app/api/vibe/matches/route.ts",
+        "src/app/api/vibe/matches/[id]/messages/route.ts"
+      ],
+      "routes_api": [
+        "GET /api/vibe/matches",
+        "GET|POST|PATCH /api/vibe/matches/[id]/messages"
+      ]
     },
     {
       "id": "messages-vocaux",
       "nom": "Notes vocales dans le chat (+ sélecteur d'emojis)",
       "statut": "implémentée",
-      "fichiers": ["src/components/vibe/app/voice-recorder.tsx", "src/components/vibe/app/voice-note-player.tsx", "src/components/vibe/app/emoji-picker.tsx"],
-      "routes_api": ["POST /api/vibe/matches/[id]/messages (type=voice)"]
+      "fichiers": [
+        "src/components/vibe/app/voice-recorder.tsx",
+        "src/components/vibe/app/voice-note-player.tsx",
+        "src/components/vibe/app/emoji-picker.tsx"
+      ],
+      "routes_api": [
+        "POST /api/vibe/matches/[id]/messages (type=voice)"
+      ]
     },
     {
       "id": "cadeaux-virtuels",
@@ -95,15 +147,23 @@
         "src/app/api/vibe/matches/[id]/gift/route.ts",
         "src/app/api/vibe/gifts/route.ts",
         "src/app/api/vibe/gifts/[id]/open/route.ts",
-        "src/lib/vibe/constants.ts"
+        "src/lib/vibe/constants.ts",
+        "src/app/api/vibe/gifts/send/route.ts"
       ],
-      "routes_api": ["POST /api/vibe/matches/[id]/gift", "GET /api/vibe/gifts", "POST /api/vibe/gifts/[id]/open"]
+      "routes_api": [
+        "POST /api/vibe/matches/[id]/gift",
+        "GET /api/vibe/gifts",
+        "POST /api/vibe/gifts/[id]/open",
+        "POST /api/vibe/gifts/send"
+      ]
     },
     {
       "id": "partage-social",
       "nom": "Partage social post-cadeau + modale de parrainage",
       "statut": "implémentée (UI uniquement)",
-      "fichiers": ["src/components/vibe/app/social-share.tsx"],
+      "fichiers": [
+        "src/components/vibe/app/social-share.tsx"
+      ],
       "routes_api": []
     },
     {
@@ -121,7 +181,11 @@
         "src/app/api/vibe/gems/purchase/route.ts",
         "src/app/api/vibe/gems/spend/route.ts"
       ],
-      "routes_api": ["GET /api/vibe/gem-packs", "POST /api/vibe/gems/purchase", "POST /api/vibe/gems/spend"]
+      "routes_api": [
+        "GET /api/vibe/gem-packs",
+        "POST /api/vibe/gems/purchase",
+        "POST /api/vibe/gems/spend"
+      ]
     },
     {
       "id": "actions-premium",
@@ -135,55 +199,103 @@
         "src/lib/vibe/constants.ts",
         "src/app/api/vibe/gems/spend/route.ts"
       ],
-      "routes_api": ["POST /api/vibe/gems/spend"]
+      "routes_api": [
+        "POST /api/vibe/gems/spend"
+      ]
     },
     {
       "id": "buffs-actifs",
       "nom": "Suivi des buffs actifs (anneaux compte à rebours, polling 15s)",
       "statut": "implémentée (section UI non branchée)",
-      "fichiers": ["src/app/api/vibe/active-buffs/route.ts", "src/lib/vibe/use-active-buffs.ts", "src/components/vibe/app/active-buffs-section.tsx", "src/components/vibe/app/countdown-ring.tsx", "src/components/vibe/app/action-success-modal.tsx"],
-      "routes_api": ["GET /api/vibe/active-buffs"]
+      "fichiers": [
+        "src/app/api/vibe/active-buffs/route.ts",
+        "src/lib/vibe/use-active-buffs.ts",
+        "src/components/vibe/app/active-buffs-section.tsx",
+        "src/components/vibe/app/countdown-ring.tsx",
+        "src/components/vibe/app/action-success-modal.tsx"
+      ],
+      "routes_api": [
+        "GET /api/vibe/active-buffs"
+      ]
     },
     {
       "id": "wallet-retraits",
       "nom": "Portefeuille gains € + demandes de retrait (escrow)",
       "statut": "implémentée (partielle : traitement admin absent)",
-      "fichiers": ["src/components/vibe/app/wallet-screen.tsx", "src/components/vibe/app/withdraw-modal.tsx", "src/app/api/vibe/wallet/withdraw/route.ts", "src/app/api/vibe/wallet/transactions/route.ts"],
-      "routes_api": ["GET|POST /api/vibe/wallet/withdraw", "GET /api/vibe/wallet/transactions"]
+      "fichiers": [
+        "src/components/vibe/app/wallet-screen.tsx",
+        "src/components/vibe/app/withdraw-modal.tsx",
+        "src/app/api/vibe/wallet/withdraw/route.ts",
+        "src/app/api/vibe/wallet/transactions/route.ts"
+      ],
+      "routes_api": [
+        "GET|POST /api/vibe/wallet/withdraw",
+        "GET /api/vibe/wallet/transactions"
+      ]
     },
     {
       "id": "streak-quotidien",
       "nom": "Série quotidienne (streak) avec récompenses N×2 Vibes",
       "statut": "implémentée",
-      "fichiers": ["src/components/vibe/app/streak-reward.tsx", "src/app/api/vibe/streak/route.ts"],
-      "routes_api": ["GET|POST /api/vibe/streak"]
+      "fichiers": [
+        "src/components/vibe/app/streak-reward.tsx",
+        "src/app/api/vibe/streak/route.ts"
+      ],
+      "routes_api": [
+        "GET|POST /api/vibe/streak"
+      ]
     },
     {
       "id": "notifications-inapp",
       "nom": "Notifications in-app (cloche + centre, polling 30s)",
       "statut": "implémentée",
-      "fichiers": ["src/components/vibe/app/notification-bell.tsx", "src/lib/vibe/notify.ts", "src/app/api/vibe/notifications/route.ts"],
-      "routes_api": ["GET|POST /api/vibe/notifications"]
+      "fichiers": [
+        "src/components/vibe/app/notification-bell.tsx",
+        "src/lib/vibe/notify.ts",
+        "src/app/api/vibe/notifications/route.ts"
+      ],
+      "routes_api": [
+        "GET|POST /api/vibe/notifications"
+      ]
     },
     {
       "id": "parametres-notifications",
       "nom": "Préférences de notifications par catégorie",
       "statut": "implémentée (UI orpheline)",
-      "fichiers": ["src/components/vibe/app/notification-settings.tsx", "src/app/api/vibe/notification-settings/route.ts"],
-      "routes_api": ["GET|POST /api/vibe/notification-settings"]
+      "fichiers": [
+        "src/components/vibe/app/notification-settings.tsx",
+        "src/app/api/vibe/notification-settings/route.ts"
+      ],
+      "routes_api": [
+        "GET|POST /api/vibe/notification-settings"
+      ]
     },
     {
       "id": "push-web",
       "nom": "Souscription Web Push (VAPID)",
       "statut": "partielle (aucun envoi serveur)",
-      "fichiers": ["src/components/vibe/app/notification-permission-prompt.tsx", "src/app/api/vibe/push/vapid-key/route.ts", "src/app/api/vibe/push/subscribe/route.ts"],
-      "routes_api": ["GET /api/vibe/push/vapid-key", "POST|DELETE /api/vibe/push/subscribe"]
+      "fichiers": [
+        "src/components/vibe/app/notification-permission-prompt.tsx",
+        "src/app/api/vibe/push/vapid-key/route.ts",
+        "src/app/api/vibe/push/subscribe/route.ts"
+      ],
+      "routes_api": [
+        "GET /api/vibe/push/vapid-key",
+        "POST|DELETE /api/vibe/push/subscribe"
+      ]
     },
     {
       "id": "pwa",
       "nom": "PWA (manifest, icônes, install prompt, métadonnées SEO/JSON-LD)",
       "statut": "implémentée hors sw.js (icônes 192/512 générées et versionnées)",
-      "fichiers": ["public/manifest.json", "public/icon-192.png", "public/icon-512.png", "src/components/vibe/app/pwa-install-prompt.tsx", "src/app/layout.tsx", "public/robots.txt"],
+      "fichiers": [
+        "public/manifest.json",
+        "public/icon-192.png",
+        "public/icon-512.png",
+        "src/components/vibe/app/pwa-install-prompt.tsx",
+        "src/app/layout.tsx",
+        "public/robots.txt"
+      ],
       "routes_api": []
     },
     {
@@ -199,14 +311,26 @@
         "src/lib/vibe/currency.ts",
         "src/lib/vibe/constants.ts"
       ],
-      "routes_api": ["GET /api/vibe/detect", "GET /api/vibe/rates", "POST /api/vibe/currency"]
+      "routes_api": [
+        "GET /api/vibe/detect",
+        "GET /api/vibe/rates",
+        "POST /api/vibe/currency"
+      ]
     },
     {
       "id": "profil-completion",
       "nom": "Complétion de profil (12 tâches, anneau animé)",
       "statut": "implémentée",
-      "fichiers": ["src/app/api/vibe/completion-rate/route.ts", "src/components/vibe/app/completion-ring.tsx", "src/components/vibe/app/profile-screen.tsx", "src/app/api/vibe/profile/route.ts"],
-      "routes_api": ["GET /api/vibe/completion-rate", "GET|PATCH /api/vibe/profile"]
+      "fichiers": [
+        "src/app/api/vibe/completion-rate/route.ts",
+        "src/components/vibe/app/completion-ring.tsx",
+        "src/components/vibe/app/profile-screen.tsx",
+        "src/app/api/vibe/profile/route.ts"
+      ],
+      "routes_api": [
+        "GET /api/vibe/completion-rate",
+        "GET|PATCH /api/vibe/profile"
+      ]
     },
     {
       "id": "admin-dashboard",
@@ -231,13 +355,24 @@
         "src/app/api/vibe/admin/gifts/[id]/route.ts",
         "src/app/api/vibe/admin/settings/route.ts"
       ],
-      "routes_api": ["GET /api/vibe/admin/stats", "GET /api/vibe/admin/users", "GET|POST /api/vibe/admin/reports", "GET|POST /api/vibe/admin/gifts", "PUT|DELETE /api/vibe/admin/gifts/[id]", "GET|PUT /api/vibe/admin/settings"]
+      "routes_api": [
+        "GET /api/vibe/admin/stats",
+        "GET /api/vibe/admin/users",
+        "GET|POST /api/vibe/admin/reports",
+        "GET|POST /api/vibe/admin/gifts",
+        "PUT|DELETE /api/vibe/admin/gifts/[id]",
+        "GET|PUT /api/vibe/admin/settings"
+      ]
     },
     {
       "id": "landing-immersive",
       "nom": "Landing immersive plein écran (vidéo de fond, CTA, modale auth)",
       "statut": "implémentée",
-      "fichiers": ["src/components/vibe/landing/immersive-landing.tsx", "src/components/vibe/auth-modal.tsx", "src/components/vibe/vibe-logo.tsx"],
+      "fichiers": [
+        "src/components/vibe/landing/immersive-landing.tsx",
+        "src/components/vibe/auth-modal.tsx",
+        "src/components/vibe/vibe-logo.tsx"
+      ],
       "routes_api": []
     },
     {
@@ -268,7 +403,9 @@
       "id": "animations-transverses",
       "nom": "Bibliothèque d'animations réutilisables (motion, confetti, haptique)",
       "statut": "implémentée",
-      "fichiers": ["src/components/vibe/app/interactive-animations.tsx"],
+      "fichiers": [
+        "src/components/vibe/app/interactive-animations.tsx"
+      ],
       "routes_api": []
     },
     {
@@ -288,13 +425,20 @@
         "src/app/globals.css",
         "src/app/api/route.ts"
       ],
-      "routes_api": ["GET /api"]
+      "routes_api": [
+        "GET /api"
+      ]
     },
     {
       "id": "schema-donnees",
       "nom": "Schéma de données Prisma (Neon PostgreSQL) + seeds",
       "statut": "implémentée",
-      "fichiers": ["prisma/schema.prisma", "prisma/seed.js", "scripts/seed.ts", "scripts/connect-neon.js"],
+      "fichiers": [
+        "prisma/schema.prisma",
+        "prisma/seed.js",
+        "scripts/seed.ts",
+        "scripts/connect-neon.js"
+      ],
       "routes_api": []
     }
   ],

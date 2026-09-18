@@ -108,6 +108,18 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
       if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
       flashTimerRef.current = window.setTimeout(() => setFlashPack(null), 1200);
       loadTxs();
+      // AUTO-RESUME — if this purchase follows an insufficient-balance
+      // redirect (premium action or gift), re-run the pending action now
+      // that the balance is topped up. The action shows its own success
+      // feedback (modal / toast / confetti).
+      const resume = useVibe.getState().takePendingVibes();
+      if (resume) {
+        toast.info("✨ Ton action reprend…", {
+          description: "Solde rechargé — l'action que tu voulais activer s'exécute maintenant.",
+          duration: 4000,
+        });
+        window.setTimeout(resume, 700);
+      }
     } catch (e: any) { toast.error(e.message || "Erreur"); }
     finally { setBuying(null); }
   }

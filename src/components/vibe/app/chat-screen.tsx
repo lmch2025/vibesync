@@ -275,14 +275,14 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         const data = await res.json();
         if (!res.ok) {
           // Elegant fallback: when the server rejects because only free Vibes
-          // are available (gifts require purchased Vibes), open the refill
-          // modal instead of a bare error toast — the pending proceed lets the
-          // gift retry automatically after a successful pack purchase.
-          if (res.status === 402 && data.needPurchased) {
+          // are available (gifts require purchased Vibes), redirect to the
+          // Vibes purchase page — the pending proceed lets the gift retry
+          // automatically after a successful pack purchase.
+          if (res.status === 402 && (data.needPurchased || data.needVibes)) {
             sfx.play("error");
-            useVibe.getState().openInsufficient(
+            useVibe.getState().redirectForVibes(
               gift.gemCost,
-              data.purchasedGems ?? 0,
+              data.purchasedGems ?? me?.gems ?? 0,
               `${gift.emoji} ${gift.name}`,
               () => sendGift(giftKey),
             );

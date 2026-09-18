@@ -51,20 +51,27 @@ type State = {
   hydrated: boolean;
   setHydrated: (b: boolean) => void;
 
-  /// Insufficient-Vibes modal: shown when a user tries a premium action
-  /// without enough balance. `pendingProceed` runs after a successful purchase
-  /// (so the action completes automatically once refilled).
+  /// Insufficient-Vibes redirect: when a user tries a premium action (or a
+  /// gift) without enough balance, the app navigates straight to the Vibes
+  /// purchase page (Boutique tab). `pendingProceed` is kept so the ORIGINAL
+  /// action resumes automatically after a successful pack purchase.
   insufficient: {
-    open: boolean;
     needed: number;
     have: number;
     actionLabel: string;
     pendingProceed: (() => void) | null;
   } | null;
-  openInsufficient: (needed: number, have: number, actionLabel: string, proceed: () => void) => void;
-  closeInsufficient: () => void;
+  /// Store the pending action and ask the app shell to navigate to the
+  /// purchase page (dispatches `vivilov:go-buy-vibes` with the deficit info).
+  redirectForVibes: (needed: number, have: number, actionLabel: string, proceed: () => void) => void;
+  /// Consume + clear the pending action (called by the wallet after a
+  /// successful purchase) — returns the callback to re-run, or null.
+  takePendingVibes: () => (() => void) | null;
+  /// Drop the pending action without running it (e.g. user navigated away
+  /// or started something else).
+  clearInsufficient: () => void;
   /// Run a gated premium action: if balance is enough, run `proceed`;
-  /// otherwise open the insufficient modal with a pending callback.
+  /// otherwise redirect to the Vibes purchase page with a pending callback.
   requireVibes: (cost: number, actionLabel: string, proceed: () => void) => void;
 };
 
@@ -86,19 +93,30 @@ export const useVibe = create<State>((set, get) => ({
   setHydrated: (hydrated) => set({ hydrated }),
 
   insufficient: null,
-  openInsufficient: (needed, have, actionLabel, proceed) =>
+  redirectForVibes: (needed, have, actionLabel, proceed) => {
     set({
-      insufficient: { open: true, needed, have, actionLabel, pendingProceed: proceed },
-    }),
-  closeInsufficient: () =>
-    set((s) => (s.insufficient ? { insufficient: { ...s.insufficient, open: false } } : {})),
+      insufficient: { needed, have, actionLabel, pendingProceed: proceed },
+    });
+    // The app shell (AppDemo) listens and navigates to the purchase page.
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("vivilov:go-buy-vibes", { detail: { needed, have, actionLabel } }),
+      );
+    }
+  },
+  takePendingVibes: () => {
+    const pending = get().insufficient?.pendingProceed ?? null;
+    if (get().insufficient) set({ insufficient: null });
+    return pending;
+  },
+  clearInsufficient: () => set({ insufficient: null }),
   requireVibes: (cost, actionLabel, proceed) => {
     const me = get().me;
     const have = me?.gems ?? 0;
     if (have >= cost) {
       proceed();
     } else {
-      get().openInsufficient(cost, have, actionLabel, proceed);
+      get().redirectForVibes(cost, have, actionLabel, proceed);
     }
   },
 }));
