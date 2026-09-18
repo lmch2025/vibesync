@@ -21,6 +21,7 @@ import { PwaInstallPrompt } from "./pwa-install-prompt";
 import { NotificationPermissionPrompt } from "./notification-permission-prompt";
 import { GemBadge } from "@/components/vibe/gem-badge";
 import { sfx, haptic } from "@/components/vibe/app/interactive-animations";
+import { CenterFeedbackLayer, vibeToast } from "./center-feedback";
 import { toast } from "sonner";
 
 type Tab = "swipe" | "matches" | "wallet" | "profile";
@@ -217,8 +218,21 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
           <div className="absolute top-3 right-3 z-40 flex items-center gap-2">
             <StreakReward />
             <NotificationBell />
+            {/* 👑 Premium — single, explicit, enticing entry point. On the
+                Découvrir tab it opens the CONTEXTUAL sheet (targets the top
+                card → Super-Like ciblé, compatibilité, Cœur d'Or…) via the
+                vivilov:open-premium-contextual event; elsewhere it opens the
+                generic sheet. */}
             <motion.button
-              onClick={() => { sfx.play("pop"); haptic(8); setPremiumOpen(true); }}
+              onClick={() => {
+                sfx.play("pop");
+                haptic(8);
+                if (tab === "swipe") {
+                  window.dispatchEvent(new Event("vivilov:open-premium-contextual"));
+                } else {
+                  setPremiumOpen(true);
+                }
+              }}
               whileTap={{ scale: 0.92 }}
               animate={{
                 boxShadow: [
@@ -228,9 +242,10 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
                 ],
               }}
               transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-              className="inline-flex items-center gap-1 rounded-full vibe-gradient px-2.5 py-1 text-[10px] font-bold text-white"
+              aria-label="Actions premium"
+              className="inline-flex items-center gap-1 rounded-full vibe-gradient px-3 py-1.5 text-[11px] font-bold text-white shadow-lg shadow-accent/25"
             >
-              <Crown className="h-3 w-3" /> Premium
+              <Crown className="h-3.5 w-3.5" /> Premium
             </motion.button>
           </div>
           <PremiumActionsSheet
@@ -244,6 +259,9 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
       {/* PWA install prompt + notification permission — once per session */}
       <PwaInstallPrompt />
       <NotificationPermissionPrompt />
+
+      {/* Retours d'action élégants — carte glass centrée (jamais sur le header) */}
+      <CenterFeedbackLayer />
     </Shell>
   );
 }
@@ -265,9 +283,10 @@ function GoBuyVibesRedirect({ onGoWallet }: { onGoWallet: () => void }) {
       const { needed, have, actionLabel } = (e as CustomEvent).detail ?? {};
       goRef.current();
       const missing = Math.max(0, (needed ?? 0) - (have ?? 0));
-      toast.info("Plus assez de Vibes 💎", {
-        description: `${actionLabel ?? "Cette action"} — il te manque ${missing} Vibes. Recharge ci-dessous, ton action reprendra automatiquement ✨`,
-        duration: 5000,
+      vibeToast({
+        emoji: "💎",
+        title: "Plus assez de Vibes",
+        sub: `Il te manque ${missing} — ${actionLabel ?? "cette action"} reprendra après recharge ✨`,
       });
     };
     window.addEventListener("vivilov:go-buy-vibes", handler);

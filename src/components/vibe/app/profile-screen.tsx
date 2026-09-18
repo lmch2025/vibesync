@@ -20,6 +20,7 @@ import { ActionSuccessModal } from "./action-success-modal";
 import { canShowNudge, markNudgeShown } from "@/lib/vibe/nudges";
 import { Input } from "@/components/ui/input";
 import { ConfettiBurst, AnimatedNumber, haptic, sfx, useSfxEnabled } from "./interactive-animations";
+import { vibeToast } from "./center-feedback";
 
 type VideoSlot = { url: string; poster: string };
 
@@ -173,7 +174,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
       // EXPLOSION OF CONFETTI! 🎉
       sfx.play("success");
       setShowConfetti(true);
-      toast.success(`Vidéo ${slot} ajoutée ! 🎬`);
+      vibeToast({ emoji: "🎬", title: `Vidéo ${slot} ajoutée` });
       setTimeout(() => setShowConfetti(false), 2500);
 
       setActiveSlot(slot);
@@ -201,7 +202,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
       else { profilePatch.videoUrl3 = ""; profilePatch.posterUrl3 = ""; }
       patchMe({ profile: profilePatch });
       if (activeSlot === slot) setActiveSlot(videos.findIndex((v, i) => i !== slot - 1 && v.url) + 1 || 1);
-      toast.success("Vidéo supprimée");
+      vibeToast({ emoji: "🗑️", title: "Vidéo supprimée" });
     } catch {
       toast.error("Erreur lors de la suppression");
     } finally {
@@ -226,7 +227,11 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           setSeeLikesResult(data);
         }
         if (action === "passport") {
-          toast.success("✈️ Passport activé 24h");
+          vibeToast({
+            emoji: "✈️",
+            title: "Passport activé",
+            sub: "24h pour découvrir une nouvelle ville",
+          });
           // Rafraîchit instantanément la section « Actions actives »
           // (le Passport vient d'y apparaître avec son compte à rebours)
           // ET la file Découvrir (profils de la ville choisie).
@@ -267,7 +272,11 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
     setTheme(next);
     haptic(8);
     sfx.play("pop");
-    toast(next === "sombre" ? "Mode sombre activé 🌙" : "Mode clair activé ☀️");
+    vibeToast(
+      next === "sombre"
+        ? { emoji: "🌙", title: "Mode sombre activé" }
+        : { emoji: "☀️", title: "Mode clair activé" },
+    );
   }
 
   const poster = activeVideo?.poster || "/profiles/lea.png";
@@ -277,7 +286,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
     if (key === "video_uploaded" || key === "poster_uploaded") {
       startUpload(filledSlots + 1);
     } else if (key === "verified") {
-      toast.success("Demande envoyée");
+      vibeToast({ emoji: "✅", title: "Demande envoyée" });
       saveEdit("verified", true);
     } else if (key === "streak_started") {
       toast.info("Reviens tous les jours pour augmenter ta série et gagner des Vibes !");
@@ -313,7 +322,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
     
     patchMe(optimisticUser);
     setEditingField(null);
-    if (field !== "verified") toast.success("Profil mis à jour");
+    if (field !== "verified") vibeToast({ emoji: "✨", title: "Profil mis à jour" });
 
     try {
       const res = await fetch("/api/vibe/profile", {

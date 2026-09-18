@@ -7,7 +7,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Flame, Gift, Link } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { useVibe } from "@/lib/vibe/store";
-import { toast } from "sonner";
 import { ConfettiBurst, haptic, sfx } from "./interactive-animations";
 
 type StreakData = {
@@ -68,7 +67,9 @@ export function StreakReward() {
       sfx.play("coin");
       haptic([10, 30, 10]);
       setJustClaimed(true);
-      toast.success(d.message);
+      // No toast here — the modal's claimed view IS the celebration
+      // (🔥 spring-in, +X Vibes badge, confetti burst). A stacked toast
+      // would only duplicate it over the header.
       // After 2.5s, show the referral invite instead of auto-closing.
       setTimeout(() => {
         setJustClaimed(false);

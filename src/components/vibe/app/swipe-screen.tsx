@@ -1,19 +1,22 @@
 "use client";
 // Swipe deck: Tinder-like drag with spring physics, Ken Burns video posters,
-// Vibe Check overlay, action bar (rewind/pass/gift/like — the Super-Like
-// stays available via the swipe-up gesture and the contextual nudges, the
-// Boost via the ✨/👑 premium sheet and the like-streak nudge), match
-// overlay. Includes the non-intrusive discovery FILTERS (distance, age range,
-// gender) — a discreet button in the top bar opens a bottom sheet; filters are
-// saved to the profile and enforced server-side by the recommendation algorithm.
+// clean full-bleed video (the interests/Vibe Check overlay was removed — the
+// compatibility data now feeds the contextual nudges only), action bar
+// (rewind/pass/gift/like — the Super-Like stays available via the swipe-up
+// gesture and the contextual nudges, the premium actions via the 👑 Premium
+// button in the header, contextual to the top card), match overlay. Includes
+// the non-intrusive discovery FILTERS (distance, age range, gender) — a
+// discreet button in the top bar opens a bottom sheet; filters are saved to
+// the profile and enforced server-side by the recommendation algorithm.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { RotateCcw, X, Star, Heart, BadgeCheck, Waves, MapPin, SlidersHorizontal, Check, Loader2, Sparkles, Plane, Gift } from "lucide-react";
+import { RotateCcw, X, Star, Heart, BadgeCheck, MapPin, SlidersHorizontal, Check, Loader2, Plane, Gift } from "lucide-react";
 import { GemBadge, GemIcon } from "@/components/vibe/gem-badge";
 import { sfx, haptic, celebrate, EmojiBurst, Shimmer, type SfxName } from "@/components/vibe/app/interactive-animations";
 import { VideoPlayer } from "./video-player";
 import { PremiumActionsSheet } from "./premium-actions-sheet";
 import { SmartNudgeBanner, useNudgeSlot, type SmartNudge } from "./smart-nudge";
+import { vibeToast } from "./center-feedback";
 import { useVibe } from "@/lib/vibe/store";
 import { GEM_ACTIONS, GIFTS, VIBE_QUESTIONS } from "@/lib/vibe/constants";
 import { useCurrency } from "@/lib/vibe/use-currency";
@@ -132,6 +135,26 @@ export function SwipeScreen({
     return () => window.removeEventListener("vivilov:go-buy-vibes", closeGiftTray);
   }, []);
 
+  // The header 👑 Premium button (and this screen's nudges) open the
+  // CONTEXTUAL premium sheet — it targets the profile currently on top of
+  // the deck so the profile-specific actions (Super-Like ciblé, rapport
+  // compatibilité, Cœur d'Or…) are available. Empty deck → Passport flow,
+  // the natural premium action when there is no one left to discover.
+  useEffect(() => {
+    const openContextual = () => {
+      const topCard = deck[0];
+      if (topCard) {
+        sfx.play("pop");
+        haptic(8);
+        setCardActions(topCard);
+      } else {
+        setPassportSheet(true);
+      }
+    };
+    window.addEventListener("vivilov:open-premium-contextual", openContextual);
+    return () => window.removeEventListener("vivilov:open-premium-contextual", openContextual);
+  }, [deck]);
+
   /// Circumstantial recommendations — the deck loaded is the best moment to
   /// suggest a discovery action. One at a time, cooldown-guarded.
   useEffect(() => {
@@ -142,7 +165,7 @@ export function SwipeScreen({
     const hour = new Date().getHours();
 
     const openPremium = () =>
-      window.dispatchEvent(new Event("vivilov:open-premium"));
+      window.dispatchEvent(new Event("vivilov:open-premium-contextual"));
 
     // Low balance → proactive (and gentle) recharge suggestion. Only when
     // the user can't even afford a Super-Like anymore — once/day max, and
@@ -273,7 +296,7 @@ export function SwipeScreen({
               emoji: "❄️",
               text: "Trois passes d'affilée ? Aperçois les 3 prochains profils avant de décider.",
               ctaLabel: "Apercevoir (45 💎)",
-              onCta: () => window.dispatchEvent(new Event("vivilov:open-premium")),
+              onCta: () => window.dispatchEvent(new Event("vivilov:open-premium-contextual")),
               tone: "cool",
             },
             "session",
@@ -294,7 +317,7 @@ export function SwipeScreen({
             emoji: "🚀",
             text: `${likeStreakRef.current} likes sans match ? Les profils Boostés sont vus en premier — passe devant tout le monde.`,
             ctaLabel: "Booster (50 💎)",
-            onCta: () => window.dispatchEvent(new Event("vivilov:open-premium")),
+            onCta: () => window.dispatchEvent(new Event("vivilov:open-premium-contextual")),
             tone: "gold",
           },
           "session",
@@ -309,7 +332,7 @@ export function SwipeScreen({
             emoji: "🔦",
             text: "Tu swipes beaucoup — fais-toi voir : ton profil en tête de 20 decks pendant 1h.",
             ctaLabel: "Briller (40 💎)",
-            onCta: () => window.dispatchEvent(new Event("vivilov:open-premium")),
+            onCta: () => window.dispatchEvent(new Event("vivilov:open-premium-contextual")),
             tone: "gold",
           },
           "day",
@@ -362,7 +385,11 @@ export function SwipeScreen({
         const last = history[history.length - 1];
         setHistory((h) => h.slice(0, -1));
         setDeck((d) => [last.profile, ...d]);
-        toast.success("Swipe annulé ↩");
+        vibeToast({
+          emoji: "↩️",
+          title: "Swipe annulé",
+          sub: `${last.profile.displayName} est de retour dans ton deck`,
+        });
       } catch (e: any) {
         toast.error(e.message || "Erreur");
       }
@@ -403,7 +430,11 @@ export function SwipeScreen({
         patchMe({ gems: data.gems, freeGems: data.freeGems });
         celebrate({ sound: "chime", confettiCount: 90, hapticPattern: [12, 30, 12] });
         setGiftBurst((k) => k + 1);
-        toast.success(`${gift.emoji} ${gift.name} offert à ${data.targetName ?? target.displayName} ! Il/elle reçoit une notification 🎁`);
+        vibeToast({
+          emoji: gift.emoji,
+          title: `${gift.name} pour ${data.targetName ?? target.displayName}`,
+          sub: "Notification envoyée 🎁",
+        });
         setGiftTarget(null);
         setGiftNote("");
       } catch (e: any) {
@@ -509,8 +540,6 @@ export function SwipeScreen({
               >
                 <Shimmer />
                 <div className="absolute inset-0 animate-pulse bg-gradient-to-t from-[var(--v-surface-3)] via-transparent to-[var(--v-surface-1)]" />
-                {/* bloc vibe check factice */}
-                <div className="absolute top-16 inset-x-4 h-28 rounded-2xl v-surface-1 animate-pulse" />
                 {/* bloc infos factices */}
                 <div className="absolute bottom-0 inset-x-0 p-4 pb-5 space-y-2">
                   <div className="h-5 w-36 rounded-lg v-surface-3 animate-pulse" />
@@ -532,9 +561,7 @@ export function SwipeScreen({
                     key={p.id}
                     profile={p}
                     isTop={isTop}
-                    vibeQ={vibeQ}
                     onSwipe={(dir) => swipe(p, dir)}
-                    onOpenActions={isTop ? () => { sfx.play("pop"); haptic(8); setCardActions(p); } : undefined}
                   />
                 );
               })}
@@ -596,16 +623,11 @@ export function SwipeScreen({
 function SwipeCard({
   profile,
   isTop,
-  vibeQ,
   onSwipe,
-  onOpenActions,
 }: {
   profile: Profile;
   isTop: boolean;
-  vibeQ: { id: string; q: string; a: string; b: string };
   onSwipe: (dir: "pass" | "like" | "superlike") => void;
-  /// Opens the contextual premium sheet for THIS profile (top card only).
-  onOpenActions?: () => void;
 }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -629,8 +651,6 @@ function SwipeCard({
       onSwipe("pass");
     }
   };
-
-  const vibeMatch = profile.vibeAnswer === vibeQ.a ? "a" : profile.vibeAnswer === vibeQ.b ? "b" : null;
 
   // Premium visibility chips (from the deck API — each flag is a real,
   // paid premium effect, not decoration).
@@ -679,48 +699,13 @@ function SwipeCard({
         <span className="text-3xl font-black text-cyan-300 ring-4 ring-cyan-300 rounded-xl px-3 py-1">SUPER</span>
       </motion.div>
 
-      {/* verified + vibe badges + contextual premium actions */}
-      <div className="absolute top-4 inset-x-4 flex items-start justify-between">
-        <div className="glass-dark rounded-full px-2.5 py-1 text-xs font-medium flex items-center gap-1">
-          <Waves className="h-3 w-3 text-accent" /> Vibe Check
+      {/* verified badge — the only chip over the video, kept minimal so the
+          video breathes. The premium entry point lives in the header (👑). */}
+      {profile.verified && (
+        <div className="absolute top-4 right-4 glass-dark rounded-full p-1">
+          <BadgeCheck className="h-4 w-4 text-cyan-300" />
         </div>
-        <div className="flex items-center gap-1.5">
-          {profile.verified && (
-            <div className="glass-dark rounded-full p-1">
-              <BadgeCheck className="h-4 w-4 text-cyan-300" />
-            </div>
-          )}
-          {onOpenActions && (
-            <motion.button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); onOpenActions(); }}
-              whileTap={{ scale: 0.85 }}
-              aria-label={`Actions premium pour ${profile.displayName}`}
-              className="glass-dark rounded-full p-1.5 vibe-glow"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-            </motion.button>
-          )}
-        </div>
-      </div>
-
-      {/* vibe check overlay */}
-      <div className="absolute top-16 inset-x-4">
-        <div className="glass-dark rounded-2xl p-3">
-          <p className="text-xs text-white/70 mb-2 font-medium">{vibeQ.q}</p>
-          <div className="grid grid-cols-2 gap-2">
-            <div className={`rounded-xl px-3 py-2 text-center text-sm font-semibold transition ${vibeMatch === "a" ? "bg-emerald-400/30 ring-1 ring-emerald-300 text-white" : "v-surface-2 text-white/85"}`}>
-              {vibeQ.a === "plage" ? "🏖️" : vibeQ.a === "chien" ? "🐶" : vibeQ.a === "aventure" ? "🧗" : vibeQ.a === "cafe" ? "☕" : "🏙️"} {vibeQ.a}
-            </div>
-            <div className={`rounded-xl px-3 py-2 text-center text-sm font-semibold transition ${vibeMatch === "b" ? "bg-emerald-400/30 ring-1 ring-emerald-300 text-white" : "v-surface-2 text-white/85"}`}>
-              {vibeQ.b === "montagne" ? "⛰️" : vibeQ.b === "chat" ? "🐱" : vibeQ.b === "confort" ? "🛋️" : vibeQ.b === "the" ? "🍵" : "🌳"} {vibeQ.b}
-            </div>
-          </div>
-          <p className="text-[10px] text-white/70 mt-1.5 text-center">
-            {vibeMatch ? "✓ Vibe compatible" : "Vibe différente — ose quand même !"}
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* info */}
       <div className="absolute bottom-0 inset-x-0 p-4 pb-5">

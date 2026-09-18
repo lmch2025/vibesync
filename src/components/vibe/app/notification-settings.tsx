@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import { Bell, BellRing, Heart, MessageCircle, Gift, ThumbsUp, Megaphone, Send } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { vibeToast } from "./center-feedback";
 
 type NotifPrefs = {
   marketingEnabled: boolean;
@@ -89,7 +90,7 @@ export function NotificationSettings() {
     if (typeof Notification === "undefined") return;
     const perm = await Notification.requestPermission();
     setPermission(perm as Permission);
-    if (perm === "granted") toast.success("Notifications activées 🔔");
+    if (perm === "granted") vibeToast({ emoji: "🔔", title: "Notifications activées" });
   }
 
   async function sendTest() {
@@ -102,7 +103,7 @@ export function NotificationSettings() {
       });
       const data = await res.json();
       if (data?.ok || data?.inApp) {
-        toast.success("Test envoyé — vérifie tes notifications 🔔");
+        vibeToast({ emoji: "🔔", title: "Test envoyé", sub: "Vérifie tes notifications" });
       } else {
         toast.error(data?.warning || "Test échoué");
       }

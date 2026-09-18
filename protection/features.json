@@ -102,7 +102,7 @@
     {
       "id": "vibe-check",
       "nom": "Vibe Check (question de compatibilité binaire)",
-      "statut": "implémentée (affichage client uniquement)",
+      "statut": "implémentée (données côté profils — alimente les recommandations contextuelles ; l'overlay sur la carte a été retiré pour laisser la vidéo respirer)",
       "fichiers": [
         "src/components/vibe/app/swipe-screen.tsx",
         "src/lib/vibe/constants.ts"
@@ -401,10 +401,11 @@
     },
     {
       "id": "animations-transverses",
-      "nom": "Bibliothèque d'animations réutilisables (motion, confetti, haptique)",
+      "nom": "Bibliothèque d'animations réutilisables (motion, confetti, haptique, retours centrés)",
       "statut": "implémentée",
       "fichiers": [
-        "src/components/vibe/app/interactive-animations.tsx"
+        "src/components/vibe/app/interactive-animations.tsx",
+        "src/components/vibe/app/center-feedback.tsx"
       ],
       "routes_api": []
     },

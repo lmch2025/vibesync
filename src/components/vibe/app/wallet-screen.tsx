@@ -20,6 +20,7 @@ import { formatIn } from "@/lib/vibe/currency";
 import { GEM_PACKS, GEM_ACTIONS, WITHDRAWAL_THRESHOLD_EUR, PLATFORM_COMMISSION } from "@/lib/vibe/constants";
 import { WithdrawModal } from "./withdraw-modal";
 import { AnimatedNumber, SuccessBounce, TabIndicator, celebrate, sfx } from "./interactive-animations";
+import { vibeToast } from "./center-feedback";
 import { toast } from "sonner";
 
 type Tab = "vibes" | "gains" | "history";
@@ -99,7 +100,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       patchMe({ gems: data.gems, freeGems: data.freeGems });
-      toast.success(`+${data.added} Vibes ! 💎`);
+      vibeToast({ emoji: "💎", title: `+${data.added} Vibes`, sub: "Solde rechargé" });
       // Immersive purchase feedback: coin sound, haptic pulse, confetti shower.
       // Fired inside the success handler — exactly once per purchase.
       celebrate({ sound: "coin", hapticPattern: [15, 40, 15], confettiCount: 120 });
@@ -114,9 +115,10 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
       // feedback (modal / toast / confetti).
       const resume = useVibe.getState().takePendingVibes();
       if (resume) {
-        toast.info("✨ Ton action reprend…", {
-          description: "Solde rechargé — l'action que tu voulais activer s'exécute maintenant.",
-          duration: 4000,
+        vibeToast({
+          emoji: "✨",
+          title: "Ton action reprend…",
+          sub: "Solde rechargé — exécution en cours",
         });
         window.setTimeout(resume, 700);
       }

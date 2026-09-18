@@ -57,15 +57,19 @@ d'URL Cloudinary (`eo_15`, `so_1,f_jpg`). Remplacement/suppression par slot.
 
 ### 6. Deck de swipe (`swipe-deck`)
 Cartes empilées draggables (physique spring Framer Motion), tampons LIKE/NOPE/
-SUPER, badge vérifié, overlay Vibe Check, vidéo autoplay avec poster. Barre
-d'actions : Rewind (2), Pass, Super-Like (5), Like, Boost (50). Deck : 12 profils
+SUPER, badge vérifié, vidéo autoplay avec poster — carte épurée (l'overlay Vibe
+Check a été retiré pour laisser la vidéo respirer). Barre d'actions : Rewind (2),
+Pass, Cadeau, Like (Super-Like via geste ⬆️ ; actions premium via le bouton 👑
+Premium du header, contextuel à la carte du dessus). Deck : 12 profils
 `approved` non swipés. Match réciproque détecté + simulation sandbox (~45 %,
 70 % super-like) faute de réciprocité réelle.
 - **API** : `GET /profiles/deck`, `POST /swipe`
 
 ### 7. Vibe Check (`vibe-check`)
-5 questions binaires tirées par session, affichées sur chaque carte, mise en
-évidence si réponse commune. Champs `vibeQuestion/vibeAnswer` sur le profil.
+5 questions binaires tirées par session, champs `vibeQuestion/vibeAnswer` sur le
+profil. L'overlay sur carte a été retiré (vidéo dégagée) : la compatibilité
+alimente désormais les recommandations contextuelles (nudges Super-Like /
+compatibilité / Rewind-rescue).
 - ⚠️ Affichage client uniquement — le filtrage serveur « réponse partagée
   requise pour se voir » n'est pas implémenté (trou connu).
 
@@ -199,7 +203,11 @@ l'immersive) — conservée volontairement comme code mort documenté.
 
 ### 26. Animations transverses (`animations-transverses`)
 Variants motion, wrappers (PulseGlow, Shimmer, Floating, SuccessBounce,
-TabIndicator), AnimatedNumber, haptique mobile, ConfettiBurst, presets toast.
+TabIndicator), AnimatedNumber, haptique mobile, ConfettiBurst, presets toast +
+`center-feedback.tsx` : retours d'action élégants — carte glass centrée (emoji +
+titre + sous-titre, auto-dismiss, pointer-events-none) via `vibeToast()`,
+remplace les toasts de succès qui obstruaient le header (Sonner repositionné
+sous le header pour les infos/erreurs).
 
 ### 27. Socle technique (`socle-transverse`)
 Store Zustand global (vue, `me`, rates, devise, machinerie `requireVibes`),

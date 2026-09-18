@@ -34,6 +34,7 @@ import { VoiceRecorder } from "./voice-recorder";
 import { VoiceNotePlayer } from "./voice-note-player";
 import { SmartNudgeBanner } from "./smart-nudge";
 import { toast } from "sonner";
+import { vibeToast } from "./center-feedback";
 
 type TimelineItem = {
   kind: "message";
@@ -210,9 +211,10 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         }
         if (data.gems !== undefined) patchMe({ gems: data.gems, freeGems: data.freeGems });
         if (wasBoost) {
-          toast.success("Message boosté ! ⚡", {
-            description: "Ton message est en haut de sa boîte de réception.",
-            duration: 3000,
+          vibeToast({
+            emoji: "⚡",
+            title: "Message boosté",
+            sub: "En tête de sa boîte de réception",
           });
         }
         // Remplace la bulle optimiste par les données serveur, puis simule
@@ -291,7 +293,11 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
           throw new Error(data.error);
         }
         patchMe({ gems: data.gems, freeGems: data.freeGems });
-        toast.success(`${gift.emoji} ${gift.name} envoyé ! Il/elle le découvrira en l'ouvrant. 🎁`);
+        vibeToast({
+          emoji: gift.emoji,
+          title: `${gift.name} pour ${otherName || "ton match"}`,
+          sub: "Il/elle le découvrira en l'ouvrant",
+        });
         setGiftOpen(false);
         setGiftNote("");
         await load();
@@ -310,7 +316,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         if (!res.ok) throw new Error(data.error);
         patchMe({ gems: data.gems, freeGems: data.freeGems });
         if (data.icebreaker) setText(data.icebreaker);
-        toast.success("✨ Phrase d'accroche générée par IA");
+        vibeToast({ emoji: "✨", title: "Accroche générée par IA" });
       } catch (e: any) { toast.error(e.message || "Erreur"); }
     });
   }

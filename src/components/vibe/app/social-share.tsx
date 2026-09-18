@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
 import { toast } from "sonner";
+import { vibeToast } from "./center-feedback";
 
 export default function SocialShare({
   open,
@@ -42,7 +43,7 @@ export default function SocialShare({
       "_blank",
       "noopener,noreferrer"
     );
-    toast.success("Partagé sur WhatsApp (démo)");
+    vibeToast({ emoji: "📤", title: "Partagé sur WhatsApp (démo)" });
     onOpenChange(false);
   }
 
@@ -52,7 +53,7 @@ export default function SocialShare({
       "_blank",
       "noopener,noreferrer"
     );
-    toast.success("Partagé sur Facebook (démo)");
+    vibeToast({ emoji: "📤", title: "Partagé sur Facebook (démo)" });
     onOpenChange(false);
   }
 
@@ -62,7 +63,7 @@ export default function SocialShare({
       "_blank",
       "noopener,noreferrer"
     );
-    toast.success("Partagé sur Twitter (démo)");
+    vibeToast({ emoji: "📤", title: "Partagé sur Twitter (démo)" });
     onOpenChange(false);
   }
 
@@ -70,7 +71,7 @@ export default function SocialShare({
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      toast.success("Lien copié !");
+      vibeToast({ emoji: "🔗", title: "Lien copié" });
       setTimeout(() => setCopied(false), 1800);
       onOpenChange(false);
     } catch {

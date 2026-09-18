@@ -170,7 +170,12 @@ export default function RootLayout({
           <ChunkErrorRecovery />
           {children}
           <Toaster />
-          <SonnerToaster position="top-center" richColors />
+          {/* Sonner — infos/erreurs uniquement (les succès passent par le
+              retour centré CenterFeedback). Décalé SOUS le header de l'app
+              (~80px, desktop ET mobile) pour ne jamais obstruer ses
+              éléments : sans mobileOffset, sonner retombe à 16px en
+              viewport ≤768px et recouvrirait le header. */}
+          <SonnerToaster position="top-center" richColors offset={80} mobileOffset={80} />
         </ThemeProvider>
       </body>
     </html>

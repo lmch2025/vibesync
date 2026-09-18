@@ -178,7 +178,9 @@ export function PremiumActionsSheet({
         const data: ActionResult = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Erreur");
         patchMe({ gems: data.gems, freeGems: data.freeGems });
-        if (data.message) toast.success(data.message);
+        // No toast here — the shared ActionSuccessModal below IS the
+        // celebration (emoji, label, buff countdown + combo tip). A stacked
+        // toast would only duplicate the message over the header.
         // The deck changed (rewind, passport, boost…) — reload it instantly.
         if (data.deckRefresh && typeof window !== "undefined") {
           window.dispatchEvent(new Event("vivilov:deck-refresh"));
@@ -211,7 +213,7 @@ export function PremiumActionsSheet({
     // Profile-targeted action without context → explain where to use it.
     if (NEEDS_PROFILE.includes(action.key) && !contextual) {
       toast.info(`${action.emoji} ${action.label}`, {
-        description: "Ouvre ✨ sur une carte dans Découvrir pour cibler un profil.",
+        description: "Depuis l'onglet Découvrir, ouvre 👑 Premium en haut à droite — les actions cibleront le profil affiché.",
         duration: 4000,
       });
       return;
