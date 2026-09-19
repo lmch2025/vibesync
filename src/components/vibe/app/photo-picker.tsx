@@ -8,6 +8,11 @@
 // discret, un X par photo. Le compteur « n/max » est rendu par le PARENT
 // pour rester flexible selon le contexte d'appel.
 //
+// Sélection (optionnelle) : quand `onSelect` est fourni (onglet Profil), un
+// toc sur une tuile l'affiche dans le grand cadre parent — l'anneau violet
+// (`activeIndex`) marque la photo affichée, comme les miniatures vidéo.
+// Sans `onSelect` (onboarding), les tuiles restent de simples vignettes.
+//
 // Pipeline picking : compressImage (canvas, EXIF-safe, long côté ≤ 1080) →
 // uploadToCloudinary (image) → fallback data URL si l'upload échoue (bac à
 // sable — toast UNE seule fois par session de picking).
@@ -31,6 +36,10 @@ export type PhotoPickerProps = {
   /** Notifie le parent qu'un upload est en cours (pour verrouiller un CTA
    *  pendant la transaction — ex. bouton Terminer de l'onboarding). */
   onUploadingChange?: (uploading: boolean) => void;
+  /** Toc sur une photo existante — l'affiche dans le grand cadre parent. */
+  onSelect?: (index: number) => void;
+  /** Index de la photo affichée dans le grand cadre (anneau violet), -1 si aucune. */
+  activeIndex?: number;
 };
 
 export function PhotoPicker({
@@ -40,6 +49,8 @@ export function PhotoPicker({
   disabled = false,
   tileClassName,
   onUploadingChange,
+  onSelect,
+  activeIndex = -1,
 }: PhotoPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -121,7 +132,12 @@ export function PhotoPicker({
         <div
           key={`${i}-${src.slice(0, 24)}-${src.slice(-16)}`}
           className={cn(
-            "relative aspect-[3/4] rounded-xl overflow-hidden ring-1 ring-(--v-divider) bg-v-surface-2",
+            "relative aspect-[3/4] rounded-xl overflow-hidden bg-v-surface-2",
+            // Anneau de sélection — même langage visuel que les miniatures
+            // vidéo (violet + halo doux) quand la photo est au grand cadre.
+            activeIndex === i
+              ? "ring-2 ring-vibe-purple shadow-[0_0_12px_rgba(192,38,211,0.5)]"
+              : "ring-1 ring-(--v-divider)",
             tileClassName,
           )}
         >
@@ -136,13 +152,25 @@ export function PhotoPicker({
             aria-hidden
             className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/45 to-transparent pointer-events-none"
           />
+          {/* Toc sur la tuile → sélection (grand cadre parent). Calque plein
+              cadre SOUS le X : les deux restent des cibles distinctes. */}
+          {onSelect && (
+            <motion.button
+              type="button"
+              onClick={() => { if (!busy) onSelect(i); }}
+              disabled={busy}
+              whileTap={busy ? undefined : { scale: 0.94 }}
+              aria-label={`Afficher la photo ${i + 1}`}
+              className="absolute inset-0 z-10 cursor-pointer"
+            />
+          )}
           <motion.button
             type="button"
             onClick={() => removeAt(i)}
             disabled={busy}
             whileTap={busy ? undefined : { scale: 0.9 }}
             aria-label={`Retirer la photo ${i + 1}`}
-            className="absolute top-1 right-1 h-5 w-5 grid place-items-center rounded-full bg-black/50 backdrop-blur text-white/90 hover:bg-black/70 hover:text-white transition disabled:opacity-40"
+            className="absolute top-1 right-1 z-20 h-5 w-5 grid place-items-center rounded-full bg-black/50 backdrop-blur text-white/90 hover:bg-black/70 hover:text-white transition disabled:opacity-40"
           >
             <X className="h-3 w-3" />
           </motion.button>

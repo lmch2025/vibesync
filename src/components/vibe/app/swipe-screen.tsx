@@ -43,10 +43,13 @@ type Profile = {
   spotlight?: boolean;
   passport?: boolean;
   // Contrat deck (Task 1-a) : les 3 slots vidéo + les 5 photos (compactés).
-  // Règle métier : la vidéo est prioritaire — les photos ne s'affichent que
-  // si le profil n'a AUCUNE vidéo (voir ProfileDetailModal / SwipeCard).
+  // Règle métier : la vidéo est prioritaire — dans la VUE DÉTAILLÉE les
+  // slides vidéos viennent d'abord, puis toutes les photos (recensées).
   videos?: { url: string; poster: string }[];
   photos?: string[];
+  // Intentions du profil — ligne « Recherche » de la vue détaillée.
+  lookingFor?: string;
+  relationshipType?: string;
 };
 
 type SwipeResult = {

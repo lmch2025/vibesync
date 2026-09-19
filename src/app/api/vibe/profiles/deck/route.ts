@@ -330,8 +330,9 @@ export async function GET() {
       posterUrl: p.posterUrl,
       videoDuration: p.videoDuration,
       // Les 3 slots vidéo + les 5 photos de profil (compactés).
-      // Règle d'affichage : la vidéo est prioritaire — les photos ne sont
-      // montrées que si le profil n'a AUCUNE vidéo.
+      // Règle d'affichage : la vidéo est prioritaire — sur la CARTE seule la
+      // vidéo est visible (repli photo1 si absence de vidéo) ; dans la VUE
+      // DÉTAILLÉE les vidéos précèdent les photos dans la galerie.
       videos: [
         { url: p.videoUrl, poster: p.posterUrl },
         { url: p.videoUrl2, poster: p.posterUrl2 },
@@ -339,6 +340,9 @@ export async function GET() {
       ].filter((v) => v.url),
       photos: [p.photoUrl1, p.photoUrl2, p.photoUrl3, p.photoUrl4, p.photoUrl5].filter(Boolean),
       gender: p.gender,
+      // Intentions du profil — affichées dans la vue détaillée (« Recherche »).
+      lookingFor: p.lookingFor,
+      relationshipType: p.relationshipType,
       vibeQuestion: p.vibeQuestion,
       vibeAnswer: p.vibeAnswer,
       verified: p.user.verified,

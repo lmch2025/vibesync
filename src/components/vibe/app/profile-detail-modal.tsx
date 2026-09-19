@@ -5,8 +5,10 @@
 // inset-0 z-50 dans la racine de SwipeScreen — jamais fixed, la colonne
 // mobile reste la limite visuelle).
 //
-// RÈGLE MÉTIER (propriétaire) : la VIDÉO est prioritaire sur les photos.
-// Médias affichés = videos.length > 0 ? videos : photos — jamais mélangés.
+// RÈGLE MÉTIER (propriétaire) : la VIDÉO est prioritaire sur les photos —
+// les slides VIDÉO viennent toujours en premier. La page de détail RECENSE
+// ENSUITE toutes les photos (slides suivantes) : tout le contenu du profil
+// est visible dans une seule galerie élégante.
 //
 // Structure de la carte (flex-col, hauteur définie) :
 //   1. galerie horizontale scroll-snap (55 %) — compteur discret, dots
@@ -18,6 +20,9 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Heart, Star, Gift, BadgeCheck, MapPin } from "lucide-react";
+// Heart est utilisé par la barre d'actions ; l'icône de la ligne « Recherche »
+// est HeartHandshake (importée ci-dessous) pour ne pas la confondre avec Like.
+import { HeartHandshake } from "lucide-react";
 import { VideoPlayer } from "./video-player";
 import { sfx, haptic, type SfxName } from "./interactive-animations";
 import { GEM_ACTIONS, VIBE_QUESTIONS } from "@/lib/vibe/constants";
@@ -42,20 +47,36 @@ export type DetailProfile = {
   passport?: boolean;
   videos?: { url: string; poster: string }[];
   photos?: string[];
+  // Intentions du profil (renseignées à l'onboarding) — « Recherche ».
+  lookingFor?: string;
+  relationshipType?: string;
 };
 
-/// RÈGLE MÉTIER — la vidéo prime ; les photos ne s'affichent que si le
-/// profil n'a AUCUNE vidéo. Une seule liste de slides en résulte.
+/// RÈGLE MÉTIER — la vidéo prime (slides vidéos d'abord), puis la galerie
+/// recense toutes les photos. Une seule liste de slides en résulte.
 type Slide = { kind: "video"; url: string; poster: string } | { kind: "photo"; url: string };
 
 function buildSlides(profile: DetailProfile): Slide[] {
   const videos = profile.videos ?? [];
   const photos = profile.photos ?? [];
-  if (videos.length > 0) {
-    return videos.map((v) => ({ kind: "video" as const, url: v.url, poster: v.poster }));
-  }
-  return photos.map((url) => ({ kind: "photo" as const, url }));
+  return [
+    ...videos.map((v) => ({ kind: "video" as const, url: v.url, poster: v.poster })),
+    ...photos.map((url) => ({ kind: "photo" as const, url })),
+  ];
 }
+
+/// Libellés lisibles des intentions (mêmes valeurs que l'onboarding).
+const LOOKING_FOR_LABELS: Record<string, string> = {
+  f: "Femmes",
+  m: "Hommes",
+  nb: "Personnes non-binaires",
+  all: "Tout le monde",
+};
+const RELATIONSHIP_LABELS: Record<string, string> = {
+  serious: "Relation sérieuse",
+  casual: "Sans lendemain",
+  friendship: "Amitié",
+};
 
 /// La réponse Vibe stockée est le libellé lisible ("plage", "chien"…) tel
 /// que défini par VIBE_QUESTIONS — on traduit quand même une éventuelle
@@ -254,6 +275,10 @@ function InfoSection({ profile }: { profile: DetailProfile }) {
   const answer = readableVibeAnswer(profile);
   const answerLabel = answer ? answer.charAt(0).toUpperCase() + answer.slice(1) : "";
 
+  // Intentions du profil — « Recherche : Femmes · Relation sérieuse ».
+  const lookingLabel = LOOKING_FOR_LABELS[profile.lookingFor ?? ""];
+  const relLabel = RELATIONSHIP_LABELS[profile.relationshipType ?? ""];
+
   return (
     <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 pb-4 pt-2">
       <div className="flex items-center gap-1.5">
@@ -268,6 +293,14 @@ function InfoSection({ profile }: { profile: DetailProfile }) {
         <MapPin className="h-3.5 w-3.5 shrink-0" /> {profile.city}
         {profile.distanceKm != null && <span>· {profile.distanceKm} km</span>}
       </p>
+
+      {(lookingLabel || relLabel) && (
+        <p className="text-[13px] v-fg-muted flex items-center gap-1.5 mt-1">
+          <HeartHandshake className="h-3.5 w-3.5 shrink-0 text-rose-400" aria-hidden />
+          Recherche&nbsp;: {lookingLabel ?? relLabel}
+          {lookingLabel && relLabel ? ` · ${relLabel}` : ""}
+        </p>
+      )}
 
       {chips.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2.5">

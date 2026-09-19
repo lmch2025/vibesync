@@ -44,6 +44,16 @@ export default async function Home() {
               posterUrl2: user.profile.posterUrl2,
               videoUrl3: user.profile.videoUrl3,
               posterUrl3: user.profile.posterUrl3,
+              // Photos de profil (max 5, set compacté) — mêmes champs que
+              // /api/vibe/me : sans ce mapping, les photos disparaissaient de
+              // l'onglet Profil après un rechargement de page.
+              photos: [
+                user.profile.photoUrl1,
+                user.profile.photoUrl2,
+                user.profile.photoUrl3,
+                user.profile.photoUrl4,
+                user.profile.photoUrl5,
+              ].filter(Boolean),
               gender: user.profile.gender,
               lookingFor: user.profile.lookingFor,
               lat: user.profile.lat,

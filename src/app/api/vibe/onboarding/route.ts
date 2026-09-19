@@ -187,6 +187,24 @@ export async function POST(req: Request) {
                 bio: updatedUser.profile.bio,
                 videoUrl: updatedUser.profile.videoUrl,
                 posterUrl: updatedUser.profile.posterUrl,
+                videoDuration: updatedUser.profile.videoDuration,
+                videoUrl2: updatedUser.profile.videoUrl2,
+                posterUrl2: updatedUser.profile.posterUrl2,
+                videoUrl3: updatedUser.profile.videoUrl3,
+                posterUrl3: updatedUser.profile.posterUrl3,
+                // Photos (set compacté) — sans ce champ, l'onglet Profil
+                // affichait « 0/5 » juste après l'onboarding avec photos.
+                photos: [
+                  updatedUser.profile.photoUrl1,
+                  updatedUser.profile.photoUrl2,
+                  updatedUser.profile.photoUrl3,
+                  updatedUser.profile.photoUrl4,
+                  updatedUser.profile.photoUrl5,
+                ].filter(Boolean),
+                gender: updatedUser.profile.gender,
+                lookingFor: updatedUser.profile.lookingFor,
+                lat: updatedUser.profile.lat,
+                lng: updatedUser.profile.lng,
                 vibeQuestion: updatedUser.profile.vibeQuestion,
                 vibeAnswer: updatedUser.profile.vibeAnswer,
               }

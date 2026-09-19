@@ -73,6 +73,24 @@ export async function POST(req: Request) {
             bio: user.profile.bio,
             videoUrl: user.profile.videoUrl,
             posterUrl: user.profile.posterUrl,
+            videoDuration: user.profile.videoDuration,
+            videoUrl2: user.profile.videoUrl2,
+            posterUrl2: user.profile.posterUrl2,
+            videoUrl3: user.profile.videoUrl3,
+            posterUrl3: user.profile.posterUrl3,
+            // Photos (set compacté) — même forme que /api/vibe/me : sans ce
+            // champ, l'onglet Profil affichait « 0/5 » après connexion.
+            photos: [
+              user.profile.photoUrl1,
+              user.profile.photoUrl2,
+              user.profile.photoUrl3,
+              user.profile.photoUrl4,
+              user.profile.photoUrl5,
+            ].filter(Boolean),
+            gender: user.profile.gender,
+            lookingFor: user.profile.lookingFor,
+            lat: user.profile.lat,
+            lng: user.profile.lng,
             vibeQuestion: user.profile.vibeQuestion,
             vibeAnswer: user.profile.vibeAnswer,
           }

@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import {
-  ArrowLeft, BadgeCheck, Eye, Ghost, Globe, Loader2, LogOut, MapPin, Moon, Plane, Volume2, VolumeX, Waves, Video, X, Check, Pencil, Trash2, Play, ShieldCheck,
+  ArrowLeft, BadgeCheck, Camera, Eye, Ghost, Globe, Loader2, LogOut, MapPin, Moon, Plane, Volume2, VolumeX, Waves, Video, X, Check, Pencil, Trash2, Play, ShieldCheck,
 } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { VideoPlayer } from "./video-player";
@@ -24,6 +24,10 @@ import { vibeToast } from "./center-feedback";
 import { PhotoPicker } from "./photo-picker";
 
 type VideoSlot = { url: string; poster: string };
+
+/// Média affiché dans le grand cadre : une des 3 slots vidéo OU une des
+/// photos de profil. Taper une miniature (vidéo comme photo) l'y affiche.
+type ActiveMedia = { kind: "video"; slot: number } | { kind: "photo"; index: number };
 
 export function ProfileScreen({ onBack }: { onBack: () => void }) {
   const me = useVibe((s) => s.me);
@@ -44,13 +48,22 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
     { url: me?.profile?.videoUrl3 || "", poster: me?.profile?.posterUrl3 || "" },
   ];
   const filledSlots = videos.filter(v => v.url).length;
-  // Photos de profil (max 5, set compacté par l'API). Règle métier : la vidéo
-  // garde la priorité — elles ne s'affichent que si le profil n'a aucune vidéo.
+  // Photos de profil (max 5, set compacté par l'API). Elles sont affichées
+  // dans le grand cadre au toc (comme les vidéos) et recensées dans la vue
+  // détaillée après les vidéos (la vidéo garde la priorité d'affichage).
   const photos = me?.profile?.photos ?? [];
 
   // Auto-select the first slot that has a video (avoids showing a black/empty main frame)
   const firstFilledSlot = videos.findIndex(v => v.url) + 1 || 1;
-  const [activeSlot, setActiveSlot] = useState(firstFilledSlot);
+  // Média actif du grand cadre : la 1ʳᵉ vidéo, sinon la 1ʳᵉ photo, sinon le
+  // slot 1 (état vide — poster placeholder).
+  const [activeMedia, setActiveMedia] = useState<ActiveMedia>(
+    filledSlots > 0
+      ? { kind: "video", slot: firstFilledSlot }
+      : photos.length > 0
+        ? { kind: "photo", index: 0 }
+        : { kind: "video", slot: 1 },
+  );
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null); // slot à supprimer
   const [deleting, setDeleting] = useState(false);
   // Ouvre le catalogue complet des actions premium (CTA de la section
@@ -90,7 +103,8 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
   const videoFileRef = useRef<HTMLInputElement>(null);
   const pendingSlotRef = useRef(1);
 
-  const activeVideo = videos[activeSlot - 1];
+  const activeVideo = activeMedia.kind === "video" ? videos[activeMedia.slot - 1] : undefined;
+  const activePhoto = activeMedia.kind === "photo" ? photos[activeMedia.index] : undefined;
 
 
   async function handleVideoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -125,7 +139,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         else if (slot === 2) { previewPatch.videoUrl2 = ""; previewPatch.posterUrl2 = posterDataUrl; }
         else { previewPatch.videoUrl3 = ""; previewPatch.posterUrl3 = posterDataUrl; }
         patchMe({ profile: previewPatch });
-        setActiveSlot(slot);
+        setActiveMedia({ kind: "video", slot });
       }
 
       // --- Phase 2 : Upload Cloudinary (fichier compressé, ~2–4 Mo) ---
@@ -181,7 +195,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
       vibeToast({ emoji: "🎬", title: `Vidéo ${slot} ajoutée` });
       setTimeout(() => setShowConfetti(false), 2500);
 
-      setActiveSlot(slot);
+      setActiveMedia({ kind: "video", slot });
     } catch (e: any) {
       toast.error(e.message || "Erreur lors de l'upload");
     } finally {
@@ -206,6 +220,21 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
 
     const optimistic: any = { ...prevProfile, photos: next };
     patchMe({ profile: optimistic });
+
+    // Média actif : une AJOUT s'affiche aussitôt au grand cadre (retour
+    // immédiat, comme l'upload vidéo) ; un RETRAIT invalide l'index
+    // affiché → repli sur la dernière photo, sinon la 1ʳᵉ vidéo.
+    if (next.length > prevCount) {
+      setActiveMedia({ kind: "photo", index: prevCount });
+    } else if (activeMedia.kind === "photo") {
+      if (next.length === 0) {
+        const firstVideo = videos.findIndex(v => v.url) + 1;
+        setActiveMedia(firstVideo > 0 ? { kind: "video", slot: firstVideo } : { kind: "video", slot: 1 });
+      } else if (activeMedia.index >= next.length) {
+        setActiveMedia({ kind: "photo", index: next.length - 1 });
+      }
+    }
+
     try {
       const res = await fetch("/api/vibe/profile/photos", {
         method: "POST",
@@ -226,6 +255,21 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
     }
   }
 
+  // Supprime la photo affichée au grand cadre (bouton Supprimer du cadre) :
+  // même pipeline que le X du picker, puis enchaîne sur le média suivant.
+  function deleteActivePhoto() {
+    if (activeMedia.kind !== "photo") return;
+    const idx = activeMedia.index;
+    const next = photos.filter((_, i) => i !== idx);
+    savePhotos(next);
+    if (next.length > 0) {
+      setActiveMedia({ kind: "photo", index: Math.min(idx, next.length - 1) });
+    } else {
+      const firstVideo = videos.findIndex(v => v.url) + 1;
+      setActiveMedia(firstVideo > 0 ? { kind: "video", slot: firstVideo } : { kind: "video", slot: 1 });
+    }
+  }
+
   async function deleteVideo(slot: number) {
     setDeleting(true);
     try {
@@ -235,7 +279,14 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
       else if (slot === 2) { profilePatch.videoUrl2 = ""; profilePatch.posterUrl2 = ""; }
       else { profilePatch.videoUrl3 = ""; profilePatch.posterUrl3 = ""; }
       patchMe({ profile: profilePatch });
-      if (activeSlot === slot) setActiveSlot(videos.findIndex((v, i) => i !== slot - 1 && v.url) + 1 || 1);
+      // Le cadre montrait cette vidéo → repli : autre vidéo, sinon 1ʳᵉ photo,
+      // sinon slot 1 (état vide).
+      if (activeMedia.kind === "video" && activeMedia.slot === slot) {
+        const otherVideo = videos.findIndex((v, i) => i !== slot - 1 && v.url) + 1;
+        if (otherVideo > 0) setActiveMedia({ kind: "video", slot: otherVideo });
+        else if (photos.length > 0) setActiveMedia({ kind: "photo", index: 0 });
+        else setActiveMedia({ kind: "video", slot: 1 });
+      }
       vibeToast({ emoji: "🗑️", title: "Vidéo supprimée" });
     } catch {
       toast.error("Erreur lors de la suppression");
@@ -404,29 +455,62 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-24">
-        {/* Grand cadre — vidéo active + actions Remplacer / Supprimer */}
+        {/* Grand cadre — média ACTIF (vidéo du slot sélectionné ou photo
+            tapée dans le picker) + actions. Transition en fondu entre médias. */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="relative rounded-3xl overflow-hidden ring-1 ring-(--v-divider) aspect-[4/5] mb-4">
-          <VideoPlayer
-            key={`profile-slot-${activeSlot}-${videoUrl}`}
-            videoUrl={videoUrl}
-            posterUrl={poster}
-            duration={15}
-            className="absolute inset-0"
-            sizes="280px"
-            priority
-          />
+          <AnimatePresence initial={false}>
+            {activeMedia.kind === "video" ? (
+              <motion.div
+                key={`frame-v${activeMedia.slot}-${videoUrl}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0"
+              >
+                <VideoPlayer
+                  videoUrl={videoUrl}
+                  posterUrl={poster}
+                  duration={15}
+                  className="absolute inset-0"
+                  sizes="280px"
+                  priority
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key={`frame-p${activeMedia.index}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0"
+              >
+                <img
+                  src={activePhoto}
+                  alt={`Photo ${activeMedia.index + 1} de ton profil`}
+                  draggable={false}
+                  className="absolute inset-0 w-full h-full object-cover select-none"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent pointer-events-none" />
 
-          {/* Badge 15s max — posé sur la vidéo : verre sombre + texte blanc constant */}
+          {/* Badge type de média — « 15s max » pour une vidéo, « Photo » pour
+              une photo : verre sombre + texte blanc constant */}
           <div className="absolute top-3 right-3 z-50 glass-dark v-fg-media rounded-full px-2.5 py-1 text-[10px] flex items-center gap-1 pointer-events-none">
-            <Video className="h-3 w-3 text-accent" /> 15s max
+            {activeMedia.kind === "video"
+              ? <><Video className="h-3 w-3 text-accent" /> 15s max</>
+              : <><Camera className="h-3 w-3 text-accent" /> Photo</>}
           </div>
 
-          {/* Boutons action sur le grand cadre quand une vidéo est présente */}
-          {activeVideo?.url && (
+          {/* Boutons action sur le grand cadre — vidéo : Remplacer / Supprimer ;
+              photo : Supprimer (le retrait compacte le set, comme le X du picker) */}
+          {activeMedia.kind === "video" && activeVideo?.url && (
             <div className="absolute top-3 left-3 flex gap-1.5 z-50">
               <motion.button
-                onClick={() => startUpload(activeSlot)}
+                onClick={() => startUpload(activeMedia.slot)}
                 disabled={videoUploading}
                 whileTap={{ scale: 0.92 }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur hover:bg-black/80 transition text-[10px] font-semibold text-white disabled:opacity-50"
@@ -434,10 +518,21 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                 <Pencil className="h-3 w-3" /> Remplacer
               </motion.button>
               <motion.button
-                onClick={() => setConfirmDelete(activeSlot)}
+                onClick={() => setConfirmDelete(activeMedia.slot)}
                 disabled={videoUploading}
                 whileTap={{ scale: 0.92 }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/70 backdrop-blur hover:bg-red-500/90 transition text-[10px] font-semibold text-white disabled:opacity-50"
+              >
+                <Trash2 className="h-3 w-3" /> Supprimer
+              </motion.button>
+            </div>
+          )}
+          {activeMedia.kind === "photo" && (
+            <div className="absolute top-3 left-3 flex gap-1.5 z-50">
+              <motion.button
+                onClick={deleteActivePhoto}
+                whileTap={{ scale: 0.92 }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/70 backdrop-blur hover:bg-red-500/90 transition text-[10px] font-semibold text-white"
               >
                 <Trash2 className="h-3 w-3" /> Supprimer
               </motion.button>
@@ -474,7 +569,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
             {[1, 2, 3].map((slot) => {
               const v = videos[slot - 1];
               const hasVideo = !!v.url;
-              const isActive = activeSlot === slot;
+              const isActive = activeMedia.kind === "video" && activeMedia.slot === slot;
               const isUploading = videoUploading && uploadingSlot === slot;
               const slotPoster = v.poster || (v.url.includes("cloudinary.com") ? v.url.replace(/^(.*\/video\/upload\/)(?:[a-zA-Z0-9_,]+\/)?(v\d+\/.*)\.[a-zA-Z0-9]+$/, "$1so_1,f_jpg/$2.jpg") : "");
               return (
@@ -485,7 +580,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                     onClick={() => {
                       if (isUploading) return;
                       if (hasVideo) {
-                        setActiveSlot(slot);
+                        setActiveMedia({ kind: "video", slot });
                       } else {
                         startUpload(slot);
                       }
@@ -528,13 +623,24 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           </div>
         </div>
 
-        {/* Mes photos — jusqu'à 5. La vidéo garde la priorité d'affichage :
-            elles ne sont montrées que si le profil n'a aucune vidéo. */}
+        {/* Mes photos — jusqu'à 5. Un toc sur une tuile l'affiche dans le
+            grand cadre (anneau violet), exactement comme les miniatures
+            vidéo ; le X la retire du set (compacté). */}
         <div className="mb-4">
-          <p className="text-[10px] uppercase tracking-wide v-fg-muted font-semibold mb-2">
-            Mes photos ({photos.length}/5)
-          </p>
-          <PhotoPicker photos={photos} onChange={savePhotos} />
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] uppercase tracking-wide v-fg-muted font-semibold">
+              Mes photos ({photos.length}/5)
+            </p>
+            {photos.length > 0 && (
+              <span className="text-[10px] v-fg-faint">Touche une photo pour l’afficher</span>
+            )}
+          </div>
+          <PhotoPicker
+            photos={photos}
+            onChange={savePhotos}
+            onSelect={(i) => setActiveMedia({ kind: "photo", index: i })}
+            activeIndex={activeMedia.kind === "photo" ? activeMedia.index : -1}
+          />
         </div>
 
         {/* Completion Ring */}

@@ -42,13 +42,63 @@ export async function PATCH(req: Request) {
       });
     }
 
-    // Return the updated user and profile to sync the client state
+    // Return the updated user and profile to sync the client state.
+    // MÊME FORME que /api/vibe/me : le profil est sérialisé avec le tableau
+    // `photos` (compacté) — les appelants font `{ ...me, ...data.user }` et un
+    // profil Prisma brut (photoUrl1..5 sans `photos`) leur faisait perdre les
+    // photos côté store après chaque édition.
     const updatedUser = await db.user.findUnique({
       where: { id: user.id },
       include: { profile: true },
     });
 
-    return NextResponse.json({ user: updatedUser });
+    return NextResponse.json({
+      user: updatedUser && {
+        id: updatedUser.id,
+        phone: updatedUser.phone,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        currency: updatedUser.currency,
+        country: updatedUser.country,
+        gems: updatedUser.gems,
+        freeGems: updatedUser.freeGems,
+        walletEurCents: updatedUser.walletEurCents,
+        verified: updatedUser.verified,
+        onboardingComplete: updatedUser.onboardingComplete,
+        profile: updatedUser.profile
+          ? {
+              id: updatedUser.profile.id,
+              displayName: updatedUser.profile.displayName,
+              age: updatedUser.profile.age,
+              city: updatedUser.profile.city,
+              bio: updatedUser.profile.bio,
+              videoUrl: updatedUser.profile.videoUrl,
+              posterUrl: updatedUser.profile.posterUrl,
+              videoDuration: updatedUser.profile.videoDuration,
+              videoUrl2: updatedUser.profile.videoUrl2,
+              posterUrl2: updatedUser.profile.posterUrl2,
+              videoUrl3: updatedUser.profile.videoUrl3,
+              posterUrl3: updatedUser.profile.posterUrl3,
+              photos: [
+                updatedUser.profile.photoUrl1,
+                updatedUser.profile.photoUrl2,
+                updatedUser.profile.photoUrl3,
+                updatedUser.profile.photoUrl4,
+                updatedUser.profile.photoUrl5,
+              ].filter(Boolean),
+              gender: updatedUser.profile.gender,
+              lookingFor: updatedUser.profile.lookingFor,
+              lat: updatedUser.profile.lat,
+              lng: updatedUser.profile.lng,
+              vibeQuestion: updatedUser.profile.vibeQuestion,
+              vibeAnswer: updatedUser.profile.vibeAnswer,
+              prefMinAge: updatedUser.profile.prefMinAge,
+              prefMaxAge: updatedUser.profile.prefMaxAge,
+              prefMaxDistance: updatedUser.profile.prefMaxDistance,
+            }
+          : null,
+      },
+    });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "Erreur" }, { status: 500 });
   }
