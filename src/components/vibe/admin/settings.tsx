@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, MapPin, MessageSquare, Percent, Wallet, Gift, Video, Check, Loader2, Sparkles, Upload, Trash2, Film } from "lucide-react";
+import { Save, MapPin, MessageSquare, Percent, Wallet, Gift, Video, Check, Loader2, Sparkles, Upload, Trash2, Film, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { SuccessBounce } from "@/components/vibe/app/interactive-animations";
+import {
+  browserCanRecordWebM,
+  compressLandingVideoToWebM,
+  isDirectSendWebm,
+  LANDING_DIRECT_WEBM_MAX_BYTES,
+  type LandingVideoCompressResult,
+} from "@/lib/vibe/landing-video-compress";
 import { cn } from "@/lib/utils";
 import {
   WITHDRAWAL_THRESHOLD_EUR,
@@ -631,8 +638,12 @@ export function Settings() {
 function LandingVideoCard() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
+  // « compressing » : transcodage navigateur en WebM (barre de progression) ;
+  // « uploading » : envoi du WebM résultant vers Vercel Blob.
+  const [phase, setPhase] = useState<"idle" | "compressing" | "uploading">("idle");
+  const [progress, setProgress] = useState(0); // ratio 0..1 de la compression
+  const busy = phase !== "idle";
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -649,8 +660,8 @@ function LandingVideoCard() {
     })();
   }, []);
 
-  async function upload(file: File) {
-    setUploading(true);
+  async function send(file: File) {
+    setPhase("uploading");
     try {
       const form = new FormData();
       form.append("file", file);
@@ -667,9 +678,66 @@ function LandingVideoCard() {
     } catch (e: any) {
       toast.error("Upload impossible", { description: e.message });
     } finally {
-      setUploading(false);
+      setPhase("idle");
+      setProgress(0);
       if (fileRef.current) fileRef.current.value = "";
     }
+  }
+
+  async function upload(file: File) {
+    const reset = () => {
+      setPhase("idle");
+      setProgress(0);
+      if (fileRef.current) fileRef.current.value = "";
+    };
+
+    // WebM déjà léger : recompresser ne ferait que dégrader — envoi direct.
+    if (isDirectSendWebm(file)) {
+      toast.info("WebM déjà optimisé", {
+        description: "Envoi direct sans recompression — qualité préservée.",
+      });
+      return send(file);
+    }
+
+    // Navigateur incapable d'encoder en WebM (Safari…) : envoi de l'original
+    // s'il respecte la limite, sinon refus explicite avec la marche à suivre.
+    if (!browserCanRecordWebM()) {
+      if (file.size > LANDING_DIRECT_WEBM_MAX_BYTES) {
+        toast.error("Compression indisponible sur ce navigateur", {
+          description: `Fichier trop lourd (${(file.size / 1024 / 1024).toFixed(1)} Mo) et compression WebM impossible — utilisez Chrome ou Edge.`,
+        });
+        return reset();
+      }
+      toast.info("Compression indisponible sur ce navigateur", {
+        description: "Envoi du fichier original tel quel.",
+      });
+      return send(file);
+    }
+
+    // Transcodage navigateur → WebM (VP9 si dispo), puis envoi vers le Blob.
+    setPhase("compressing");
+    setProgress(0);
+    let result: LandingVideoCompressResult;
+    try {
+      result = await compressLandingVideoToWebM(file, { onProgress: setProgress });
+    } catch (e: any) {
+      toast.error("Compression impossible", { description: e?.message ?? "Réessayez." });
+      return reset();
+    }
+
+    if (result.blob.size > LANDING_DIRECT_WEBM_MAX_BYTES) {
+      toast.error("Vidéo trop longue après compression", {
+        description: `${(result.blob.size / 1024 / 1024).toFixed(1)} Mo — visez une boucle de 6 à 10 s.`,
+      });
+      return reset();
+    }
+
+    toast.success("Compression terminée", {
+      description: `WebM ${result.codec.toUpperCase()} · ${result.width}×${result.height} · ${(result.blob.size / 1024 / 1024).toFixed(1)} Mo (source : ${(file.size / 1024 / 1024).toFixed(1)} Mo).`,
+    });
+    await send(
+      new File([result.blob], "fond-accueil.webm", { type: "video/webm" })
+    );
   }
 
   async function remove() {
@@ -695,8 +763,9 @@ function LandingVideoCard() {
           <Film className="h-4 w-4 text-primary" /> Vidéo de fond — page d'accueil
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Vidéo plein écran diffusée en boucle derrière le titre de l'accueil. Stockage Vercel Blob.
-          Recommandé : WebM vertical, 6-10 s en boucle, ≤ 12 Mo.
+          Vidéo plein écran diffusée en boucle derrière le titre de l'accueil. Importez MP4, MOV, MKV ou WebM :
+          votre navigateur la convertit en WebM haute qualité (VP9) avant l'envoi vers le cloud.
+          Boucle recommandée : 6 à 10 s.
         </p>
       </div>
 
@@ -737,28 +806,49 @@ function LandingVideoCard() {
           }}
         />
         <div className="flex flex-wrap items-center gap-2">
-          <motion.button
-            type="button"
-            whileTap={uploading ? undefined : { scale: 0.97 }}
-            disabled={uploading || removing}
-            onClick={() => fileRef.current?.click()}
-            className={cn(buttonVariants({ className: "rounded-xl gap-1.5" }))}
-          >
-            {uploading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Import en cours…
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4" /> {url ? "Remplacer la vidéo" : "Importer une vidéo"}
-              </>
-            )}
-          </motion.button>
+          {phase === "compressing" ? (
+            <div
+              className="flex-1 min-w-[220px] rounded-xl ring-1 ring-border bg-muted/40 px-3 py-2"
+              role="status"
+              aria-live="polite"
+              aria-label={`Compression en cours, ${Math.round(progress * 100)} %`}
+            >
+              <p className="text-xs font-medium flex items-center gap-1.5">
+                <Wand2 className="h-3.5 w-3.5 text-primary" />
+                Compression navigateur — {Math.round(progress * 100)} %
+              </p>
+              <div className="mt-1.5 h-1.5 rounded-full bg-background overflow-hidden">
+                <motion.div
+                  className="h-full vibe-gradient"
+                  animate={{ width: `${Math.round(progress * 100)}%` }}
+                  transition={{ ease: "linear", duration: 0.2 }}
+                />
+              </div>
+            </div>
+          ) : (
+            <motion.button
+              type="button"
+              whileTap={busy ? undefined : { scale: 0.97 }}
+              disabled={busy || removing}
+              onClick={() => fileRef.current?.click()}
+              className={cn(buttonVariants({ className: "rounded-xl gap-1.5" }))}
+            >
+              {phase === "uploading" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Envoi vers le cloud…
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" /> {url ? "Remplacer la vidéo" : "Importer une vidéo"}
+                </>
+              )}
+            </motion.button>
+          )}
           {url && (
             <motion.button
               type="button"
               whileTap={removing ? undefined : { scale: 0.97 }}
-              disabled={uploading || removing}
+              disabled={busy || removing}
               onClick={remove}
               className={cn(buttonVariants({ variant: "destructive", className: "rounded-xl gap-1.5" }))}
             >
