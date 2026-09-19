@@ -247,9 +247,11 @@ export function VideoPlayer({
         </div>
       )}
 
-      {/* Error State */}
+      {/* Error State — pointer-events-none : l'overlay ne bloque PAS les
+          contrôles posés au-dessus (affordance ⤢ de la carte swipe) ; le
+          tap-to-retry passe par le onClick racine (n'importe où sur le média). */}
       {hasError && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 text-white text-center p-4">
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 text-white text-center p-4 pointer-events-none">
           <p className="text-sm font-semibold">Lecture impossible</p>
           <p className="text-xs text-white/70 mt-1">Appuie pour réessayer</p>
         </div>

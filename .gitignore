@@ -88,9 +88,15 @@ agent-ctx/
 # /public/icon-*.png  # PWA icons ARE tracked (required by manifest.json)
 /public/icon-*.webp
 # Vidéos utilisateur lourdes → CDN ; MAIS la vidéo de repli de l'accueil doit
-# être versionnée (39 Ko, asset cœur du landing — sinon 404 en production).
+# être versionnée (39 Ko, asset cœur du landing — sinon 404 en production),
+# ainsi que les 4 placeholders de profils seedés (référencés par le seed,
+# les fallbacks VideoPlayer/modal/match — sinon 404 en production).
 /public/profiles/*
 !/public/profiles/swipe-bg.webm
+!/public/profiles/lea.png
+!/public/profiles/marco.png
+!/public/profiles/sofia.png
+!/public/profiles/yann.png
 
 # Artefacts runtime du sandbox (PID de process, scripts de test plateforme)
 *.pid

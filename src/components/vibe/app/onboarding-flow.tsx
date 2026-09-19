@@ -26,6 +26,7 @@ import { compressVideo, fetchVideoConfig, formatDuration } from "@/lib/vibe/vide
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { celebrate } from "./interactive-animations";
+import { PhotoPicker } from "./photo-picker";
 
 type Gender = "f" | "m" | "nb";
 type LookingFor = "f" | "m" | "nb" | "all";
@@ -60,6 +61,12 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>("");
   const fileRef = useRef<HTMLInputElement>(null);
+  // Step 4 — photos de profil (optionnel, max 5). La vidéo reste prioritaire :
+  // les photos sont surtout utiles si l'utilisateur n'ajoute pas de vidéo.
+  const [photos, setPhotos] = useState<string[]>([]);
+  // Upload photo en cours → verrouille le bouton Terminer (pas de submit
+  // avec un set photos tronqué).
+  const [photosUploading, setPhotosUploading] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   // Garde anti double-fire (StrictMode) — la célébration ne part qu'une fois.
@@ -136,6 +143,8 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
           videoUrl: videoUrl || undefined,
           posterUrl: posterUrl || undefined,
           videoDuration: videoDuration || undefined,
+          // Toujours envoyé (même vide) — le backend écrit/compacte les 5 slots.
+          photos,
         }),
       });
       const data = await res.json();
@@ -157,7 +166,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
     }
   }
 
-  const stepTitles = ["Ton identité", "Toi en bref", "Ta recherche", "Ta vidéo 15s"];
+  const stepTitles = ["Ton identité", "Toi en bref", "Ta recherche", "Ta présentation"];
 
   return (
     <div className="dark relative min-h-dvh w-full flex items-center justify-center bg-[#0a0612] text-white overflow-hidden px-4 py-6">
@@ -193,6 +202,9 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
         <div className="relative rounded-3xl v-surface-1 backdrop-blur-xl ring-1 ring-white/10 shadow-2xl p-6 sm:p-8 overflow-hidden">
           <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-vibe-purple/15 blur-2xl" />
 
+          {/* Conteneur scrollable — l'étape 4 (vidéo + photos) peut dépasser
+              sur petits écrans ; le header logo/progression reste visible. */}
+          <div className="relative max-h-[70dvh] overflow-y-auto overscroll-contain scrollbar-vibe">
           <AnimatePresence mode="wait">
             {/* STEP 1 — Identity */}
             {step === 0 && (
@@ -559,14 +571,30 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       <li>• Recevoir des cadeaux</li>
                       <li>• Booster ton profil</li>
                     </ul>
+                    {/* Ligne d'espoir — factuelle : les photos restent une porte d'entrée */}
+                    <p className="text-[10px] text-white/50 mt-2 pt-2 border-t border-white/10">
+                      Pas de vidéo ? Jusqu&apos;à 5 photos permettent quand même de te découvrir.
+                    </p>
                   </div>
+                </div>
+
+                {/* Photos de profil — plein largeur, optionnel (max 5) */}
+                <div>
+                  <div className="flex items-baseline justify-between mb-1">
+                    <label className="text-xs font-semibold text-white/70">Tes photos</label>
+                    <span className="text-[11px] text-white/50 tabular-nums">{photos.length}/5</span>
+                  </div>
+                  <p className="text-[11px] text-white/60 mb-2.5">
+                    Optionnel — utile surtout si tu n&apos;ajoutes pas de vidéo.
+                  </p>
+                  <PhotoPicker photos={photos} onChange={setPhotos} onUploadingChange={setPhotosUploading} />
                 </div>
 
                 <div className="flex gap-2.5 mt-auto">
                   <BackBtn onClick={() => setStep(2)} />
                   <motion.button
                     onClick={submit}
-                    disabled={submitting || uploading}
+                    disabled={submitting || uploading || photosUploading}
                     whileTap={{ scale: 0.97 }}
                     className="flex-1 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-60"
                   >
@@ -582,6 +610,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>

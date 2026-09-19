@@ -30,6 +30,13 @@ export type MeUser = {
     gender?: string | null;
     lookingFor?: string | null;
     relationshipType?: string | null;
+    // Slots vidéo 2 et 3 (renvoyés par /api/vibe/me — évite les casts `as any`)
+    videoUrl2?: string;
+    posterUrl2?: string;
+    videoUrl3?: string;
+    posterUrl3?: string;
+    // Photos de profil (max 5, set compacté — /api/vibe/me renvoie photos[])
+    photos?: string[];
   } | null;
 };
 

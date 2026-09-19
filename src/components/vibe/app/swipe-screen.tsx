@@ -10,10 +10,11 @@
 // the profile and enforced server-side by the recommendation algorithm.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { RotateCcw, X, Star, Heart, BadgeCheck, MapPin, SlidersHorizontal, Check, Loader2, Plane, Gift } from "lucide-react";
+import { RotateCcw, X, Star, Heart, BadgeCheck, MapPin, SlidersHorizontal, Check, Loader2, Plane, Gift, Maximize2 } from "lucide-react";
 import { GemBadge, GemIcon } from "@/components/vibe/gem-badge";
 import { sfx, haptic, celebrate, EmojiBurst, Shimmer, type SfxName } from "@/components/vibe/app/interactive-animations";
 import { VideoPlayer } from "./video-player";
+import { ProfileDetailModal } from "./profile-detail-modal";
 import { PremiumActionsSheet } from "./premium-actions-sheet";
 import { SmartNudgeBanner, useNudgeSlot, type SmartNudge } from "./smart-nudge";
 import { vibeToast } from "./center-feedback";
@@ -41,6 +42,11 @@ type Profile = {
   goldenHeart?: boolean;
   spotlight?: boolean;
   passport?: boolean;
+  // Contrat deck (Task 1-a) : les 3 slots vidéo + les 5 photos (compactés).
+  // Règle métier : la vidéo est prioritaire — les photos ne s'affichent que
+  // si le profil n'a AUCUNE vidéo (voir ProfileDetailModal / SwipeCard).
+  videos?: { url: string; poster: string }[];
+  photos?: string[];
 };
 
 type SwipeResult = {
@@ -85,6 +91,10 @@ export function SwipeScreen({
   // Gift tray — opens from the 🎁 action button, targets the top card.
   const [giftTarget, setGiftTarget] = useState<Profile | null>(null);
   const [giftNote, setGiftNote] = useState("");
+  // Detailed profile view — opened by tapping the top card (or its ⤢
+  // affordance). Tap on an action closes the modal first, then the parent
+  // swipes / opens the gift tray (clean transition).
+  const [detailProfile, setDetailProfile] = useState<Profile | null>(null);
   // Contextual premium-action recommendations (elegant, cooldown-guarded).
   const { nudge, dismiss, offer } = useNudgeSlot();
   const passStreakRef = useRef(0);
@@ -525,6 +535,16 @@ export function SwipeScreen({
         gems={me?.gems ?? 0}
       />
 
+      {/* Detailed profile view — tap the top card to discover the full
+          profile (media gallery, bio, Vibe Check) before deciding. */}
+      <ProfileDetailModal
+        profile={detailProfile}
+        onOpenChange={(o) => { if (!o) setDetailProfile(null); }}
+        onSwipe={(dir) => { if (detailProfile) swipe(detailProfile, dir); }}
+        onGift={() => { if (detailProfile) setGiftTarget(detailProfile); }}
+        gems={me?.gems ?? 0}
+      />
+
       {/* deck */}
       <div className="absolute inset-0 pt-20 pb-44 px-4">
         {loading ? (
@@ -562,6 +582,15 @@ export function SwipeScreen({
                     profile={p}
                     isTop={isTop}
                     onSwipe={(dir) => swipe(p, dir)}
+                    onOpenDetail={
+                      isTop
+                        ? () => {
+                            sfx.play("pop");
+                            haptic(8);
+                            setDetailProfile(p);
+                          }
+                        : undefined
+                    }
                   />
                 );
               })}
@@ -624,10 +653,13 @@ function SwipeCard({
   profile,
   isTop,
   onSwipe,
+  onOpenDetail,
 }: {
   profile: Profile;
   isTop: boolean;
   onSwipe: (dir: "pass" | "like" | "superlike") => void;
+  /// Opens the detailed profile view — only ever provided for the top card.
+  onOpenDetail?: () => void;
 }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -635,6 +667,39 @@ function SwipeCard({
   const likeOpacity = useTransform(x, [40, 140], [0, 1]);
   const nopeOpacity = useTransform(x, [-140, -40], [1, 0]);
   const superOpacity = useTransform(y, [-140, -40], [1, 0]);
+
+  // Tap → vue détaillée. Détection MANUELLE (framer-motion onTap
+  // interférerait avec le drag) : pointerdown mémorise le point de départ,
+  // pointerup compare — déplacement < 10 px en < 400 ms = tap intentionnel.
+  const tapRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  // Le tap a ouvert la vue détaillée → le click qui suit (togglePlay du
+  // VideoPlayer) doit être avalé pour éviter la double action.
+  const suppressClickRef = useRef(false);
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    tapRef.current = { x: e.clientX, y: e.clientY, t: Date.now() };
+  };
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = tapRef.current;
+    tapRef.current = null;
+    if (!start || !isTop || !onOpenDetail) return;
+    // Un tap visant un contrôle imbriqué (son, affordance ⤢…) garde son
+    // comportement propre — il n'ouvre pas la vue détaillée en doublon.
+    if ((e.target as HTMLElement).closest("button")) return;
+    const dist = Math.hypot(e.clientX - start.x, e.clientY - start.y);
+    if (dist < 10 && Date.now() - start.t < 400) {
+      suppressClickRef.current = true;
+      onOpenDetail();
+    }
+  };
+  // Capture : avalé AVANT le onClick du VideoPlayer (le click natif suit
+  // immédiatement le pointerup — le flag est fiable).
+  const handleClickCapture = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  };
 
   const onDragEnd = (_e: any, info: PanInfo) => {
     const { offset, velocity } = info;
@@ -669,22 +734,35 @@ function SwipeCard({
       drag={isTop}
       dragSnapToOrigin
       onDragEnd={onDragEnd}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onClickCapture={handleClickCapture}
       initial={{ scale: 0.94, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       whileTap={isTop ? { cursor: "grabbing" } : undefined}
     >
-      {/* Video player with poster fallback + preloading */}
+      {/* Media — RÈGLE MÉTIER : la vidéo est prioritaire ; sans vidéo, la
+          1ʳᵉ photo prend le relais ; sinon poster placeholder (VideoPlayer). */}
       <div className="absolute inset-0 overflow-hidden">
-        <VideoPlayer
-          videoUrl={profile.videoUrl}
-          posterUrl={profile.posterUrl || "/profiles/lea.png"}
-          duration={profile.videoDuration}
-          sizes="300px"
-          priority
-          className="absolute inset-0"
-        />
+        {profile.videoUrl || !profile.photos?.[0] ? (
+          <VideoPlayer
+            videoUrl={profile.videoUrl}
+            posterUrl={profile.posterUrl || "/profiles/lea.png"}
+            duration={profile.videoDuration}
+            sizes="300px"
+            priority
+            className="absolute inset-0"
+          />
+        ) : (
+          <img
+            src={profile.photos[0]}
+            alt={`Photo de ${profile.displayName}`}
+            draggable={false}
+            className="absolute inset-0 w-full h-full object-cover select-none"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/10" />
       </div>
 
@@ -721,6 +799,19 @@ function SwipeCard({
               )}
             </p>
           </div>
+          {/* Affordance discrète — même handler que le tap sur la carte */}
+          {isTop && onOpenDetail && (
+            <motion.button
+              onClick={onOpenDetail}
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerUp={(e) => e.stopPropagation()}
+              whileTap={{ scale: 0.88 }}
+              aria-label="Voir le profil détaillé"
+              className="h-8 w-8 rounded-full glass-dark grid place-items-center text-white/90 hover:text-white opacity-80 hover:opacity-100 transition shrink-0 self-start"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+            </motion.button>
+          )}
         </div>
         {/* premium visibility chips — real effects from the deck API */}
         {chips.length > 0 && (

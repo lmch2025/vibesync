@@ -2,12 +2,61 @@
 // 3-step onboarding data collection. Creates or updates the user's Profile
 // and marks onboardingComplete = true. Video is optional.
 // Fields: pseudo, gender (f|m|nb), lookingFor (f|m|nb|all), age (16-100),
-// city (must be a valid selection from /api/vibe/cities), videoUrl?, posterUrl?
+// city (must be a valid selection from /api/vibe/cities), videoUrl?, posterUrl?,
+// photos? (string[], max 5 — data URL image sandbox ou URL http(s) CDN)
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/vibe/session";
 import { CITIES } from "@/lib/vibe/cities";
 import { FALLBACK_RATES } from "@/lib/vibe/constants";
+
+const MAX_PHOTOS = 5;
+// Tolérante : la compression client vise ~500 Ko mais on accepte jusqu'à ~3 Mo
+// par data URL pour ne jamais bloquer un envoi légitime.
+const MAX_DATA_URL_LENGTH = 3 * 1024 * 1024;
+
+/// Une photo est valide s'il s'agit d'une data URL d'image ou d'une URL
+/// http(s) (CDN — idéalement Cloudinary).
+function isValidPhoto(s: string): boolean {
+  if (typeof s !== "string" || s.length === 0) return false;
+  if (s.startsWith("data:image/")) return s.length <= MAX_DATA_URL_LENGTH;
+  return /^https?:\/\//i.test(s);
+}
+
+/// Valide le tableau `photos` optionnel. Renvoie soit un message d'erreur,
+/// soit le tableau compacté (trimmé) à écrire dans photoUrl1..5.
+function parsePhotos(raw: unknown): { error: string } | { photos: string[] } {
+  if (raw === undefined || raw === null) return { photos: [] };
+  if (!Array.isArray(raw)) return { error: "photos doit être un tableau" };
+  if (raw.length > MAX_PHOTOS) return { error: `Maximum ${MAX_PHOTOS} photos` };
+  for (const photo of raw) {
+    if (typeof photo !== "string" || photo.trim().length === 0) {
+      return { error: "Photo invalide (chaîne vide)" };
+    }
+    if (!isValidPhoto(photo)) {
+      return { error: "Photo invalide — data URL d'image ou URL http(s) requise (max ~3 Mo)" };
+    }
+  }
+  return { photos: raw.map((p: string) => p.trim()) };
+}
+
+/// Re-mappe un tableau compacté vers les 5 slots photoUrl1..photoUrl5.
+function toPhotoSlots(photos: string[]): {
+  photoUrl1: string;
+  photoUrl2: string;
+  photoUrl3: string;
+  photoUrl4: string;
+  photoUrl5: string;
+} {
+  const slots = [0, 1, 2, 3, 4].map((i) => photos[i] ?? "");
+  return {
+    photoUrl1: slots[0],
+    photoUrl2: slots[1],
+    photoUrl3: slots[2],
+    photoUrl4: slots[3],
+    photoUrl5: slots[4],
+  };
+}
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -15,6 +64,13 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({} as any));
   const { pseudo, gender, lookingFor, relationshipType, age, city, videoUrl, posterUrl, videoDuration } = body;
+
+  // Photos optionnelles (max 5) — même validation que /api/vibe/profile/photos.
+  const photosResult = parsePhotos(body.photos);
+  if ("error" in photosResult) {
+    return NextResponse.json({ error: photosResult.error }, { status: 400 });
+  }
+  const photoSlots = toPhotoSlots(photosResult.photos);
 
   // Validation
   if (!pseudo || typeof pseudo !== "string" || pseudo.trim().length < 2 || pseudo.trim().length > 20) {
@@ -63,6 +119,8 @@ export async function POST(req: Request) {
         lat: cityMatch.lat,
         lng: cityMatch.lng,
         modStatus: hasVideo ? "pending" : "approved",
+        // Photos de profil (max 5) — compactées dans les slots 1..N.
+        ...photoSlots,
       },
     });
   } else {
@@ -82,6 +140,8 @@ export async function POST(req: Request) {
         lat: cityMatch.lat,
         lng: cityMatch.lng,
         modStatus: hasVideo ? "pending" : "approved",
+        // Photos de profil (max 5) — compactées dans les slots 1..N.
+        ...photoSlots,
       },
     });
   }

@@ -21,6 +21,7 @@ import { canShowNudge, markNudgeShown } from "@/lib/vibe/nudges";
 import { Input } from "@/components/ui/input";
 import { ConfettiBurst, AnimatedNumber, haptic, sfx, useSfxEnabled } from "./interactive-animations";
 import { vibeToast } from "./center-feedback";
+import { PhotoPicker } from "./photo-picker";
 
 type VideoSlot = { url: string; poster: string };
 
@@ -39,10 +40,13 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
   // Build video slots from profile data
   const videos: VideoSlot[] = [
     { url: me?.profile?.videoUrl || "", poster: me?.profile?.posterUrl || "" },
-    { url: (me?.profile as any)?.videoUrl2 || "", poster: (me?.profile as any)?.posterUrl2 || "" },
-    { url: (me?.profile as any)?.videoUrl3 || "", poster: (me?.profile as any)?.posterUrl3 || "" },
+    { url: me?.profile?.videoUrl2 || "", poster: me?.profile?.posterUrl2 || "" },
+    { url: me?.profile?.videoUrl3 || "", poster: me?.profile?.posterUrl3 || "" },
   ];
   const filledSlots = videos.filter(v => v.url).length;
+  // Photos de profil (max 5, set compacté par l'API). Règle métier : la vidéo
+  // garde la priorité — elles ne s'affichent que si le profil n'a aucune vidéo.
+  const photos = me?.profile?.photos ?? [];
 
   // Auto-select the first slot that has a video (avoids showing a black/empty main frame)
   const firstFilledSlot = videos.findIndex(v => v.url) + 1 || 1;
@@ -190,6 +194,36 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
   function startUpload(slot: number) {
     pendingSlotRef.current = slot;
     videoFileRef.current?.click();
+  }
+
+  // Sauvegarde le set de photos (max 5) : patch optimiste → POST
+  // /api/vibe/profile/photos → rollback + toast en cas d'échec. Retour
+  // centré sobre (📸 / 🗑️) — PAS de confetti vidéo ici.
+  async function savePhotos(next: string[]) {
+    const prevProfile = me?.profile ?? null;
+    const prevCount = photos.length;
+    if (next.length === prevCount) return; // rien à faire (garde)
+
+    const optimistic: any = { ...prevProfile, photos: next };
+    patchMe({ profile: optimistic });
+    try {
+      const res = await fetch("/api/vibe/profile/photos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (next.length > prevCount) {
+        vibeToast({ emoji: "📸", title: next.length - prevCount > 1 ? `${next.length - prevCount} photos ajoutées` : "Photo ajoutée" });
+      } else {
+        vibeToast({ emoji: "🗑️", title: "Photo retirée" });
+      }
+    } catch (e: any) {
+      // Rollback : on repatche avec le profil d'avant (photos d'origine).
+      if (prevProfile) patchMe({ profile: prevProfile } as any);
+      toast.error(e?.message || "Impossible de sauvegarder les photos");
+    }
   }
 
   async function deleteVideo(slot: number) {
@@ -492,6 +526,15 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
               );
             })}
           </div>
+        </div>
+
+        {/* Mes photos — jusqu'à 5. La vidéo garde la priorité d'affichage :
+            elles ne sont montrées que si le profil n'a aucune vidéo. */}
+        <div className="mb-4">
+          <p className="text-[10px] uppercase tracking-wide v-fg-muted font-semibold mb-2">
+            Mes photos ({photos.length}/5)
+          </p>
+          <PhotoPicker photos={photos} onChange={savePhotos} />
         </div>
 
         {/* Completion Ring */}

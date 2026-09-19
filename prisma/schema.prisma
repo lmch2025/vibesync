@@ -76,6 +76,13 @@ model Profile {
   posterUrl2   String   @default("")
   videoUrl3    String   @default("") // 3rd video (CDN URL)
   posterUrl3   String   @default("")
+  // Profile photos (up to 5) — Cloudinary CDN URL (or base64 data URL sandbox fallback).
+  // Displayed ONLY when the profile has no video (video has display priority).
+  photoUrl1 String @default("")
+  photoUrl2 String @default("")
+  photoUrl3 String @default("")
+  photoUrl4 String @default("")
+  photoUrl5 String @default("")
   gender       String // "f" | "m" | "nb"
   lookingFor   String // "f" | "m" | "nb" | "all"
   relationshipType String @default("serious") // "serious" | "casual" | "friendship"
