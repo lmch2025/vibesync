@@ -303,10 +303,10 @@ export async function POST(req: Request) {
             effect.likers = [];
             effect.ghostTease = likes.length;
           } else if (effect.likers.length === 0) {
-            effect.likers = [
-              { id: "sim1", displayName: "Mystère", age: 25, city: "Près de toi", posterUrl: "/profiles/sofia.png", direction: "like" },
-              { id: "sim2", displayName: "Secret", age: 28, city: "Près de toi", posterUrl: "/profiles/marco.png", direction: "superlike" },
-            ];
+            // PRODUCTION: never fabricate likers. An honest empty answer is
+            // the real product truth — no fake "Mystère/Secret" profiles.
+            effect.likers = [];
+            effect.message = "Personne ne t'a encore liké — continue à swiper, ça arrivera vite ! 💜";
           }
         }
         break;

@@ -58,12 +58,15 @@ export async function GET() {
   const wants = me?.lookingFor && me.lookingFor !== "all" ? me.lookingFor : null;
 
   // Wider candidate pool than the final deck so ranking has room to reorder.
+  // PRODUCTION SAFETY: banned users and accounts that never finished
+  // onboarding never enter anyone's deck.
   const poolSize = Math.max(settings.deckSize * 4, 40);
   const candidates = await db.profile.findMany({
     where: {
       id: { notIn: swipedIds },
       userId: { not: user.id },
       modStatus: "approved",
+      user: { banned: false, onboardingComplete: true },
       ...(wants ? { gender: wants } : {}),
     },
     include: { user: { select: { verified: true } } },
@@ -121,6 +124,11 @@ export async function GET() {
   for (const p of candidates) {
     // Hard user filters — age range
     if (p.age < prefMinAge || p.age > prefMaxAge) continue;
+
+    // Hard user filter — MUTUAL gender preference: only show candidates who
+    // are open to MY gender (their lookingFor is "all" or matches me).
+    // Real-life dating logic: never show me someone who wouldn't want me.
+    if (me && p.lookingFor !== "all" && p.lookingFor !== me.gender) continue;
 
     // Hard user filter — distance (only when BOTH sides have coordinates;
     // profiles without coords are never distance-excluded).
@@ -197,6 +205,7 @@ export async function GET() {
             userId: { in: goldenUserIds },
             id: { notIn: swipedIds },
             modStatus: "approved",
+            user: { banned: false, onboardingComplete: true },
           },
           include: { user: { select: { verified: true } } },
           take: 3,
@@ -235,6 +244,7 @@ export async function GET() {
           userId: { in: spotlightIds },
           id: { notIn: swipedIds },
           modStatus: "approved",
+          user: { banned: false, onboardingComplete: true },
           ...(wants ? { gender: wants } : {}),
         },
         include: { user: { select: { verified: true } } },
@@ -242,6 +252,7 @@ export async function GET() {
       });
       for (const p of spotProfiles) {
         if (p.age < prefMinAge || p.age > prefMaxAge) continue;
+        if (me && p.lookingFor !== "all" && p.lookingFor !== me.gender) continue;
         if (goldenHeartProfiles.some((g) => g.profile.id === p.id)) continue;
         const distanceKm =
           iHaveCoords && hasCoords(p.lat, p.lng)
@@ -270,6 +281,7 @@ export async function GET() {
           id: { notIn: swipedIds },
           userId: { not: user.id },
           modStatus: "approved",
+          user: { banned: false, onboardingComplete: true },
           ...(wants ? { gender: wants } : {}),
         },
         include: { user: { select: { verified: true } } },
@@ -278,6 +290,7 @@ export async function GET() {
       });
       for (const p of spot) {
         if (p.age < prefMinAge || p.age > prefMaxAge) continue;
+        if (me && p.lookingFor !== "all" && p.lookingFor !== me.gender) continue;
         if (
           goldenHeartProfiles.some((g) => g.profile.id === p.id) ||
           spotlightProfiles.some((g) => g.profile.id === p.id)

@@ -66,3 +66,20 @@ export type AdminSectionId =
   | "gifts"
   | "analytics"
   | "settings";
+
+/// Real profile awaiting video moderation (onboarding flow). Served by
+/// /api/vibe/admin/pending-profiles — these profiles are INVISIBLE in decks
+/// until an admin approves them.
+export type PendingProfile = {
+  id: string;
+  userId: string;
+  displayName: string;
+  age: number;
+  city: string;
+  bio: string;
+  gender: string;
+  videoUrl: string;
+  posterUrl: string;
+  photos: string[];
+  createdAt: string;
+};

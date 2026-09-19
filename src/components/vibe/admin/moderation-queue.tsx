@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X, Bot, User, ShieldCheck, Clock, Loader2 } from "lucide-react";
+import { Check, X, Bot, User, ShieldCheck, Clock, Loader2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SuccessBounce } from "@/components/vibe/app/interactive-animations";
 import { cn } from "@/lib/utils";
-import type { AdminReport } from "./types";
+import type { AdminReport, PendingProfile } from "./types";
 
 function timeAgo(iso: string): string {
   try {
@@ -170,8 +170,122 @@ function ReportCard({
   );
 }
 
+/// Card for a REAL profile awaiting moderation (onboarding flow): the admin
+/// watches the video and approves or rejects. Approve → visible in decks.
+function PendingCard({
+  profile,
+  onAction,
+  busy,
+}: {
+  profile: PendingProfile;
+  onAction: (profileId: string, action: "approve" | "reject") => void;
+  busy: boolean;
+}) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{
+        opacity: 0,
+        x: 40,
+        scale: 0.95,
+        transition: { duration: 0.22, ease: "easeOut" },
+      }}
+      transition={{ duration: 0.25 }}
+      className="overflow-hidden rounded-2xl bg-card ring-1 ring-border shadow-sm flex flex-col sm:flex-row"
+    >
+      {/* Video preview — the admin must watch before deciding */}
+      <div className="relative w-full sm:w-[120px] aspect-[3/4] sm:aspect-auto shrink-0 bg-black">
+        <video
+          src={profile.videoUrl || undefined}
+          poster={profile.posterUrl || undefined}
+          controls
+          muted
+          loop
+          playsInline
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-1.5 pt-4 pointer-events-none">
+          <p className="text-white text-sm font-semibold drop-shadow leading-tight truncate">
+            {profile.displayName}
+          </p>
+          <p className="text-white/80 text-[11px]">
+            {profile.age} ans · {profile.city}
+          </p>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 p-4 flex flex-col gap-2 min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-transparent gap-1">
+            <UserPlus className="h-3 w-3" /> Nouveau profil
+          </Badge>
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Clock className="h-3 w-3" /> {timeAgo(profile.createdAt)}
+          </span>
+        </div>
+
+        <div className="rounded-lg bg-muted/60 ring-1 ring-border px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
+            Vidéo de présentation à valider
+          </p>
+          <p className="text-sm mt-0.5">
+            {profile.videoUrl ? "Lecture ci-contre — vérifie le contenu avant d'approuver." : "Aucune vidéo fournie."}
+          </p>
+        </div>
+
+        {profile.bio && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            « {profile.bio} »
+          </p>
+        )}
+
+        <div className="mt-auto flex items-center gap-2 pt-2">
+          <motion.button
+            type="button"
+            onClick={() => onAction(profile.id, "approve")}
+            disabled={busy}
+            whileTap={busy ? undefined : { scale: 0.95 }}
+            className={cn(
+              buttonVariants({
+                variant: "default",
+                size: "sm",
+                className:
+                  "bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg gap-1.5",
+              })
+            )}
+          >
+            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+            Valider
+          </motion.button>
+          <motion.button
+            type="button"
+            onClick={() => onAction(profile.id, "reject")}
+            disabled={busy}
+            whileTap={busy ? undefined : { scale: 0.95 }}
+            className={cn(
+              buttonVariants({
+                variant: "outline",
+                size: "sm",
+                className:
+                  "text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg gap-1.5",
+              })
+            )}
+          >
+            <X className="h-3.5 w-3.5" />
+            Refuser
+          </motion.button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export function ModerationQueue() {
   const [reports, setReports] = useState<AdminReport[] | null>(null);
+  const [pendingProfiles, setPendingProfiles] = useState<PendingProfile[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -191,6 +305,10 @@ export function ModerationQueue() {
         setReports([]);
       })
       .finally(() => setLoading(false));
+    fetch("/api/vibe/admin/pending-profiles")
+      .then((r) => (r.ok ? (r.json() as Promise<{ pending: PendingProfile[] }>) : { pending: [] }))
+      .then((d) => setPendingProfiles(d.pending ?? []))
+      .catch(() => setPendingProfiles([]));
   };
 
   useEffect(() => {
@@ -228,17 +346,47 @@ export function ModerationQueue() {
     }
   };
 
+  const onProfileAction = async (profileId: string, action: "approve" | "reject") => {
+    setBusyId(profileId);
+    // Optimistic removal
+    setPendingProfiles((curr) => (curr ? curr.filter((p) => p.id !== profileId) : curr));
+    try {
+      const r = await fetch("/api/vibe/admin/pending-profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileId, action }),
+      });
+      if (r.status === 403) {
+        toast.error("Accès refusé");
+        load();
+        return;
+      }
+      if (!r.ok) throw new Error();
+      toast.success(
+        action === "approve"
+          ? "Profil validé — visible dans le Découvrir 🎉"
+          : "Profil refusé — l'utilisateur est invité à refaire sa vidéo"
+      );
+    } catch {
+      toast.error("Échec de l'action, réessaye");
+      load();
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const pending = reports?.filter((r) => r.status === "pending") ?? [];
   const count = pending.length;
+  const pendingCount = pendingProfiles?.length ?? 0;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium">File de modération vidéo</span>
+          <span className="text-sm font-medium">Vidéos signalées</span>
           <Badge className="bg-primary/10 text-primary border-transparent">
-            {loading ? "…" : count} en attente
+            {loading ? "…" : count}
           </Badge>
         </div>
         <motion.button
@@ -259,6 +407,31 @@ export function ModerationQueue() {
         </div>
       )}
 
+      {/* ── NOUVEAUX PROFILS À VALIDER (flux de modération onboarding) ── */}
+      {!loading && pendingCount > 0 && (
+        <section aria-label="Nouveaux profils à valider" className="space-y-3">
+          <div className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4 text-amber-500" />
+            <span className="text-sm font-medium">Nouveaux profils à valider</span>
+            <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-transparent">
+              {pendingCount}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <AnimatePresence mode="popLayout">
+              {(pendingProfiles ?? []).map((p) => (
+                <PendingCard
+                  key={p.id}
+                  profile={p}
+                  onAction={onProfileAction}
+                  busy={busyId === p.id}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        </section>
+      )}
+
       {loading && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -277,16 +450,16 @@ export function ModerationQueue() {
         </div>
       )}
 
-      {!loading && count === 0 && !error && (
+      {!loading && count === 0 && !error && pendingCount === 0 && (
         <div className="rounded-2xl bg-card ring-1 ring-border p-12 text-center">
           <div className="mx-auto h-14 w-14 rounded-full bg-emerald-500/10 grid place-items-center mb-3">
             <SuccessBounce>
               <Check className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
             </SuccessBounce>
           </div>
-          <p className="font-display text-lg font-semibold">File vide — aucune vidéo signalée 🎉</p>
+          <p className="font-display text-lg font-semibold">Rien à modérer 🎉</p>
           <p className="text-sm text-muted-foreground mt-1">
-            La communauté est sage. Nouveaux signalements apparaîtront ici en temps réel.
+            Aucune vidéo signalée ni nouveau profil en attente. Les nouvelles soumissions apparaîtront ici.
           </p>
         </div>
       )}

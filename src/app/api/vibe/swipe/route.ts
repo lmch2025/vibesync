@@ -55,7 +55,9 @@ export async function POST(req: Request) {
     }
   });
 
-  // Match detection: did the target user already like/superlike OUR profile?
+  // Match detection: REAL reciprocity only — a match is created if and only
+  // if the target user already liked/superliked OUR profile. No simulation:
+  // production logic, real users, real matches.
   let match: any = null;
   if (direction === "like" || direction === "superlike") {
     let reciprocal: any = null;
@@ -67,13 +69,6 @@ export async function POST(req: Request) {
           direction: { in: ["like", "superlike"] },
         },
       });
-    }
-    // Sandbox demo: if no real reciprocal swipe, simulate one with ~45% probability
-    // so the match celebration + chat/anti-spam flow is exercisable. Super-likes
-    // boost the chance to 70%. In production this branch does not exist.
-    if (!reciprocal) {
-      const chance = direction === "superlike" ? 0.7 : 0.45;
-      if (Math.random() < chance) reciprocal = { simulated: true };
     }
     if (reciprocal) {
       // Create the match (idempotent)
