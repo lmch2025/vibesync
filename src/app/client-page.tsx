@@ -2,33 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useVibe, View } from "@/lib/vibe/store";
-import { useI18n, useI18nStore } from "@/lib/vibe/i18n";
+import { I18nProvider } from "@/lib/vibe/i18n";
 import type { Lang } from "@/lib/vibe/i18n/core";
 import { ImmersiveLanding } from "@/components/vibe/landing/immersive-landing";
 import { AppDemo } from "@/components/vibe/app/app-demo";
 import AdminDashboard from "@/components/vibe/admin/admin-dashboard";
 import { toast } from "sonner";
-
-// Branded splash shown during the initial session-hydration fetch.
-// Prevents ANY flash of the landing page for authenticated users.
-// Funnel pré-app : ambiance immersif sombre permanente (classe .immersive),
-// quel que soit le thème choisi par l'utilisateur dans l'app.
-function AuthSplash() {
-  const { t } = useI18n();
-  return (
-    <div className="immersive min-h-dvh flex flex-col items-center justify-center v-bg-page gap-4">
-      <div className="relative flex items-center justify-center">
-        {/* Outer glow ring */}
-        <span className="absolute h-20 w-20 rounded-full bg-[#9B51E0]/30 animate-ping" />
-        {/* Logo mark */}
-        <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shadow-lg shadow-violet-500/40">
-          <span className="text-white text-2xl font-bold select-none">VS</span>
-        </div>
-      </div>
-      <p className="text-white/70 text-sm tracking-widest uppercase animate-pulse">{t("common.signingIn")}</p>
-    </div>
-  );
-}
 
 export function ClientHome({ initialView, initialUser, initialRates, initialLandingVideo, initialLang }: { initialView: View, initialUser?: any, initialRates?: any, initialLandingVideo?: string, initialLang?: Lang }) {
   const view = useVibe((s) => s.view);
@@ -47,20 +26,16 @@ export function ClientHome({ initialView, initialUser, initialRates, initialLand
     if (initialRates) {
       useVibe.setState({ rates: initialRates });
     }
-    // Langue résolue côté SERVEUR (choix explicite → compte → cookie →
-    // Accept-Language) : appliquée en phase de rendu, AVANT les enfants →
-    // zéro flash, zéro mismatch d'hydratation.
-    if (initialLang) {
-      useI18nStore.setState({ lang: initialLang });
-    }
+    // NOTE : la langue N'EST PAS initialisée ici — un store zustand est un
+    // singleton de module dont le getServerSnapshot vaut toujours l'état
+    // initial (« fr ») : le corps SSR serait resté français avec flash de
+    // correction. La langue vit dans <I18nProvider initialLang={…}> (React
+    // Context → état initial PAR REQUÊTE, SSR correct, zéro flash).
   }
 
-  // Synchronise l'attribut <html lang> (SEO/accessibilité) avec la langue
-  // active, à chaque changement.
-  const lang = useI18nStore((s) => s.lang);
-  useEffect(() => {
-    document.documentElement.lang = lang;
-  }, [lang]);
+  // NOTE : la synchro de l'attribut <html lang> vit dans <I18nProvider> —
+  // ce composant étant AU-DESSUS du provider qu'il rend, un useI18n() ici
+  // recevrait le repli statique et ne réagirait jamais aux changements.
 
   useEffect(() => {
     fetch("/api/vibe/detect")
@@ -115,12 +90,14 @@ export function ClientHome({ initialView, initialUser, initialRates, initialLand
   const activeView = view;
 
   return (
-    <div className="min-h-dvh flex flex-col v-bg-page">
-      {activeView === "landing" && (
-        <ImmersiveLanding videoUrl={initialLandingVideo} onEnterApp={() => setView("app")} />
-      )}
-      {activeView === "app" && <AppDemo onExit={() => setView("landing")} />}
-      {activeView === "admin" && <AdminDashboard onExit={() => setView("app")} />}
-    </div>
+    <I18nProvider initialLang={initialLang}>
+      <div className="min-h-dvh flex flex-col v-bg-page">
+        {activeView === "landing" && (
+          <ImmersiveLanding videoUrl={initialLandingVideo} onEnterApp={() => setView("app")} />
+        )}
+        {activeView === "app" && <AppDemo onExit={() => setView("landing")} />}
+        {activeView === "admin" && <AdminDashboard onExit={() => setView("app")} />}
+      </div>
+    </I18nProvider>
   );
 }
