@@ -1,8 +1,8 @@
 {
   "version": 1,
   "algorithm": "sha256",
-  "generatedAt": "2026-09-20T19:51:41.740Z",
-  "headCommit": "60305a6",
+  "generatedAt": "2026-09-20T20:09:22.739Z",
+  "headCommit": "d926157",
   "fileCount": 237,
   "files": {
     ".github/CODEOWNERS": "57e8796aaf9e0aac4c3cc2e0a6907ca5628e67b516b2158251b3b2cc9afcc98d",
@@ -86,7 +86,7 @@
     "src/app/api/vibe/video-config/route.ts": "94f8b4ac6823974148343a06b8f0a519ed3c8034cf8be95b52f4146c7f6eaea3",
     "src/app/api/vibe/wallet/transactions/route.ts": "1a6bf0b6a6fbaf9d4580b810f5932b343e61a8d2118b455ecb9f259b1becf5c3",
     "src/app/api/vibe/wallet/withdraw/route.ts": "b8bed0595da04dffd737d53172c2e5444f1aa32c4c9a10c0e35d3eff5f1ecd00",
-    "src/app/client-page.tsx": "d82aef7f8e35cccfbd8b9eaf175a775e1cfc8d7b7f1a856693e4de10d793e65e",
+    "src/app/client-page.tsx": "874d281507725dca5b6ad88e183a55df802b3b745aa4e951ced15073b7e99d40",
     "src/app/globals.css": "005a9248ba44ce1fb3db500dfad2df8b7f9953f0e3e19e0cb891166bcdb4920b",
     "src/app/layout.tsx": "32c3f519b0d2eaf6685921915299e8ef9f1ec3267da714411484bb68d646994c",
     "src/app/page.tsx": "1913f52d13069549e9aec6d54c583d9d0bce7ab32278b831c9a0ff6a6ee9ab55",
@@ -226,7 +226,7 @@
     "src/lib/vibe/i18n/dictionaries/shared.ts": "06292ee1a4db64827e240e6086a5ee9e7fc9dbe06465240e24e15929fec3fe2f",
     "src/lib/vibe/i18n/dictionaries/swipe.ts": "cd52f949cc06aee772bb4a451780f9b1b9a79633b39dbbbfb6d782358cfa893b",
     "src/lib/vibe/i18n/dictionaries/wallet.ts": "339c1142a4547eede1a026686ea51d9278699f7dd9e6113f2990d978939ed14c",
-    "src/lib/vibe/i18n/index.ts": "d9a81f1d55f97a36603f2073cea6209cc140af9f120ee7b6493a100b362f547b",
+    "src/lib/vibe/i18n/index.tsx": "f49642bbd2d74507bcc54a49d9daf6427d0bc8399e7c10bbb1b10b95ac0f7efa",
     "src/lib/vibe/i18n/server.ts": "47b037776b2b5cdfb7e23944a86deaabc216d6850999f1fa375278dd946ae047",
     "src/lib/vibe/image-compress.ts": "e46297268b919b565e8c9826347fce2501213a926752c6b2635127638412b4de",
     "src/lib/vibe/landing-video-compress.ts": "9a8ef5a0e83bae17de75cf3d515e18679900323fce2925cb2a666f25c9fbb591",
