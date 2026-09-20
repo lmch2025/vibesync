@@ -21,6 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
 import { useVibe } from "@/lib/vibe/store";
+import { useI18n } from "@/lib/vibe/i18n";
+import { LangSwitcher } from "@/components/vibe/lang-switcher";
 import { searchCities, type City } from "@/lib/vibe/cities";
 import { compressVideo, fetchVideoConfig, formatDuration } from "@/lib/vibe/video-compress";
 import { cn } from "@/lib/utils";
@@ -36,6 +38,7 @@ const AGES = Array.from({ length: 85 }, (_, i) => i + 16); // 16..100
 
 export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   const setMe = useVibe((s) => s.setMe);
+  const { t, apiErr } = useI18n();
   const [step, setStep] = useState(0);
 
   // Step 1 data
@@ -88,21 +91,21 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("video/")) {
-      toast.error("Format vidéo requis");
+      toast.error(t("onb.videoFormatRequired"));
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
-      toast.error("Vidéo trop lourde (max 50 Mo)");
+      toast.error(t("onb.videoTooLarge"));
       return;
     }
 
     setUploading(true);
-    setUploadProgress("Chargement de la vidéo…");
+    setUploadProgress(t("onb.videoLoading"));
 
     try {
       // Fetch the admin-configured video settings.
       const config = await fetchVideoConfig();
-      setUploadProgress(`Compression (${config.maxWidth}px, ${config.maxDuration}s)…`);
+      setUploadProgress(t("onb.compressing", { w: config.maxWidth, d: config.maxDuration }));
 
       // Compress the video: re-encode at lower resolution/bitrate + extract poster.
       const result = await compressVideo(file, config);
@@ -111,9 +114,9 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
       setVideoUrl(result.videoBase64);
       setVideoDuration(result.duration);
       setUploadProgress("");
-      toast.success(`Vidéo compressée ! ${result.width}×${result.height}, ${formatDuration(result.duration)} 🎬`);
+      toast.success(t("onb.videoCompressed", { w: result.width, h: result.height, dur: formatDuration(result.duration) }));
     } catch (err: any) {
-      toast.error(err.message || "Compression échouée. Réessaie.");
+      toast.error(apiErr(err.message) || t("onb.compressFailed"));
     } finally {
       setUploading(false);
       setUploadProgress("");
@@ -153,23 +156,25 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
         setMe(data.user);
         useVibe.getState().setRates(data.rates ?? {});
       }
-      toast.success(videoUrl ? "Profil créé ! Bienvenue 🎉" : "Profil créé — ajoute ta vidéo plus tard pour débloquer tout.");
+      toast.success(videoUrl ? t("onb.profileCreatedVideo") : t("onb.profileCreatedNoVideo"));
       if (!celebratedRef.current) {
         celebratedRef.current = true;
         celebrate({ sound: "chime", hapticPattern: [10, 30, 10], confettiCount: 140 });
       }
       onComplete();
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      toast.error(apiErr(e.message) || t("onb.error"));
     } finally {
       setSubmitting(false);
     }
   }
 
-  const stepTitles = ["Ton identité", "Toi en bref", "Ta recherche", "Ta présentation"];
+  const stepTitles = [t("onb.step1Title"), t("onb.step2Title"), t("onb.step3Title"), t("onb.step4Title")];
 
   return (
     <div className="dark relative min-h-dvh w-full flex items-center justify-center bg-[#0a0612] text-white overflow-hidden px-4 py-6">
+      {/* Sélecteur de langue discret — coin haut droit, au-dessus de tout le contenu. */}
+      <LangSwitcher tone="onDark" className="absolute top-3 right-3 z-40" />
       {/* Ambient background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-20 -left-20 h-80 w-80 rounded-full bg-vibe-purple/25 blur-3xl animate-float-slow" />
@@ -195,7 +200,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
               </div>
             ))}
           </div>
-          <p className="text-xs text-white/70 mt-2 tabular-nums">Étape {step + 1} / 4 — {stepTitles[step]}</p>
+          <p className="text-xs text-white/70 mt-2 tabular-nums">{t("onb.step", { n: step + 1, total: 4, title: stepTitles[step] })}</p>
         </div>
 
         {/* Card */}
@@ -217,8 +222,8 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                 className="relative space-y-6"
               >
                 <div>
-                  <h2 className="font-display text-2xl font-bold mb-1">Comment tu t&apos;appelles ?</h2>
-                  <p className="text-sm text-white/70">Ton pseudo sera visible par les autres membres.</p>
+                  <h2 className="font-display text-2xl font-bold mb-1">{t("onb.nameTitle")}</h2>
+                  <p className="text-sm text-white/70">{t("onb.nameHint")}</p>
                 </div>
 
                 <div className="relative">
@@ -226,7 +231,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                   <Input
                     value={pseudo}
                     onChange={(e) => setPseudo(e.target.value)}
-                    placeholder="ex. Alex, Léa, Marco…"
+                    placeholder={t("onb.pseudoPlaceholder")}
                     maxLength={20}
                     className="pl-10 h-12 rounded-2xl v-surface-1 border-white/10 text-white placeholder:text-white/70 focus:border-vibe-purple focus-visible:ring-vibe-purple/40"
                     onKeyDown={(e) => e.key === "Enter" && canProceed() && setStep(1)}
@@ -236,12 +241,12 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
 
                 {/* Gender */}
                 <div>
-                  <label className="text-xs font-semibold text-white/70 mb-2 block">Tu es…</label>
+                  <label className="text-xs font-semibold text-white/70 mb-2 block">{t("onb.genderLabel")}</label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { v: "f", label: "Femme", emoji: "♀" },
-                      { v: "m", label: "Homme", emoji: "♂" },
-                      { v: "nb", label: "Non-binaire", emoji: "⚧" },
+                      { v: "f", label: t("onb.genderF"), emoji: "♀" },
+                      { v: "m", label: t("onb.genderM"), emoji: "♂" },
+                      { v: "nb", label: t("onb.genderNB"), emoji: "⚧" },
                     ].map((g) => (
                       <motion.button
                         key={g.v}
@@ -263,13 +268,13 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
 
                 {/* Looking for */}
                 <div>
-                  <label className="text-xs font-semibold text-white/70 mb-2 block">Tu cherches…</label>
+                  <label className="text-xs font-semibold text-white/70 mb-2 block">{t("onb.lookingForLabel")}</label>
                   <div className="grid grid-cols-4 gap-2">
                     {[
-                      { v: "f", label: "Femmes" },
-                      { v: "m", label: "Hommes" },
-                      { v: "nb", label: "NB" },
-                      { v: "all", label: "Tous" },
+                      { v: "f", label: t("onb.seekF") },
+                      { v: "m", label: t("onb.seekM") },
+                      { v: "nb", label: t("onb.seekNB") },
+                      { v: "all", label: t("onb.seekAll") },
                     ].map((g) => (
                       <motion.button
                         key={g.v}
@@ -303,13 +308,13 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                 className="relative space-y-6"
               >
                 <div>
-                  <h2 className="font-display text-2xl font-bold mb-1">Toi en bref</h2>
-                  <p className="text-sm text-white/70">Ton âge et ta ville — le reste viendra en douceur.</p>
+                  <h2 className="font-display text-2xl font-bold mb-1">{t("onb.step2Title")}</h2>
+                  <p className="text-sm text-white/70">{t("onb.ageAndCityHint")}</p>
                 </div>
 
                 {/* Age dropdown */}
                 <div>
-                  <label className="text-xs font-semibold text-white/70 mb-2 block">Âge</label>
+                  <label className="text-xs font-semibold text-white/70 mb-2 block">{t("onb.ageLabel")}</label>
                   <div className="relative">
                     <motion.button
                       onClick={() => setAgeOpen((o) => !o)}
@@ -320,7 +325,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                         ageOpen && "border-vibe-purple"
                       )}
                     >
-                      <span className="font-medium">{age !== null ? `${age} ans` : "Sélectionne ton âge"}</span>
+                      <span className="font-medium">{age !== null ? t("onb.ageValue", { n: age }) : t("onb.ageSelect")}</span>
                       <ChevronDown className={cn("h-4 w-4 text-white/70 transition", ageOpen && "rotate-180")} />
                     </motion.button>
                     <AnimatePresence>
@@ -340,7 +345,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                                 age === a ? "vibe-gradient text-white font-semibold" : "text-white/70 hover:v-surface-2"
                               )}
                             >
-                              {a} ans
+                              {t("onb.ageValue", { n: a })}
                             </button>
                           ))}
                         </motion.div>
@@ -351,7 +356,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
 
                 {/* City — predictive, selection-only */}
                 <div>
-                  <label className="text-xs font-semibold text-white/70 mb-2 block">Ville</label>
+                  <label className="text-xs font-semibold text-white/70 mb-2 block">{t("onb.cityLabel")}</label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70 pointer-events-none z-10" />
                     <Input
@@ -363,7 +368,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       }}
                       onFocus={() => setCityFocused(true)}
                       onBlur={() => setTimeout(() => setCityFocused(false), 200)}
-                      placeholder="Tape ta ville…"
+                      placeholder={t("onb.cityPlaceholder")}
                       className={cn(
                         "pl-10 h-12 rounded-2xl v-surface-1 border-white/10 text-white placeholder:text-white/70 focus-visible:ring-vibe-purple/40",
                         selectedCity && "border-emerald-400/50"
@@ -384,7 +389,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                           {cityResults.length === 0 ? (
                             <div className="px-3 py-3 text-sm text-white/70 flex items-center gap-2">
                               <Search className="h-3.5 w-3.5" />
-                              {cityQuery.length < 2 ? "Continue à taper…" : "Aucune ville trouvée"}
+                              {cityQuery.length < 2 ? t("onb.keepTyping") : t("onb.noCity")}
                             </div>
                           ) : (
                             cityResults.map((c) => (
@@ -406,7 +411,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                   </div>
                   {!selectedCity && cityQuery.length > 0 && (
                     <p className="text-[11px] text-amber-300/70 mt-1.5 flex items-center gap-1">
-                      <Info className="h-3 w-3" /> Sélectionne ta ville dans la liste — la saisie libre n&apos;est pas acceptée.
+                      <Info className="h-3 w-3" /> {t("onb.cityHint")}
                     </p>
                   )}
                 </div>
@@ -429,29 +434,29 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                 className="relative space-y-6"
               >
                 <div>
-                  <h2 className="font-display text-2xl font-bold mb-1">Que cherches-tu ?</h2>
-                  <p className="text-sm text-white/70">Sois honnête — ça aide à matcher avec les bonnes personnes.</p>
+                  <h2 className="font-display text-2xl font-bold mb-1">{t("onb.relTitle")}</h2>
+                  <p className="text-sm text-white/70">{t("onb.relHint")}</p>
                 </div>
 
                 <div className="space-y-2.5">
                   {[
                     {
                       v: "serious",
-                      label: "Relation sérieuse",
+                      label: t("onb.relSerious"),
                       emoji: "💍",
-                      desc: "Mariage, amour durable, construire ensemble",
+                      desc: t("onb.relSeriousDesc"),
                     },
                     {
                       v: "casual",
-                      label: "Relation sans lendemain",
+                      label: t("onb.relCasual"),
                       emoji: "🔥",
-                      desc: "Fun, spontané, sans engagement",
+                      desc: t("onb.relCasualDesc"),
                     },
                     {
                       v: "friendship",
-                      label: "Amitié",
+                      label: t("onb.relFriendship"),
                       emoji: "🤝",
-                      desc: "Rencontrer des gens, partager des moments",
+                      desc: t("onb.relFriendshipDesc"),
                     },
                   ].map((r) => (
                     <motion.button
@@ -504,8 +509,8 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                 className="relative flex flex-col gap-4"
               >
                 <div>
-                  <h2 className="font-display text-2xl font-bold mb-0.5">Ta vidéo de présentation</h2>
-                  <p className="text-sm text-white/70">15 secondes, portrait. Optionnelle mais puissante.</p>
+                  <h2 className="font-display text-2xl font-bold mb-0.5">{t("onb.videoTitle")}</h2>
+                  <p className="text-sm text-white/70">{t("onb.videoHint")}</p>
                 </div>
 
                 {/* Upload zone + preview — compact landscape, side-by-side with info on desktop */}
@@ -522,7 +527,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                       {uploading ? (
                         <>
                           <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-vibe-purple animate-spin" />
-                          <span className="text-xs text-white/70">Traitement…</span>
+                          <span className="text-xs text-white/70">{t("onb.processing")}</span>
                         </>
                       ) : (
                         <>
@@ -530,15 +535,15 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                             <Video className="h-5 w-5 text-white" />
                           </span>
                           <div className="text-center">
-                            <p className="font-semibold text-white text-sm">Ajouter ma vidéo</p>
-                            <p className="text-[10px] text-white/70 mt-0.5">Portrait · 15s · MP4/MOV</p>
+                            <p className="font-semibold text-white text-sm">{t("onb.addVideo")}</p>
+                            <p className="text-[10px] text-white/70 mt-0.5">{t("onb.videoSpec")}</p>
                           </div>
                         </>
                       )}
                     </motion.button>
                   ) : (
                     <div className="relative h-36 sm:h-44 rounded-2xl overflow-hidden ring-1 ring-white/10">
-                      <img src={posterUrl} alt="Aperçu vidéo" className="absolute inset-0 w-full h-full object-cover" />
+                      <img src={posterUrl} alt={t("onb.videoPreviewAlt")} className="absolute inset-0 w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute top-2 left-2 glass-dark rounded-full px-2 py-0.5 text-[9px] font-semibold flex items-center gap-1">
                         <Video className="h-2.5 w-2.5 text-vibe-orange" /> 15s
@@ -548,7 +553,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                         whileTap={{ scale: 0.95 }}
                         className="absolute bottom-2 left-2 right-2 h-7 rounded-lg glass-dark text-[11px] font-semibold flex items-center justify-center gap-1 hover:v-surface-3 transition"
                       >
-                        <Video className="h-3 w-3" /> Changer
+                        <Video className="h-3 w-3" /> {t("onb.change")}
                       </motion.button>
                       <motion.button
                         onClick={() => { setPosterUrl(""); setVideoUrl(""); }}
@@ -563,17 +568,17 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                   {/* What video unlocks — compact, beside the upload zone on desktop */}
                   <div className="rounded-2xl v-surface-1 ring-1 ring-white/10 p-3 flex flex-col justify-center">
                     <p className="text-[11px] font-semibold text-white/70 mb-2 flex items-center gap-1.5">
-                      <Heart className="h-3.5 w-3.5 text-vibe-pink" /> Sans vidéo, bloqué :
+                      <Heart className="h-3.5 w-3.5 text-vibe-pink" /> {t("onb.lockedTitle")}
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-2 text-[11px] text-white/70">
-                      <li>• Apparaître dans le swipe</li>
-                      <li>• Super-liker</li>
-                      <li>• Recevoir des cadeaux</li>
-                      <li>• Booster ton profil</li>
+                      <li>{t("onb.lockSwipe")}</li>
+                      <li>{t("onb.lockSuperlike")}</li>
+                      <li>{t("onb.lockGifts")}</li>
+                      <li>{t("onb.lockBoost")}</li>
                     </ul>
                     {/* Ligne d'espoir — factuelle : les photos restent une porte d'entrée */}
                     <p className="text-[10px] text-white/50 mt-2 pt-2 border-t border-white/10">
-                      Pas de vidéo ? Jusqu&apos;à 5 photos permettent quand même de te découvrir.
+                      {t("onb.photosHope")}
                     </p>
                   </div>
                 </div>
@@ -581,11 +586,11 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                 {/* Photos de profil — plein largeur, optionnel (max 5) */}
                 <div>
                   <div className="flex items-baseline justify-between mb-1">
-                    <label className="text-xs font-semibold text-white/70">Tes photos</label>
+                    <label className="text-xs font-semibold text-white/70">{t("onb.photosLabel")}</label>
                     <span className="text-[11px] text-white/50 tabular-nums">{photos.length}/5</span>
                   </div>
                   <p className="text-[11px] text-white/60 mb-2.5">
-                    Optionnel — utile surtout si tu n&apos;ajoutes pas de vidéo.
+                    {t("onb.photosHint")}
                   </p>
                   <PhotoPicker photos={photos} onChange={setPhotos} onUploadingChange={setPhotosUploading} />
                 </div>
@@ -599,11 +604,11 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                     className="flex-1 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-60"
                   >
                     {submitting ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Création…</>
+                      <><Loader2 className="h-4 w-4 animate-spin" /> {t("onb.creating")}</>
                     ) : videoUrl ? (
-                      <><Check className="h-4 w-4" /> Terminer</>
+                      <><Check className="h-4 w-4" /> {t("onb.finish")}</>
                     ) : (
-                      <>Passer &amp; terminer <ArrowRight className="h-4 w-4" /></>
+                      <>{t("onb.skipFinish")} <ArrowRight className="h-4 w-4" /></>
                     )}
                   </motion.button>
                 </div>
@@ -618,6 +623,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
 }
 
 function NextBtn({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
+  const { t } = useI18n();
   return (
     <motion.button
       onClick={onClick}
@@ -625,19 +631,20 @@ function NextBtn({ disabled, onClick }: { disabled: boolean; onClick: () => void
       whileTap={disabled ? undefined : { scale: 0.97 }}
       className="flex-1 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-40 disabled:cursor-not-allowed"
     >
-      Continuer <ArrowRight className="h-4 w-4" />
+      {t("onb.continue")} <ArrowRight className="h-4 w-4" />
     </motion.button>
   );
 }
 
 function BackBtn({ onClick }: { onClick: () => void }) {
+  const { t } = useI18n();
   return (
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.95 }}
       className="h-12 px-4 rounded-2xl v-surface-1 ring-1 ring-white/10 text-white/70 font-medium text-sm hover:v-surface-2 transition"
     >
-      Retour
+      {t("onb.back")}
     </motion.button>
   );
 }

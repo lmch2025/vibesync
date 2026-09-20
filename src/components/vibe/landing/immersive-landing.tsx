@@ -3,7 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
 import { AuthModal } from "@/components/vibe/auth-modal";
+import { LangSwitcher } from "@/components/vibe/lang-switcher";
 import { useVibe } from "@/lib/vibe/store";
+import { useI18n } from "@/lib/vibe/i18n";
 
 export function ImmersiveLanding({
   videoUrl,
@@ -12,6 +14,7 @@ export function ImmersiveLanding({
   videoUrl?: string; // vidéo de fond administrable (Vercel Blob) — fallback local
   onEnterApp: () => void;
 }) {
+  const { t } = useI18n();
   const setView = useVibe((s) => s.setView);
   const me = useVibe((s) => s.me);
   const [authOpen, setAuthOpen] = useState(false);
@@ -35,8 +38,8 @@ export function ImmersiveLanding({
     // Filet de sécurité : si la vidéo ne charge pas (réseau faible, asset
     // indisponible), on masque le spinner après 8 s pour ne jamais laisser
     // la page bloquée sur un état de chargement — le poster reste affiché.
-    const t = setTimeout(() => setVideoFailed(true), 8000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setVideoFailed(true), 8000);
+    return () => clearTimeout(timer);
   }, []);
 
   function handleAuthSuccess() {
@@ -116,13 +119,16 @@ export function ImmersiveLanding({
       >
         <VibeLogo withText={false} className="scale-110 origin-left" />
         <div className="flex items-center gap-2">
+          {/* Sélecteur de langue FR/EN — visible avant connexion pour que
+              chaque visiteur puisse choisir sa langue dès l'arrivée. */}
+          <LangSwitcher tone="onDark" />
           {/* NOTE: the public "Admin" button was removed — admin panel access
               is now EXCLUSIVELY via the profile tab of an admin account. */}
           <button
             onClick={enterApp}
             className="inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-2 text-[13px] font-semibold text-white/90 bg-white/10 backdrop-blur-md ring-1 ring-white/15 active:scale-95 active:bg-white/20 transition-all min-h-[44px]"
           >
-            {me ? "Mon compte" : "Connexion"}
+            {me ? t("landing.im.myAccount") : t("landing.im.login")}
           </button>
         </div>
       </header>
@@ -159,9 +165,9 @@ export function ImmersiveLanding({
             fontWeight: 500,
           }}
         >
-          La rencontre authentique,<br/>
+          {t("landing.im.taglineA")}<br/>
           <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FF7E67] to-[#9B51E0]">
-            en vidéo de 15 secondes.
+            {t("landing.im.taglineB")}
           </span>
         </p>
 
@@ -171,10 +177,10 @@ export function ImmersiveLanding({
           style={{ animation: "fadeIn 1.1s ease 0.4s both" }}
         >
           {[
-            { icon: "🛡️", text: "Profils vérifiés" },
-            { icon: "🎬", text: "Vidéo 15s" },
-            { icon: "✨", text: "Vibe Check" },
-            { icon: "🚀", text: "Zéro abonnement" }
+            { icon: "🛡️", text: t("landing.im.pillVerified") },
+            { icon: "🎬", text: t("landing.im.pillVideo") },
+            { icon: "✨", text: t("landing.im.pillVibeCheck") },
+            { icon: "🚀", text: t("landing.im.pillNoSub") }
           ].map((feature) => (
             <span
               key={feature.text}
@@ -202,7 +208,7 @@ export function ImmersiveLanding({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#9B51E0] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#9B51E0]"></span>
             </span>
-            <span className="text-[12px] font-medium text-white/80">342 Vibes en cours</span>
+            <span className="text-[12px] font-medium text-white/80">{t("landing.im.live")}</span>
           </div>
 
           {/* CTA Button with Hypnotic Sync (Signature Geste Part 2) */}
@@ -232,13 +238,13 @@ export function ImmersiveLanding({
               }}
             />
             <span className="relative tracking-tight text-[#1a0833]">
-              {me ? "Retour à l'app" : "Rejoins l'expérience"}
+              {me ? t("landing.im.backToApp") : t("landing.nav.cta")}
             </span>
           </button>
         </div>
 
         <p className="text-[12px] font-medium text-white/70 text-center tracking-wide drop-shadow-sm px-2">
-          Inscription en 30s · <span className="text-white">25 Vibes offertes</span> · Sans engagement
+          {t("landing.im.metaA")} <span className="text-white">{t("landing.im.metaHighlight")}</span> {t("landing.im.metaB")}
         </p>
       </footer>
 

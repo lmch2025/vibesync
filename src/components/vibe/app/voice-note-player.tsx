@@ -4,6 +4,7 @@
 // Marks the voice note as "listened" on first play (calls onListened).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause } from "lucide-react";
+import { useI18n } from "@/lib/vibe/i18n";
 
 export function VoiceNotePlayer({
   voiceData,
@@ -18,6 +19,7 @@ export function VoiceNotePlayer({
   listened: boolean;
   onListened?: () => void;
 }) {
+  const { t } = useI18n();
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -82,7 +84,7 @@ export function VoiceNotePlayer({
         className={`h-9 w-9 grid place-items-center rounded-full shrink-0 transition active:scale-90 ${
           mine ? "v-surface-3" : "bg-vibe-purple"
         }`}
-        aria-label={playing ? "Pause" : "Lire"}
+        aria-label={playing ? t("chat.voice.pause") : t("chat.voice.play")}
       >
         {playing ? (
           <Pause className="h-4 w-4 text-white" fill="white" />

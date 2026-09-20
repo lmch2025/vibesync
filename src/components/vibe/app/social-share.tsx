@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
+import { useI18n } from "@/lib/vibe/i18n";
 import { toast } from "sonner";
 import { vibeToast } from "./center-feedback";
 
@@ -33,9 +34,10 @@ export default function SocialShare({
   valueLabel: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const { t } = useI18n();
 
   const shareUrl = "https://vivilov.app";
-  const shareText = `${fromName} m'a offert un ${giftName} sur Vivilov 🎁 Rejoins l'aventure !`;
+  const shareText = t("wallet.share.text", { name: fromName, gift: giftName });
 
   function handleWhatsApp() {
     window.open(
@@ -43,7 +45,7 @@ export default function SocialShare({
       "_blank",
       "noopener,noreferrer"
     );
-    vibeToast({ emoji: "📤", title: "Partagé sur WhatsApp (démo)" });
+    vibeToast({ emoji: "📤", title: t("wallet.share.sharedOn", { platform: "WhatsApp" }) });
     onOpenChange(false);
   }
 
@@ -53,7 +55,7 @@ export default function SocialShare({
       "_blank",
       "noopener,noreferrer"
     );
-    vibeToast({ emoji: "📤", title: "Partagé sur Facebook (démo)" });
+    vibeToast({ emoji: "📤", title: t("wallet.share.sharedOn", { platform: "Facebook" }) });
     onOpenChange(false);
   }
 
@@ -63,7 +65,7 @@ export default function SocialShare({
       "_blank",
       "noopener,noreferrer"
     );
-    vibeToast({ emoji: "📤", title: "Partagé sur Twitter (démo)" });
+    vibeToast({ emoji: "📤", title: t("wallet.share.sharedOn", { platform: "Twitter" }) });
     onOpenChange(false);
   }
 
@@ -71,11 +73,11 @@ export default function SocialShare({
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      vibeToast({ emoji: "🔗", title: "Lien copié" });
+      vibeToast({ emoji: "🔗", title: t("wallet.share.linkCopied") });
       setTimeout(() => setCopied(false), 1800);
       onOpenChange(false);
     } catch {
-      toast.error("Impossible de copier le lien");
+      toast.error(t("wallet.share.copyError"));
     }
   }
 
@@ -103,7 +105,7 @@ export default function SocialShare({
     },
     {
       key: "copy",
-      label: copied ? "Copié !" : "Copier le lien",
+      label: copied ? t("wallet.share.copied") : t("wallet.share.copyLink"),
       color: "bg-primary",
       icon: copied ? <Check className="h-5 w-5" /> : <Link2 className="h-5 w-5" />,
       onClick: handleCopy,
@@ -138,10 +140,10 @@ export default function SocialShare({
           </motion.div>
 
           <DialogTitle className="relative font-display text-2xl font-bold text-white mt-3">
-            Tu as reçu {giftName} !
+            {t("wallet.share.receivedTitle", { gift: giftName })}
           </DialogTitle>
           <DialogDescription className="relative text-white/85 text-sm mt-1">
-            de la part de {fromName} · {valueLabel}
+            {t("wallet.share.fromLine", { name: fromName, value: valueLabel })}
           </DialogDescription>
         </div>
 
@@ -149,7 +151,7 @@ export default function SocialShare({
         <div className="v-bg-app px-5 py-5">
           {/* Section label */}
           <p className="text-xs font-semibold v-fg-muted uppercase tracking-wide mb-2 flex items-center gap-1.5">
-            <Share2 className="h-3.5 w-3.5 text-primary" /> Aperçu du partage
+            <Share2 className="h-3.5 w-3.5 text-primary" /> {t("wallet.share.previewLabel")}
           </p>
 
           {/* Premium OG-style preview card — what the shared post will look like */}
@@ -175,7 +177,7 @@ export default function SocialShare({
                 </motion.span>
               </div>
               <div className="absolute bottom-2 left-3 text-white/85 text-[10px] font-medium tracking-wide">
-                Vivilov · Cadeau reçu
+                {t("wallet.share.previewBadge")}
               </div>
             </div>
 
@@ -185,11 +187,10 @@ export default function SocialShare({
                 <VibeLogo className="scale-90 origin-left [&_span:last-child]:v-fg" />
               </div>
               <p className="font-semibold text-sm v-fg leading-snug line-clamp-2">
-                {fromName} t&apos;a offert un cadeau sur Vivilov 🎁
+                {t("wallet.share.previewTitle", { name: fromName })}
               </p>
               <p className="text-xs v-fg-muted leading-snug mt-1 line-clamp-2">
-                Découvre Vivilov — la rencontre authentique en vidéo. Rejoins
-                l&apos;aventure !
+                {t("wallet.share.previewDesc")}
               </p>
               {/* Fake URL bar */}
               <div className="mt-2.5 flex items-center gap-1.5 text-[11px] v-fg-muted">
@@ -232,7 +233,7 @@ export default function SocialShare({
 
           {/* Marketing CTA */}
           <p className="mt-5 text-center text-sm v-fg-muted leading-relaxed">
-            Plus tu partages, plus tu rencontres des personnes authentiques. 💜
+            {t("wallet.share.cta")}
           </p>
 
           {/* Dismiss */}
@@ -240,7 +241,7 @@ export default function SocialShare({
             onClick={() => onOpenChange(false)}
             className="mt-3 w-full h-10 rounded-2xl bg-transparent ring-1 ring-[var(--v-divider)] v-fg-muted hover:v-fg hover:v-surface-2 text-sm font-medium flex items-center justify-center gap-1.5 transition"
           >
-            <Clock className="h-4 w-4" /> Plus tard
+            <Clock className="h-4 w-4" /> {t("wallet.later")}
           </button>
         </div>
       </DialogContent>

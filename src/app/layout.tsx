@@ -1,74 +1,151 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ChunkErrorRecovery } from "@/components/chunk-error-recovery";
+import { detectLangFromAcceptLanguage } from "@/lib/vibe/i18n/core";
 
 const geistSans = { variable: "--font-geist-sans" };
 const geistMono = { variable: "--font-geist-mono" };
 const display = { variable: "--font-display" };
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://vivilov.app"),
-  title: {
-    default: "Vivilov — Rencontre Vidéo Authentique | PWA Mobile-First",
-    template: "%s · Vivilov",
-  },
-  description:
-    "Vivilov révolutionne la rencontre en remplaçant les photos par des vidéos de 15s. Swype fluide, messagerie anti-spam, cadeaux virtuels monétisables et économie de Vibes. Zéro abonnement.",
-  keywords: [
-    "Vivilov",
-    "rencontre vidéo",
-    "dating app",
-    "PWA",
-    "vidéo 15 secondes",
-    "Vibes",
-    "cadeaux virtuels",
-    "micro-paiements",
-    "rencontre authentique",
-    "mobile first",
-  ],
-  authors: [{ name: "Vivilov" }],
-  creator: "Vivilov",
-  applicationName: "Vivilov",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Vivilov",
-  },
-  icons: {
-    icon: [
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-    ],
-    shortcut: "/icon-192.png",
-  },
-  openGraph: {
-    title: "Vivilov — Rencontre Vidéo Authentique",
+// Métadonnées SEO bilingues — la langue suit la détection serveur
+// (cookie de choix > Accept-Language), comme le rendu de la page.
+export async function generateMetadata(): Promise<Metadata> {
+  const h = await headers();
+  const cookie = h.get("cookie") ?? "";
+  const choice = cookie.match(/(?:^|;\s*)vibe_lang_choice=(fr|en)(?:;|$)/);
+  const effective = cookie.match(/(?:^|;\s*)vibe_lang=(fr|en)(?:;|$)/);
+  const lang =
+    choice?.[1] ?? effective?.[1] ??
+    (detectLangFromAcceptLanguage(h.get("accept-language")) === "en" ? "en" : "fr");
+
+  if (lang === "en") {
+    return {
+      metadataBase: new URL("https://vivilov.app"),
+      title: {
+        default: "Vivilov — Authentic Video Dating | Mobile-First PWA",
+        template: "%s · Vivilov",
+      },
+      description:
+        "Vivilov revolutionizes dating by replacing photos with 15s videos. Smooth swiping, anti-spam messaging, monetizable virtual gifts and the Vibes economy. Zero subscription.",
+      keywords: [
+        "Vivilov",
+        "video dating",
+        "dating app",
+        "PWA",
+        "15 second video",
+        "Vibes",
+        "virtual gifts",
+        "micro-payments",
+        "authentic dating",
+        "mobile first",
+      ],
+      authors: [{ name: "Vivilov" }],
+      creator: "Vivilov",
+      applicationName: "Vivilov",
+      manifest: "/manifest.json",
+      appleWebApp: {
+        capable: true,
+        statusBarStyle: "black-translucent",
+        title: "Vivilov",
+      },
+      icons: {
+        icon: [
+          { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+          { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+        ],
+        apple: [
+          { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        ],
+        shortcut: "/icon-192.png",
+      },
+      openGraph: {
+        title: "Vivilov — Authentic Video Dating",
+        description:
+          "The 15s video dating PWA. Authentic, smooth, subscription-free. Vibes economy and virtual gifts.",
+        url: "https://vivilov.app",
+        siteName: "Vivilov",
+        type: "website",
+        locale: "en_US",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: "Vivilov — Authentic Video Dating",
+        description:
+          "The 15s video dating PWA. Authentic, smooth, subscription-free.",
+      },
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: { index: true, follow: true, "max-image-preview": "large" },
+      },
+    };
+  }
+
+  return {
+    metadataBase: new URL("https://vivilov.app"),
+    title: {
+      default: "Vivilov — Rencontre Vidéo Authentique | PWA Mobile-First",
+      template: "%s · Vivilov",
+    },
     description:
-      "La PWA de rencontre par vidéo de 15s. Authentique, fluide, sans abonnement. Économie de Vibes et cadeaux virtuels.",
-    url: "https://vivilov.app",
-    siteName: "Vivilov",
-    type: "website",
-    locale: "fr_FR",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Vivilov — Rencontre Vidéo Authentique",
-    description:
-      "La PWA de rencontre par vidéo de 15s. Authentique, fluide, sans abonnement.",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
-  },
-};
+      "Vivilov révolutionne la rencontre en remplaçant les photos par des vidéos de 15s. Swype fluide, messagerie anti-spam, cadeaux virtuels monétisables et économie de Vibes. Zéro abonnement.",
+    keywords: [
+      "Vivilov",
+      "rencontre vidéo",
+      "dating app",
+      "PWA",
+      "vidéo 15 secondes",
+      "Vibes",
+      "cadeaux virtuels",
+      "micro-paiements",
+      "rencontre authentique",
+      "mobile first",
+    ],
+    authors: [{ name: "Vivilov" }],
+    creator: "Vivilov",
+    applicationName: "Vivilov",
+    manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: "Vivilov",
+    },
+    icons: {
+      icon: [
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      ],
+      shortcut: "/icon-192.png",
+    },
+    openGraph: {
+      title: "Vivilov — Rencontre Vidéo Authentique",
+      description:
+        "La PWA de rencontre par vidéo de 15s. Authentique, fluide, sans abonnement. Économie de Vibes et cadeaux virtuels.",
+      url: "https://vivilov.app",
+      siteName: "Vivilov",
+      type: "website",
+      locale: "fr_FR",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Vivilov — Rencontre Vidéo Authentique",
+      description:
+        "La PWA de rencontre par vidéo de 15s. Authentique, fluide, sans abonnement.",
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, "max-image-preview": "large" },
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#6b32c4",

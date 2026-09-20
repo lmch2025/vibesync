@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Gift, Share2, X } from "lucide-react";
 import { useCurrency } from "@/lib/vibe/use-currency";
+import { useI18n } from "@/lib/vibe/i18n";
 import SocialShare from "./social-share";
 import { ConfettiBurst, haptic, sfx } from "./interactive-animations";
 
@@ -33,6 +34,7 @@ export function GiftOpenModal({
   } | null;
 }) {
   const { moneyCents } = useCurrency();
+  const { t } = useI18n();
   const [phase, setPhase] = useState<Phase>("wrapped");
   const [shareOpen, setShareOpen] = useState(false);
   const [canClose, setCanClose] = useState(true);
@@ -135,8 +137,8 @@ export function GiftOpenModal({
                     animate={{ opacity: 1, scale: 1 }}
                     className="relative z-10 flex flex-col items-center text-center px-6"
                   >
-                    <p className="text-sm text-white/70 mb-1">{gift.fromName} t&apos;a envoyé</p>
-                    <p className="font-display text-lg font-bold text-white mb-6">un cadeau surprise 🎁</p>
+                    <p className="text-sm text-white/70 mb-1">{t("wallet.gift.sentLine", { name: gift.fromName })}</p>
+                    <p className="font-display text-lg font-bold text-white mb-6">{t("wallet.gift.surprise")}</p>
 
                     <motion.button
                       onClick={() => handleOpen()}
@@ -161,9 +163,9 @@ export function GiftOpenModal({
                       transition={{ duration: 1.6, repeat: Infinity }}
                       className="mt-6 text-white font-display font-bold text-base"
                     >
-                      👆 Tape pour ouvrir
+                      {t("wallet.gift.tapToOpen")}
                     </motion.p>
-                    <p className="text-[11px] text-white/70 mt-1">Le suspense fait son effet…</p>
+                    <p className="text-[11px] text-white/70 mt-1">{t("wallet.gift.suspense")}</p>
                   </motion.div>
                 )}
 
@@ -241,7 +243,7 @@ export function GiftOpenModal({
                       transition={{ delay: 0.25 }}
                       className="text-sm text-white/70 mt-1"
                     >
-                      de la part de <span className="font-semibold text-white">{gift.fromName}</span>
+                      {t("wallet.gift.fromPrefix")}<span className="font-semibold text-white">{gift.fromName}</span>
                     </motion.p>
 
                     <motion.div
@@ -250,7 +252,7 @@ export function GiftOpenModal({
                       transition={{ delay: 0.35, type: "spring" }}
                       className="mt-4 rounded-2xl bg-emerald-500/15 ring-1 ring-emerald-400/30 px-5 py-3"
                     >
-                      <p className="text-[11px] uppercase tracking-wide text-emerald-300/80">Crédité sur ton portefeuille</p>
+                      <p className="text-[11px] uppercase tracking-wide text-emerald-300/80">{t("wallet.gift.credited")}</p>
                       <p className="font-display text-2xl font-black text-emerald-300">{valueLabel}</p>
                     </motion.div>
 
@@ -261,7 +263,7 @@ export function GiftOpenModal({
                         transition={{ delay: 0.45 }}
                         className="mt-4 rounded-2xl v-surface-1 ring-1 ring-white/10 px-4 py-3 w-full"
                       >
-                        <p className="text-[11px] text-white/70 mb-1">Message de {gift.fromName} :</p>
+                        <p className="text-[11px] text-white/70 mb-1">{t("wallet.gift.messageFrom", { name: gift.fromName })}</p>
                         <p className="text-sm text-white/90 italic">&ldquo;{gift.messageText}&rdquo;</p>
                       </motion.div>
                     )}
@@ -274,13 +276,13 @@ export function GiftOpenModal({
                       className="mt-5 w-full h-12 rounded-2xl vibe-gradient text-white font-display font-bold vibe-glow flex items-center justify-center gap-2 active:scale-95 transition"
                     >
                       <Share2 className="h-5 w-5" />
-                      Partager ma joie
+                      {t("wallet.gift.shareJoy")}
                     </motion.button>
                     <button
                       onClick={handleClose}
                       className="mt-2 text-sm text-white/70 hover:text-white/80 transition"
                     >
-                      Plus tard
+                      {t("wallet.later")}
                     </button>
                   </motion.div>
                 )}

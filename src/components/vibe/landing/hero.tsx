@@ -6,10 +6,12 @@ import { HeroSwipeDemo } from "./hero-swipe-demo";
 import { useCurrency } from "@/lib/vibe/use-currency";
 import { formatIn } from "@/lib/vibe/currency";
 import { GEM_PACKS } from "@/lib/vibe/constants";
+import { useI18n } from "@/lib/vibe/i18n";
 
 function StarsRow() {
+  const { t } = useI18n();
   return (
-    <span className="inline-flex items-center gap-0.5" aria-label="4.8 étoiles sur 5">
+    <span className="inline-flex items-center gap-0.5" aria-label={t("landing.hero.starsAria")}>
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
@@ -22,18 +24,19 @@ function StarsRow() {
 
 /* Live multi-currency chip: shows starter pack price in EUR / USD / GBP. */
 function CurrencyChip() {
+  const { t } = useI18n();
   const { money } = useCurrency();
   const starter = GEM_PACKS[0]; // 1.99 €
-  const eur = starter.tiers.find((t) => t.currency === "EUR")?.amount ?? 1.99;
-  const usd = starter.tiers.find((t) => t.currency === "USD")?.amount ?? 1.99;
-  const gbp = starter.tiers.find((t) => t.currency === "GBP")?.amount ?? 1.79;
+  const eur = starter.tiers.find((tier) => tier.currency === "EUR")?.amount ?? 1.99;
+  const usd = starter.tiers.find((tier) => tier.currency === "USD")?.amount ?? 1.99;
+  const gbp = starter.tiers.find((tier) => tier.currency === "GBP")?.amount ?? 1.79;
   // Deterministic formatter (manual symbol → no hydration mismatch on any currency).
   const fmt = (code: string, amt: number) => formatIn(amt, code);
 
   return (
     <div className="inline-flex items-center gap-2 rounded-full glass px-3 py-1.5 text-xs">
       <Zap className="h-3.5 w-3.5 text-vibe-orange" />
-      <span className="text-muted-foreground">Pack 100 Vibes</span>
+      <span className="text-muted-foreground">{t("landing.hero.chipPack")}</span>
       <span className="flex items-center gap-1.5 font-semibold">
         <span>{fmt("EUR", eur)}</span>
         <span className="text-muted-foreground/60">·</span>
@@ -41,7 +44,7 @@ function CurrencyChip() {
         <span className="text-muted-foreground/60">·</span>
         <span>{fmt("GBP", gbp)}</span>
       </span>
-      <span className="hidden sm:inline text-muted-foreground">— prix fixe par région</span>
+      <span className="hidden sm:inline text-muted-foreground">{t("landing.hero.chipNote")}</span>
       {/* Hidden but referenced so useCurrency().money is exercised */}
       <span className="sr-only">{money(eur)}</span>
     </div>
@@ -49,6 +52,7 @@ function CurrencyChip() {
 }
 
 export function Hero({ onEnterApp }: { onEnterApp: () => void }) {
+  const { t } = useI18n();
   return (
     <section
       id="top"
@@ -78,30 +82,28 @@ export function Hero({ onEnterApp }: { onEnterApp: () => void }) {
         >
           <div className="inline-flex items-center gap-2 rounded-full bg-vibe-gradient-soft px-3 py-1 text-xs font-semibold ring-1 ring-border/60">
             <Flame className="h-3.5 w-3.5 text-vibe-orange" />
-            <span>La rencontre authentique, en vidéo</span>
+            <span>{t("landing.hero.badge")}</span>
           </div>
 
           <h1 className="mt-5 font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
-            Rencontre authentique par{" "}
-            <span className="vibe-text-gradient">vidéo de 15s</span>.
-            <br className="hidden sm:block" /> Zéro abonnement, juste des Vibes.
+            {t("landing.hero.titleA")}{" "}
+            <span className="vibe-text-gradient">{t("landing.hero.titleB")}</span>.
+            <br className="hidden sm:block" /> {t("landing.hero.titleC")}
           </h1>
 
           <p className="mt-5 max-w-xl mx-auto lg:mx-0 text-base sm:text-lg text-muted-foreground text-pretty">
-            Fini les catfish. Enregistre une vidéo de 15 secondes, swipe, match,
-            passe le Vibe Check et commence à vibrer sur la bonne fréquence.
-            Reçois des cadeaux. Encaisse en €.
+            {t("landing.hero.subtitle")}
           </p>
 
           <div className="mt-7 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
             <PrimaryCta onClick={onEnterApp}>
               <Rocket className="h-4 w-4" />
-              Rejoins l'expérience
+              {t("landing.nav.cta")}
             </PrimaryCta>
             <a href="#demo" className="contents">
               <GhostCta>
                 <Play className="h-4 w-4" />
-                Voir la démo
+                {t("landing.hero.seeDemo")}
               </GhostCta>
             </a>
           </div>
@@ -111,12 +113,12 @@ export function Hero({ onEnterApp }: { onEnterApp: () => void }) {
             <div className="inline-flex items-center gap-2">
               <StarsRow />
               <span className="font-semibold">4.8</span>
-              <span className="text-muted-foreground">· 12 840 avis</span>
+              <span className="text-muted-foreground">{t("landing.hero.reviews")}</span>
             </div>
             <span className="hidden sm:inline text-muted-foreground/40">·</span>
             <div className="inline-flex items-center gap-1.5 text-muted-foreground">
               <span className="text-base">📱</span>
-              Dispo sur iOS, Android &amp; Web
+              {t("landing.hero.platforms")}
             </div>
             <span className="hidden sm:inline text-muted-foreground/40">·</span>
             <div className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -149,7 +151,7 @@ export function Hero({ onEnterApp }: { onEnterApp: () => void }) {
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
           className="inline-flex items-center gap-1 text-xs text-muted-foreground"
         >
-          <ChevronDown className="h-3.5 w-3.5" /> Descouvre l'expérience
+          <ChevronDown className="h-3.5 w-3.5" /> {t("landing.hero.scroll")}
         </motion.div>
       </div>
     </section>

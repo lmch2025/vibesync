@@ -17,6 +17,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Download, Share, MoreVertical, Smartphone, X } from "lucide-react";
+import { useI18n } from "@/lib/vibe/i18n";
 
 const SESSION_KEY = "pwa_prompt_shown";
 const DISMISS_KEY = "pwa_dismiss_count";
@@ -31,6 +32,7 @@ type BeforeInstallPromptEvent = Event & {
 type Platform = "ios" | "android" | "desktop" | "standalone";
 
 export function PwaInstallPrompt() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<Platform>("desktop");
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(
@@ -128,7 +130,7 @@ export function PwaInstallPrompt() {
             <button
               onClick={dismiss}
               className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full v-surface-2 v-fg hover:v-surface-3 transition"
-              aria-label="Fermer"
+              aria-label={t("common.close")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -144,11 +146,10 @@ export function PwaInstallPrompt() {
             </motion.div>
 
             <h3 className="font-display text-xl font-bold text-center v-fg">
-              Installe Vivilov
+              {t("misc.pwaTitle")}
             </h3>
             <p className="text-sm v-fg-muted text-center mt-1 mb-5">
-              Lance-toi en 1 tap — pas de store, pas d'attente. Ton app
-              plein écran, notifications incluses.
+              {t("misc.pwaBody")}
             </p>
 
             {/* Platform-specific instructions */}
@@ -156,25 +157,25 @@ export function PwaInstallPrompt() {
               {platform === "ios" && (
                 <Instruction
                   icon={<Share className="h-4 w-4 text-sky-500 dark:text-sky-300" />}
-                  text="Tape le bouton Partager"
+                  text={t("misc.pwaIosShare")}
                 />
               )}
               {platform === "ios" && (
                 <Instruction
                   icon={<PlusIcon />}
-                  text="Puis « Sur l'écran d'accueil »"
+                  text={t("misc.pwaIosHome")}
                 />
               )}
               {platform === "android" && !deferred && (
                 <Instruction
                   icon={<MoreVertical className="h-4 w-4 v-fg-muted" />}
-                  text="Menu ⋮ → Installer l'application"
+                  text={t("misc.pwaAndroidMenu")}
                 />
               )}
               {platform === "desktop" && !deferred && (
                 <Instruction
                   icon={<Download className="h-4 w-4 text-vibe-pink" />}
-                  text="Icône d'installation dans la barre d'adresse"
+                  text={t("misc.pwaDesktop")}
                 />
               )}
             </div>
@@ -185,7 +186,7 @@ export function PwaInstallPrompt() {
                 onClick={install}
                 className="w-full h-12 rounded-2xl vibe-gradient text-white font-display font-bold text-sm active:scale-95 transition vibe-glow flex items-center justify-center gap-2"
               >
-                <Download className="h-5 w-5" /> Installer maintenant
+                <Download className="h-5 w-5" /> {t("misc.pwaInstallNow")}
               </button>
             ) : (
               <a
@@ -196,7 +197,7 @@ export function PwaInstallPrompt() {
                 }}
                 className="block w-full h-12 rounded-2xl v-surface-2 ring-1 ring-[var(--v-divider)] v-fg font-display font-bold text-sm active:scale-95 transition text-center leading-[3rem]"
               >
-                J'ai compris
+                {t("misc.pwaGotIt")}
               </a>
             )}
 
@@ -204,7 +205,7 @@ export function PwaInstallPrompt() {
               onClick={dismiss}
               className="w-full text-center text-[11px] v-fg-muted hover:v-fg transition mt-3"
             >
-              Plus tard
+              {t("misc.later")}
             </button>
           </motion.div>
         </motion.div>

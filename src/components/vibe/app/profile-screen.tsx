@@ -22,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { ConfettiBurst, AnimatedNumber, haptic, sfx, useSfxEnabled } from "./interactive-animations";
 import { vibeToast } from "./center-feedback";
 import { PhotoPicker } from "./photo-picker";
+import { useI18n } from "@/lib/vibe/i18n";
+import { LangSwitcher } from "@/components/vibe/lang-switcher";
 
 type VideoSlot = { url: string; poster: string };
 
@@ -35,6 +37,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
   const setView = useVibe((s) => s.setView);
   const requireVibes = useVibe((s) => s.requireVibes);
   const { moneyCents, currency } = useCurrency();
+  const { t, apiErr } = useI18n();
   const [busy, setBusy] = useState<string | null>(null);
   const [videoUploading, setVideoUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -110,13 +113,13 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
   async function handleVideoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("video/")) { toast.error("Format vidéo requis"); return; }
-    if (file.size > 500 * 1024 * 1024) { toast.error("Vidéo trop lourde (max 500 Mo)"); return; }
+    if (!file.type.startsWith("video/")) { toast.error(t("profile.video.formatRequired")); return; }
+    if (file.size > 500 * 1024 * 1024) { toast.error(t("profile.video.tooHeavy")); return; }
 
     // Formats exotiques : on informe l'utilisateur que l'upload peut être plus lent
     const exoticFormats = ["video/x-matroska", "video/mkv", "video/avi", "video/x-msvideo", "video/x-flv"];
     if (exoticFormats.includes(file.type) || file.name.match(/\.(mkv|avi|flv|ts|3gp)$/i)) {
-      toast.info("Format MKV/AVI détecté — l'upload peut prendre plus de temps. Préfère MP4 ou MOV pour des uploads rapides 🎬");
+      toast.info(t("profile.video.exoticFormat"));
     }
 
     const slot = pendingSlotRef.current;
@@ -171,7 +174,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(compressedFile);
         });
-        toast.info("Mode bac à sable : la vidéo est sauvegardée localement (Cloudinary non configuré).");
+        toast.info(t("profile.video.sandbox"));
       }
 
       const profileRes = await fetch("/api/vibe/profile/video", {
@@ -192,12 +195,12 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
       // EXPLOSION OF CONFETTI! 🎉
       sfx.play("success");
       setShowConfetti(true);
-      vibeToast({ emoji: "🎬", title: `Vidéo ${slot} ajoutée` });
+      vibeToast({ emoji: "🎬", title: t("profile.video.added", { n: slot }) });
       setTimeout(() => setShowConfetti(false), 2500);
 
       setActiveMedia({ kind: "video", slot });
     } catch (e: any) {
-      toast.error(e.message || "Erreur lors de l'upload");
+      toast.error(apiErr(e.message) || t("profile.error.upload"));
     } finally {
       setVideoUploading(false);
       setUploadProgress(0);
@@ -244,14 +247,14 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       if (next.length > prevCount) {
-        vibeToast({ emoji: "📸", title: next.length - prevCount > 1 ? `${next.length - prevCount} photos ajoutées` : "Photo ajoutée" });
+        vibeToast({ emoji: "📸", title: next.length - prevCount > 1 ? t("profile.photos.addedMany", { n: next.length - prevCount }) : t("profile.photos.addedOne") });
       } else {
-        vibeToast({ emoji: "🗑️", title: "Photo retirée" });
+        vibeToast({ emoji: "🗑️", title: t("profile.photos.removed") });
       }
     } catch (e: any) {
       // Rollback : on repatche avec le profil d'avant (photos d'origine).
       if (prevProfile) patchMe({ profile: prevProfile } as any);
-      toast.error(e?.message || "Impossible de sauvegarder les photos");
+      toast.error(apiErr(e?.message) || t("profile.photos.error"));
     }
   }
 
@@ -287,9 +290,9 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         else if (photos.length > 0) setActiveMedia({ kind: "photo", index: 0 });
         else setActiveMedia({ kind: "video", slot: 1 });
       }
-      vibeToast({ emoji: "🗑️", title: "Vidéo supprimée" });
+      vibeToast({ emoji: "🗑️", title: t("profile.video.deleted") });
     } catch {
-      toast.error("Erreur lors de la suppression");
+      toast.error(t("profile.video.deleteError"));
     } finally {
       setDeleting(false);
       setConfirmDelete(null);
@@ -298,7 +301,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
 
   function spend(action: "seeLikes" | "passport") {
     const cost = GEM_ACTIONS[action];
-    const label = action === "seeLikes" ? "Voir les likes reçus (20 Vibes)" : "Passport (30 Vibes)";
+    const label = action === "seeLikes" ? t("profile.cost.seeLikes", { cost }) : t("profile.cost.passport", { cost });
     requireVibes(cost, label, async () => {
       setBusy(action);
       try {
@@ -314,8 +317,8 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         if (action === "passport") {
           vibeToast({
             emoji: "✈️",
-            title: "Passport activé",
-            sub: "24h pour découvrir une nouvelle ville",
+            title: t("profile.passport.title"),
+            sub: t("profile.passport.sub"),
           });
           // Rafraîchit instantanément la section « Actions actives »
           // (le Passport vient d'y apparaître avec son compte à rebours)
@@ -323,7 +326,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           window.dispatchEvent(new CustomEvent("vivilov:buff-activated"));
           window.dispatchEvent(new Event("vivilov:deck-refresh"));
         }
-      } catch (e: any) { toast.error(e.message || "Erreur"); }
+      } catch (e: any) { toast.error(apiErr(e.message) || t("profile.error.generic")); }
       finally { setBusy(null); }
     });
   }
@@ -332,7 +335,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
     await fetch("/api/vibe/auth/logout", { method: "POST" });
     useVibe.getState().setMe(null);
     setView("landing");
-    toast.success("Déconnecté");
+    toast.success(t("profile.logout.success"));
   }
 
   // Joue une transition de sortie douce (fade + zoom-out, 250 ms) AVANT le logout réel.
@@ -359,8 +362,8 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
     sfx.play("pop");
     vibeToast(
       next === "sombre"
-        ? { emoji: "🌙", title: "Mode sombre activé" }
-        : { emoji: "☀️", title: "Mode clair activé" },
+        ? { emoji: "🌙", title: t("profile.theme.dark") }
+        : { emoji: "☀️", title: t("profile.theme.light") },
     );
   }
 
@@ -371,10 +374,10 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
     if (key === "video_uploaded" || key === "poster_uploaded") {
       startUpload(filledSlots + 1);
     } else if (key === "verified") {
-      vibeToast({ emoji: "✅", title: "Demande envoyée" });
+      vibeToast({ emoji: "✅", title: t("profile.tasks.verifiedRequest") });
       saveEdit("verified", true);
     } else if (key === "streak_started") {
-      toast.info("Reviens tous les jours pour augmenter ta série et gagner des Vibes !");
+      toast.info(t("profile.tasks.streakHint"));
     } else if (key !== "account_created" && key !== "profile_created") {
       let currentVal = "";
       if (key === "bio_filled") currentVal = me?.profile?.bio || "";
@@ -407,7 +410,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
     
     patchMe(optimisticUser);
     setEditingField(null);
-    if (field !== "verified") vibeToast({ emoji: "✨", title: "Profil mis à jour" });
+    if (field !== "verified") vibeToast({ emoji: "✨", title: t("profile.updated") });
 
     try {
       const res = await fetch("/api/vibe/profile", {
@@ -423,7 +426,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         patchMe(meCopy);
       }
     } catch (e: any) {
-      toast.error(e.message || "Erreur lors de la mise à jour");
+      toast.error(apiErr(e.message) || t("profile.error.update"));
       if (prevMe) patchMe(prevMe);
     }
   }
@@ -451,7 +454,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
 
       <div className="pt-9 px-3 py-2 flex items-center gap-2">
         <motion.button onClick={onBack} whileTap={{ scale: 0.88 }} className="h-9 w-9 grid place-items-center rounded-full hover:v-surface-2"><ArrowLeft className="h-5 w-5" /></motion.button>
-        <span className="font-display font-bold text-lg v-text-gradient">Profil</span>
+        <span className="font-display font-bold text-lg v-text-gradient">{t("profile.title")}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-24">
@@ -488,7 +491,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
               >
                 <img
                   src={activePhoto}
-                  alt={`Photo ${activeMedia.index + 1} de ton profil`}
+                  alt={t("profile.frame.photoAlt", { n: activeMedia.index + 1 })}
                   draggable={false}
                   className="absolute inset-0 w-full h-full object-cover select-none"
                 />
@@ -501,8 +504,8 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
               une photo : verre sombre + texte blanc constant */}
           <div className="absolute top-3 right-3 z-50 glass-dark v-fg-media rounded-full px-2.5 py-1 text-[10px] flex items-center gap-1 pointer-events-none">
             {activeMedia.kind === "video"
-              ? <><Video className="h-3 w-3 text-accent" /> 15s max</>
-              : <><Camera className="h-3 w-3 text-accent" /> Photo</>}
+              ? <><Video className="h-3 w-3 text-accent" /> {t("profile.frame.videoBadge")}</>
+              : <><Camera className="h-3 w-3 text-accent" /> {t("profile.frame.photoBadge")}</>}
           </div>
 
           {/* Boutons action sur le grand cadre — vidéo : Remplacer / Supprimer ;
@@ -515,7 +518,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                 whileTap={{ scale: 0.92 }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur hover:bg-black/80 transition text-[10px] font-semibold text-white disabled:opacity-50"
               >
-                <Pencil className="h-3 w-3" /> Remplacer
+                <Pencil className="h-3 w-3" /> {t("profile.frame.replace")}
               </motion.button>
               <motion.button
                 onClick={() => setConfirmDelete(activeMedia.slot)}
@@ -523,7 +526,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                 whileTap={{ scale: 0.92 }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/70 backdrop-blur hover:bg-red-500/90 transition text-[10px] font-semibold text-white disabled:opacity-50"
               >
-                <Trash2 className="h-3 w-3" /> Supprimer
+                <Trash2 className="h-3 w-3" /> {t("profile.frame.delete")}
               </motion.button>
             </div>
           )}
@@ -534,7 +537,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                 whileTap={{ scale: 0.92 }}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/70 backdrop-blur hover:bg-red-500/90 transition text-[10px] font-semibold text-white"
               >
-                <Trash2 className="h-3 w-3" /> Supprimer
+                <Trash2 className="h-3 w-3" /> {t("profile.frame.delete")}
               </motion.button>
             </div>
           )}
@@ -542,7 +545,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           {/* Info profil en bas */}
           <div className="absolute bottom-0 inset-x-0 p-4 pointer-events-none">
             <div className="flex items-center gap-1.5">
-              <h2 className="font-display text-2xl font-bold v-text-gradient">{me?.profile?.displayName ?? me?.name ?? "Toi"}</h2>
+              <h2 className="font-display text-2xl font-bold v-text-gradient">{me?.profile?.displayName ?? me?.name ?? t("profile.you")}</h2>
               {me?.verified && <BadgeCheck className="h-5 w-5 text-cyan-300" />}
             </div>
             {me?.profile && (
@@ -557,11 +560,11 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         {/* Miniatures des slots vidéo */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] uppercase tracking-wide v-fg-muted font-semibold">Mes vidéos ({filledSlots}/3)</p>
+            <p className="text-[10px] uppercase tracking-wide v-fg-muted font-semibold">{t("profile.videos.title", { n: filledSlots })}</p>
             {filledSlots < 3 && (
               <motion.button onClick={() => startUpload(filledSlots + 1)} disabled={videoUploading} whileTap={{ scale: 0.9 }}
                 className="text-[10px] text-vibe-purple font-semibold flex items-center gap-1 hover:opacity-80 transition disabled:opacity-40">
-                <Video className="h-3 w-3" /> Ajouter
+                <Video className="h-3 w-3" /> {t("profile.videos.add")}
               </motion.button>
             )}
           </div>
@@ -594,14 +597,14 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                       <div className="absolute inset-0 grid place-items-center flex-col gap-1">
                         <ProgressRing percent={uploadProgress} size={40} strokeWidth={3} />
                         <span className="text-[7px] v-fg-muted mt-0.5 absolute bottom-2 left-0 right-0 text-center">
-                          {uploadPhase === "compress" ? "⚙️ Compression…" : "☁️ Envoi…"}
+                          {uploadPhase === "compress" ? t("profile.videos.compressing") : t("profile.videos.uploading")}
                         </span>
                       </div>
                     ) : hasVideo ? (
                       <>
                         <img
                           src={slotPoster}
-                          alt={`Vidéo ${slot}`}
+                          alt={t("profile.videos.slotAlt", { n: slot })}
                           onError={(e) => { e.currentTarget.style.opacity = "0"; e.currentTarget.parentElement!.style.background = "#27272a" }}
                           className="absolute inset-0 w-full h-full object-cover"
                         />
@@ -612,7 +615,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                     ) : (
                       <div className="absolute inset-0 grid place-items-center flex-col gap-1 v-fg-muted">
                         <Video className="h-5 w-5" />
-                        <span className="text-[8px]">Ajouter</span>
+                        <span className="text-[8px]">{t("profile.videos.add")}</span>
                       </div>
                     )}
                   </motion.button>
@@ -629,10 +632,10 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-[10px] uppercase tracking-wide v-fg-muted font-semibold">
-              Mes photos ({photos.length}/5)
+              {t("profile.photos.title", { n: photos.length })}
             </p>
             {photos.length > 0 && (
-              <span className="text-[10px] v-fg-faint">Touche une photo pour l’afficher</span>
+              <span className="text-[10px] v-fg-faint">{t("profile.photos.hint")}</span>
             )}
           </div>
           <PhotoPicker
@@ -651,7 +654,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         {/* stats row */}
         <div className="grid grid-cols-3 gap-2 mb-4">
           <Stat label="Vibes" value={<AnimatedNumber value={me?.gems ?? 0} duration={900} />} icon={<GemIcon className="h-3.5 w-3.5" />} />
-          <Stat label="Portefeuille" value={<AnimatedNumber value={me?.walletEurCents ?? 0} duration={900} format={(n) => moneyCents(Math.round(n))} />} />
+          <Stat label={t("profile.stats.wallet")} value={<AnimatedNumber value={me?.walletEurCents ?? 0} duration={900} format={(n) => moneyCents(Math.round(n))} />} />
           <Stat label="Vibe" value={me?.profile?.vibeAnswer ?? "—"} icon={<Waves className="h-3.5 w-3.5 text-accent" />} />
         </div>
 
@@ -682,36 +685,38 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
               <Ghost className="h-4.5 w-4.5 text-vibe-purple dark:text-vibe-pink" />
             </span>
             <span className="relative flex-1 min-w-0">
-              <span className="block text-[13px] font-bold">Envie de discrétion ?</span>
+              <span className="block text-[13px] font-bold">{t("profile.ghost.title")}</span>
               <span className="block text-[11px] v-fg-muted leading-snug mt-0.5">
-                Le Mode Fantôme rend tes likes invisibles pendant 1h — tu explores sans laisser de trace.
+                {t("profile.ghost.body")}
               </span>
             </span>
-            <span className="relative shrink-0 text-[11px] font-semibold text-vibe-purple dark:text-vibe-pink">Essayer →</span>
+            <span className="relative shrink-0 text-[11px] font-semibold text-vibe-purple dark:text-vibe-pink">{t("profile.ghost.cta")}</span>
           </motion.button>
         )}
 
         {/* premium actions */}
-        <h3 className="font-display font-bold text-sm mb-2 px-1">Premium</h3>
+        <h3 className="font-display font-bold text-sm mb-2 px-1">{t("profile.premium.title")}</h3>
         <div className="space-y-2 mb-4">
-          <PremiumRow icon={<Eye className="h-4 w-4" />} title="Voir les likes reçus" desc="Dévoile un profil qui t'a déjà liké" cost={GEM_ACTIONS.seeLikes} onClick={() => spend("seeLikes")} loading={busy === "seeLikes"} />
-          <PremiumRow icon={<Plane className="h-4 w-4" />} title="Passport" desc="Choisis une ville et swipe là-bas 24h" cost={GEM_ACTIONS.passport} onClick={() => setPremiumOpen(true)} loading={false} />
+          <PremiumRow icon={<Eye className="h-4 w-4" />} title={t("profile.premium.seeLikes.title")} desc={t("profile.premium.seeLikes.desc")} cost={GEM_ACTIONS.seeLikes} onClick={() => spend("seeLikes")} loading={busy === "seeLikes"} />
+          <PremiumRow icon={<Plane className="h-4 w-4" />} title={t("profile.premium.passport.title")} desc={t("profile.premium.passport.desc")} cost={GEM_ACTIONS.passport} onClick={() => setPremiumOpen(true)} loading={false} />
         </div>
 
         {/* settings */}
-        <h3 className="font-display font-bold text-sm mb-2 px-1">Réglages</h3>
+        <h3 className="font-display font-bold text-sm mb-2 px-1">{t("profile.settings.title")}</h3>
         <div className="rounded-2xl v-surface-1 ring-1 ring-(--v-divider) divide-y divide-(--v-divider)">
-          <Row icon={<Globe className="h-4 w-4" />} label="Devise"><span className="v-fg-muted text-xs">{currency} · auto</span></Row>
-          <Row icon={<BadgeCheck className="h-4 w-4" />} label="Compte vérifié">{me?.verified ? <span className="text-cyan-600 dark:text-cyan-300 text-xs">Oui</span> : <span className="v-fg-muted text-xs">En attente</span>}</Row>
+          <Row icon={<Globe className="h-4 w-4" />} label={t("profile.settings.currency")}><span className="v-fg-muted text-xs">{t("profile.settings.currencyValue", { currency })}</span></Row>
+          {/* Réglage langue — sélecteur FR/EN explicite (persiste sur le compte). */}
+          <Row icon={<Globe className="h-4 w-4" />} label={t("profile.settings.lang")}><LangSwitcher /></Row>
+          <Row icon={<BadgeCheck className="h-4 w-4" />} label={t("profile.settings.verified")}>{me?.verified ? <span className="text-cyan-600 dark:text-cyan-300 text-xs">{t("profile.settings.yes")}</span> : <span className="v-fg-muted text-xs">{t("profile.settings.pending")}</span>}</Row>
           <Row
             icon={sfxOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 v-fg-muted" />}
-            label="Sons de l'interface"
+            label={t("profile.settings.sounds")}
           >
             <motion.button
               type="button"
               role="switch"
               aria-checked={sfxOn}
-              aria-label="Activer les sons de l'interface"
+              aria-label={t("profile.settings.soundsAria")}
               onClick={toggleSounds}
               whileTap={{ scale: 0.92 }}
               className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${sfxOn ? "bg-vibe-purple/80" : "v-surface-3"}`}
@@ -726,13 +731,13 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           {/* Mode sombre (opt-in) — le thème clair est le rendu par défaut
               de l'app ; ici l'utilisateur active (ou non) le mode nuit au
               fond #09090B. */}
-          <Row icon={<Moon className="h-4 w-4" />} label="Mode sombre">
-            <span className="text-[10px] v-fg-muted mr-1 hidden sm:inline">Active le fond nuit #09090B. Le thème clair reste le rendu par défaut.</span>
+          <Row icon={<Moon className="h-4 w-4" />} label={t("profile.settings.darkMode")}>
+            <span className="text-[10px] v-fg-muted mr-1 hidden sm:inline">{t("profile.settings.darkModeHint")}</span>
             <motion.button
               type="button"
               role="switch"
               aria-checked={sombreOn}
-              aria-label="Activer le mode sombre profond"
+              aria-label={t("profile.settings.darkModeAria")}
               onClick={toggleSombre}
               whileTap={{ scale: 0.92 }}
               className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${sombreOn ? "bg-vibe-purple/80" : "v-surface-3"}`}
@@ -755,7 +760,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
             whileTap={{ scale: 0.97 }}
             className="mt-4 w-full h-12 rounded-2xl vibe-gradient text-white font-semibold text-sm flex items-center justify-center gap-2 relative overflow-hidden"
           >
-            <ShieldCheck className="h-4 w-4" /> Panneau Administrateur
+            <ShieldCheck className="h-4 w-4" /> {t("profile.adminPanel")}
             <motion.span
               aria-hidden
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent"
@@ -772,9 +777,9 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           whileTap={{ scale: 0.97, opacity: 0.85 }}
           className="mt-4 w-full h-11 rounded-2xl bg-red-500/10 ring-1 ring-red-500/30 dark:ring-red-400/30 text-red-600 dark:text-red-300 font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-60"
         >
-          <LogOut className="h-4 w-4" /> {exiting ? "Déconnexion…" : "Se déconnecter"}
+          <LogOut className="h-4 w-4" /> {exiting ? t("profile.logout.pending") : t("profile.logout.cta")}
         </motion.button>
-        <p className="text-[10px] v-fg-muted text-center mt-4">Vivilov · PWA démo</p>
+        <p className="text-[10px] v-fg-muted text-center mt-4">{t("profile.footer")}</p>
       </div>
       {/* Modale de confirmation de suppression */}
       <AnimatePresence>
@@ -799,8 +804,8 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                   <Trash2 className="h-6 w-6 text-red-400" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-lg v-fg">Supprimer la vidéo {confirmDelete} ?</h3>
-                  <p className="text-sm v-fg-muted mt-1">Cette action est irréversible. La vidéo sera définitivement supprimée de ton profil.</p>
+                  <h3 className="font-display font-bold text-lg v-fg">{t("profile.deleteConfirm.title", { n: confirmDelete })}</h3>
+                  <p className="text-sm v-fg-muted mt-1">{t("profile.deleteConfirm.body")}</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -810,7 +815,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                   whileTap={{ scale: 0.95 }}
                   className="flex-1 h-12 rounded-2xl v-surface-1 v-fg-muted font-semibold hover:v-surface-2 transition disabled:opacity-50"
                 >
-                  Annuler
+                  {t("common.cancel")}
                 </motion.button>
                 <button
                   onClick={() => deleteVideo(confirmDelete)}
@@ -820,7 +825,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                   {deleting ? (
                     <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   ) : (
-                    <><Trash2 className="h-4 w-4" /> Oui, supprimer</>
+                    <><Trash2 className="h-4 w-4" /> {t("profile.deleteConfirm.confirm")}</>
                   )}
                 </button>
               </div>
@@ -845,12 +850,12 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
               className="w-full max-w-sm rounded-3xl v-surface-solid ring-1 ring-(--v-divider) p-6 shadow-2xl"
             >
               <h3 className="font-display font-bold text-lg mb-4 v-fg">
-                {editingField === "bio_filled" && "Modifier ta bio"}
-                {editingField === "city_set" && "Modifier ta ville"}
-                {editingField === "age_set" && "Modifier ton âge"}
-                {editingField === "gender_set" && "Modifier ton genre"}
-                {editingField === "looking_for_set" && "Ce que tu cherches"}
-                {editingField === "vibe_answered" && "Ton Vibe Check"}
+                {editingField === "bio_filled" && t("profile.edit.bio")}
+                {editingField === "city_set" && t("profile.edit.city")}
+                {editingField === "age_set" && t("profile.edit.age")}
+                {editingField === "gender_set" && t("profile.edit.gender")}
+                {editingField === "looking_for_set" && t("profile.edit.lookingFor")}
+                {editingField === "vibe_answered" && t("profile.edit.vibe")}
               </h3>
               
               <div className="mb-6">
@@ -858,19 +863,19 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                   <Input
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
-                    placeholder="Saisis ton texte..."
+                    placeholder={t("profile.edit.placeholder")}
                     className="h-12 rounded-2xl v-surface-2 v-divider v-fg focus:border-vibe-purple"
                     autoFocus
                   />
                 ) : editingField === "gender_set" ? (
                   <div className="grid grid-cols-3 gap-2">
-                    {[{v:"f", l:"Femme"}, {v:"m", l:"Homme"}, {v:"nb", l:"NB"}].map(g => (
+                    {[{v:"f", l:t("profile.gender.f")}, {v:"m", l:t("profile.gender.m")}, {v:"nb", l:t("profile.gender.nb")}].map(g => (
                       <motion.button key={g.v} onClick={() => setEditValue(g.v)} whileTap={{ scale: 0.93 }} className={`h-10 rounded-xl text-xs font-semibold transition ${editValue === g.v ? "vibe-gradient text-white vibe-glow" : "v-surface-1 v-fg-muted hover:v-surface-2"}`}>{g.l}</motion.button>
                     ))}
                   </div>
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
-                    {[{v:"f", l:"Femmes"}, {v:"m", l:"Hommes"}, {v:"nb", l:"NB"}, {v:"all", l:"Tous"}].map(g => (
+                    {[{v:"f", l:t("profile.lookingFor.f")}, {v:"m", l:t("profile.lookingFor.m")}, {v:"nb", l:t("profile.lookingFor.nb")}, {v:"all", l:t("profile.lookingFor.all")}].map(g => (
                       <motion.button key={g.v} onClick={() => setEditValue(g.v)} whileTap={{ scale: 0.93 }} className={`h-10 rounded-xl text-xs font-semibold transition ${editValue === g.v ? "vibe-gradient text-white vibe-glow" : "v-surface-1 v-fg-muted hover:v-surface-2"}`}>{g.l}</motion.button>
                     ))}
                   </div>
@@ -883,7 +888,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                   whileTap={{ scale: 0.95 }}
                   className="flex-1 h-12 rounded-2xl v-surface-1 v-fg-muted font-semibold hover:v-surface-2 transition"
                 >
-                  Annuler
+                  {t("common.cancel")}
                 </motion.button>
                 <button
                   onClick={() => saveEdit(editingField, editValue)}
@@ -893,7 +898,7 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                   {editSaving ? (
                     <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   ) : (
-                    <><Check className="h-4 w-4" /> Enregistrer</>
+                    <><Check className="h-4 w-4" /> {t("common.save")}</>
                   )}
                 </button>
               </div>
@@ -911,8 +916,8 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         open={seeLikesResult !== null}
         onOpenChange={(o) => { if (!o) setSeeLikesResult(null); }}
         emoji="👁️"
-        title="Voir les Likes"
-        message="Les profils qui t'ont déjà liké"
+        title={t("profile.seeLikes.title")}
+        message={t("profile.seeLikes.message")}
         result={seeLikesResult ? <EffectResult result={seeLikesResult} /> : undefined}
       />
     </motion.div>

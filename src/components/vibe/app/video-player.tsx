@@ -3,6 +3,7 @@
 // guaranteed muted autoplay, play/pause toggle, sound controls, and Cloudinary fallback poster.
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Play, Volume2, VolumeX, Loader2 } from "lucide-react";
+import { useI18n } from "@/lib/vibe/i18n";
 
 /**
  * Derive a high-quality frame (at 1s) from any Cloudinary video URL
@@ -34,6 +35,7 @@ export function VideoPlayer({
   sizes?: string;
   priority?: boolean;
 }) {
+  const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -166,7 +168,7 @@ export function VideoPlayer({
           <img src={activePoster} alt="" className="w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center v-fg-muted text-xs">
-            Aucune vidéo
+            {t("chat.video.none")}
           </div>
         )}
       </div>
@@ -224,7 +226,7 @@ export function VideoPlayer({
         type="button"
         onClick={toggleMute}
         className="absolute top-11 right-3 z-40 h-8 w-8 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:bg-black/80 transition active:scale-95 shadow-lg"
-        title={isMuted ? "Activer le son" : "Couper le son"}
+        title={isMuted ? t("chat.video.unmute") : t("chat.video.mute")}
       >
         {isMuted ? <VolumeX className="h-4 w-4 text-white/80" /> : <Volume2 className="h-4 w-4 text-fuchsia-400" />}
       </button>
@@ -252,8 +254,8 @@ export function VideoPlayer({
           tap-to-retry passe par le onClick racine (n'importe où sur le média). */}
       {hasError && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 text-white text-center p-4 pointer-events-none">
-          <p className="text-sm font-semibold">Lecture impossible</p>
-          <p className="text-xs text-white/70 mt-1">Appuie pour réessayer</p>
+          <p className="text-sm font-semibold">{t("chat.video.error")}</p>
+          <p className="text-xs text-white/70 mt-1">{t("chat.video.retry")}</p>
         </div>
       )}
     </div>

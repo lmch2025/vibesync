@@ -11,6 +11,7 @@ export type MeUser = {
   name?: string | null;
   role: string;
   currency: string;
+  lang?: string | null; // langue UI du compte ("fr" | "en")
   country?: string | null;
   gems: number;
   freeGems: number;

@@ -26,6 +26,7 @@ import {
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { sfx, haptic, TypingDots, useShake } from "@/components/vibe/app/interactive-animations";
 import { useVibe } from "@/lib/vibe/store";
+import { useI18n } from "@/lib/vibe/i18n";
 import { useCurrency } from "@/lib/vibe/use-currency";
 import { GIFTS, GEM_ACTIONS } from "@/lib/vibe/constants";
 import EmojiPicker from "./emoji-picker";
@@ -79,6 +80,7 @@ type ChatState = {
 };
 
 export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { matchId: string; initialName?: string; initialPoster?: string | null; onBack: () => void }) {
+  const { t, apiErr } = useI18n();
   const me = useVibe((s) => s.me);
   const patchMe = useVibe((s) => s.patchMe);
   const requireVibes = useVibe((s) => s.requireVibes);
@@ -205,16 +207,16 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
           setText(bodyText);
           sfx.play("error");
           shakeTrigger();
-          if (data.locked) toast.error(data.error, { duration: 4000 });
-          else toast.error(data.error);
+          if (data.locked) toast.error(apiErr(data.error), { duration: 4000 });
+          else toast.error(apiErr(data.error));
           return;
         }
         if (data.gems !== undefined) patchMe({ gems: data.gems, freeGems: data.freeGems });
         if (wasBoost) {
           vibeToast({
             emoji: "⚡",
-            title: "Message boosté",
-            sub: "En tête de sa boîte de réception",
+            title: t("chat.boost.title"),
+            sub: t("chat.boost.toastSub"),
           });
         }
         // Remplace la bulle optimiste par les données serveur, puis simule
@@ -230,7 +232,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         shakeTrigger();
       } finally { setSending(false); }
     };
-    if (boostCost > 0) requireVibes(boostCost, "Booster ce message (10 Vibes)", doSend);
+    if (boostCost > 0) requireVibes(boostCost, t("chat.boost.confirm"), doSend);
     else doSend();
   }
 
@@ -252,7 +254,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
       simulatePartnerTyping();
     } catch (e: any) {
       sfx.play("error");
-      toast.error(e.message || "Erreur");
+      toast.error(apiErr(e.message) || t("chat.error.generic"));
     } finally { setSending(false); }
   }
 
@@ -295,18 +297,18 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         patchMe({ gems: data.gems, freeGems: data.freeGems });
         vibeToast({
           emoji: gift.emoji,
-          title: `${gift.name} pour ${otherName || "ton match"}`,
-          sub: "Il/elle le découvrira en l'ouvrant",
+          title: t("chat.gift.sentTitle", { gift: gift.name, name: otherName || t("chat.matchFallback") }),
+          sub: t("chat.gift.sentSub"),
         });
         setGiftOpen(false);
         setGiftNote("");
         await load();
-      } catch (e: any) { toast.error(e.message || "Erreur"); }
+      } catch (e: any) { toast.error(apiErr(e.message) || t("chat.error.generic")); }
     });
   }
 
   function icebreaker() {
-    requireVibes(GEM_ACTIONS.icebreaker, "Icebreaker IA (3 Vibes)", async () => {
+    requireVibes(GEM_ACTIONS.icebreaker, t("chat.icebreaker.confirm"), async () => {
       try {
         const res = await fetch("/api/vibe/gems/spend", {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -316,8 +318,8 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         if (!res.ok) throw new Error(data.error);
         patchMe({ gems: data.gems, freeGems: data.freeGems });
         if (data.icebreaker) setText(data.icebreaker);
-        vibeToast({ emoji: "✨", title: "Accroche générée par IA" });
-      } catch (e: any) { toast.error(e.message || "Erreur"); }
+        vibeToast({ emoji: "✨", title: t("chat.icebreaker.done") });
+      } catch (e: any) { toast.error(apiErr(e.message) || t("chat.error.generic")); }
     });
   }
 
@@ -340,12 +342,12 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
             <BadgeCheck className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-300 shrink-0" />
           </div>
           {partnerTyping ? (
-            <TypingDots label="écrit…" className="text-[10px] text-emerald-600 dark:text-emerald-400" dotClassName="bg-emerald-500 dark:bg-emerald-400" />
+            <TypingDots label={t("chat.header.typing")} className="text-[10px] text-emerald-600 dark:text-emerald-400" dotClassName="bg-emerald-500 dark:bg-emerald-400" />
           ) : (
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400">en ligne</p>
+            <p className="text-[10px] text-emerald-600 dark:text-emerald-400">{t("chat.header.online")}</p>
           )}
         </div>
-        <button onClick={() => setGiftOpen(true)} className="h-9 w-9 grid place-items-center rounded-full hover:v-surface-2 text-fuchsia-500 dark:text-fuchsia-300 transition shrink-0" aria-label="Offrir un cadeau">
+        <button onClick={() => setGiftOpen(true)} className="h-9 w-9 grid place-items-center rounded-full hover:v-surface-2 text-fuchsia-500 dark:text-fuchsia-300 transition shrink-0" aria-label={t("chat.header.giftAria")}>
           <Gift className="h-5 w-5" />
         </button>
       </div>
@@ -361,7 +363,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         {state?.timeline.length === 0 && (
           <div className="text-center py-10">
             <div className="inline-block rounded-2xl bg-amber-500/15 px-4 py-2.5 text-xs text-amber-800 dark:text-amber-100/80">
-              🔒 Les messages sont sécurisés. Sois toi-même. 👋
+              {t("chat.empty.secure")}
             </div>
           </div>
         )}
@@ -393,9 +395,9 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
       {locked && (
         <div className="mx-3 mb-2 rounded-2xl bg-amber-400/15 ring-1 ring-amber-300/40 p-3 text-center">
           <Lock className="h-5 w-5 mx-auto mb-1 text-amber-500 dark:text-amber-300" />
-          <p className="text-xs text-amber-800 dark:text-amber-100 font-medium">Anti-spam actif</p>
+          <p className="text-xs text-amber-800 dark:text-amber-100 font-medium">{t("chat.antiSpam.title")}</p>
           <p className="text-[11px] text-amber-800/85 dark:text-amber-100/85 mt-0.5">
-            Tu as envoyé tes {state?.maxMessagesBeforeReply ?? 3} messages. Attends une réponse — ou perç̧e avec le Boost.
+            {t("chat.antiSpam.body", { n: state?.maxMessagesBeforeReply ?? 3 })}
           </p>
           <div className="mt-2 flex items-center justify-center gap-2">
             <button
@@ -404,15 +406,15 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
                 boost ? "bg-gradient-to-r from-amber-300 to-amber-500 text-black" : "bg-amber-300 text-black hover:bg-amber-400"
               }`}
             >
-              ⚡ Booster (10 💎)
+              {t("chat.antiSpam.boostCta")}
             </button>
             <button onClick={() => setGiftOpen(true)} className="h-8 px-3 rounded-full bg-amber-400/25 text-amber-900 dark:text-amber-100 text-xs font-bold hover:bg-amber-400/35 transition">
-              🎁 Cadeau
+              {t("chat.antiSpam.giftCta")}
             </button>
           </div>
           {boost && (
             <p className="text-[10px] text-amber-700 dark:text-amber-200/80 mt-2">
-              ✅ Ton prochain message passera et sera épinglé en haut de sa boîte.
+              {t("chat.antiSpam.boostArmed")}
             </p>
           )}
         </div>
@@ -427,8 +429,8 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
             nudge={{
               id: `message-boost-quiet-${matchId}`,
               emoji: "⚡",
-              text: `${otherName || "Ton match"} ne t'a pas encore répondu — un message boosté repasse en tête de sa boîte.`,
-              ctaLabel: "Booster (10 💎)",
+              text: t("chat.nudge.quiet", { name: otherName || t("chat.matchFallbackCap") }),
+              ctaLabel: t("chat.boost.cta"),
               onCta: () => { setBoost(true); setBoostInfo(true); },
               tone: "gold",
             }}
@@ -448,7 +450,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
             whileTap={{ scale: 0.95 }}
             className="w-full h-9 rounded-xl v-surface-1 ring-1 ring-[var(--v-divider)] text-xs v-fg-muted flex items-center justify-center gap-1.5 hover:v-surface-2"
           >
-            <Wand2 className="h-3.5 w-3.5 text-accent" /> Icebreaker IA · 3 <GemIcon className="h-3 w-3" />
+            <Wand2 className="h-3.5 w-3.5 text-accent" /> {t("chat.icebreaker.label")} · 3 <GemIcon className="h-3 w-3" />
           </motion.button>
         </div>
       )}
@@ -476,20 +478,20 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
                 </motion.span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-amber-800 dark:text-amber-100">
-                    Message boosté
+                    {t("chat.boost.title")}
                     {boostInfo && (
                       <span className="ml-1.5 text-[10px] font-normal text-amber-800/70 dark:text-amber-100/60">
-                        · mis en haut de sa boîte ⚡ 2h
+                        {t("chat.boost.subtitle")}
                       </span>
                     )}
                   </p>
                   {boostInfo ? (
                     <p className="text-[10px] text-amber-800/70 dark:text-amber-100/70 mt-0.5 leading-relaxed">
-                      Ton message sera mis en <span className="text-amber-600 dark:text-amber-300 font-medium">haut de sa boîte de réception</span> avec un badge ⚡ visible pendant 2h.
+                      {t("chat.boost.fullBefore")} <span className="text-amber-600 dark:text-amber-300 font-medium">{t("chat.boost.fullHighlight")}</span> {t("chat.boost.fullAfter")}
                     </p>
                   ) : (
                     <p className="text-[10px] text-amber-800/60 dark:text-amber-100/50">
-                      Remonte en haut + notification visuelle
+                      {t("chat.boost.compact")}
                     </p>
                   )}
                 </div>
@@ -502,7 +504,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
                       onClick={() => setBoostInfo(false)}
                       className="text-[9px] bg-amber-400/30 text-amber-800 dark:text-amber-100 rounded-full px-2 py-0.5 hover:bg-amber-400/40 transition"
                     >
-                      Compris
+                      {t("chat.boost.gotIt")}
                     </button>
                   )}
                 </div>
@@ -519,7 +521,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
             <button
               onClick={() => setEmojiOpen(true)}
               className="h-10 w-10 grid place-items-center rounded-full shrink-0 v-fg-muted hover:v-fg transition"
-              aria-label="Emojis"
+              aria-label={t("chat.input.emojisAria")}
             >
               <Smile className="h-5 w-5" />
             </button>
@@ -541,8 +543,8 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
                   ? "bg-gradient-to-br from-amber-300 to-amber-500 text-black"
                   : "v-fg-muted hover:text-amber-500 dark:hover:text-amber-300 hover:bg-amber-400/10"
               }`}
-              aria-label="Booster ce message (10 Vibes)"
-              title="Booster — 10 Vibes"
+              aria-label={t("chat.boost.confirm")}
+              title={t("chat.boost.titleAttr")}
             >
               <motion.div
                 animate={boost ? { rotate: [0, -15, 15, 0] } : {}}
@@ -574,7 +576,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
                 disabled={locked && !boost}
-                placeholder={locked && !boost ? "En attente…" : boost ? "✨ Message boosté…" : "Écris un message…"}
+                placeholder={locked && !boost ? t("chat.input.placeholderLocked") : boost ? t("chat.input.placeholderBoosted") : t("chat.input.placeholder")}
                 className={`w-full h-10 rounded-full px-4 pr-10 text-sm placeholder:v-fg-muted outline-none ring-1 transition disabled:opacity-50 ${
                   boost
                     ? "bg-amber-400/10 ring-amber-400/60 dark:ring-amber-300/40 focus:ring-amber-500 dark:focus:ring-amber-300/60"
@@ -593,7 +595,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
                     ? "bg-gradient-to-br from-amber-400 to-orange-500"
                     : "vibe-gradient"
                 }`}
-                aria-label="Envoyer"
+                aria-label={t("chat.input.sendAria")}
               >
                 {sending ? (
                   <motion.div
@@ -610,7 +612,7 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
                 onClick={() => setVoiceMode(true)}
                 disabled={locked}
                 className="h-10 w-10 grid place-items-center rounded-full v-fg-muted hover:v-fg transition disabled:opacity-40 shrink-0"
-                aria-label="Enregistrer un vocal"
+                aria-label={t("chat.input.micAria")}
               >
                 <Mic className="h-5 w-5" />
               </button>
@@ -619,7 +621,9 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
         )}
         {state && !state.unlocked && state.isInitiator && state.remainingBeforeLock > 0 && !voiceMode && (
           <p className="text-[10px] v-fg-muted text-center mt-1">
-            Reste {state.remainingBeforeLock} message{state.remainingBeforeLock > 1 ? "s" : ""} sur {state.maxMessagesBeforeReply ?? 3} avant blocage anti-spam
+            {state.remainingBeforeLock > 1
+              ? t("chat.input.remaining.many", { n: state.remainingBeforeLock, max: state.maxMessagesBeforeReply ?? 3 })
+              : t("chat.input.remaining.one", { n: state.remainingBeforeLock, max: state.maxMessagesBeforeReply ?? 3 })}
           </p>
         )}
       </div>
@@ -642,21 +646,21 @@ export function ChatScreen({ matchId, initialName, initialPoster, onBack }: { ma
               className="absolute bottom-0 inset-x-0 z-50 rounded-t-3xl v-surface-solid ring-1 ring-[var(--v-divider)] p-4 pb-6"
             >
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-display font-bold text-lg">Offrir un cadeau 🎁</h3>
+                <h3 className="font-display font-bold text-lg">{t("chat.gift.trayTitle")}</h3>
                 <button onClick={() => setGiftOpen(false)} className="h-8 w-8 grid place-items-center rounded-full hover:v-surface-2">
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <p className="text-[11px] v-fg-muted mb-2">Le destinataire découvrira le cadeau en l'ouvrant. 70% de la valeur lui est créditée.</p>
+              <p className="text-[11px] v-fg-muted mb-2">{t("chat.gift.trayHint")}</p>
               <input
                 value={giftNote} onChange={(e) => setGiftNote(e.target.value)} maxLength={200}
-                placeholder="Ajoute un petit mot (optionnel)…"
+                placeholder={t("chat.gift.notePlaceholder")}
                 className="w-full h-9 rounded-xl v-surface-1 ring-1 ring-[var(--v-divider)] px-3 text-sm placeholder:v-fg-muted outline-none focus:ring-vibe-purple/50 mb-3"
               />
               <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto no-scrollbar">
                 {GIFTS.map((g) => (
                   <button key={g.key} onClick={() => sendGift(g.key)} className="relative flex flex-col items-center gap-1 rounded-2xl v-surface-1 ring-1 ring-[var(--v-divider)] p-2 hover:v-surface-2 active:scale-95 transition">
-                    {g.popular && <span className="absolute -top-1.5 -right-1.5 text-[8px] bg-accent text-black font-bold rounded-full px-1 py-0.5">HOT</span>}
+                    {g.popular && <span className="absolute -top-1.5 -right-1.5 text-[8px] bg-accent text-black font-bold rounded-full px-1 py-0.5">{t("chat.gift.hot")}</span>}
                     <span className="text-2xl">{g.emoji}</span>
                     <span className="text-[10px] v-fg text-center leading-tight">{g.name}</span>
                     <span className="text-[9px] text-fuchsia-600 dark:text-fuchsia-300 flex items-center gap-0.5"><GemIcon className="h-2.5 w-2.5" /> {g.gemCost}</span>
@@ -752,6 +756,7 @@ function MessageBubble({ item, onListened, animateIn = true }: { item: Extract<T
 
 // ===== GIFT BUBBLE =====
 function GiftBubble({ item, onOpen, animateIn = true }: { item: Extract<TimelineItem, { kind: "gift" }>; onOpen: () => void; animateIn?: boolean }) {
+  const { t } = useI18n();
   const time = new Date(item.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   return (
     <motion.div
@@ -762,13 +767,13 @@ function GiftBubble({ item, onOpen, animateIn = true }: { item: Extract<Timeline
       {item.mine ? (
         <div className="max-w-[78%] rounded-2xl bg-gradient-to-br from-vibe-purple to-vibe-pink/80 text-white rounded-br-md px-3 py-2 flex items-center gap-2">
           <span className="text-2xl">{item.giftEmoji}</span>
-          <div><p className="text-[10px] uppercase tracking-wide text-white/70">Cadeau envoyé</p><p className="text-sm font-semibold">{item.giftName}</p></div>
+          <div><p className="text-[10px] uppercase tracking-wide text-white/70">{t("chat.gift.sent")}</p><p className="text-sm font-semibold">{item.giftName}</p></div>
           <span className="text-[9px] text-white/70 ml-2">{time}</span>
         </div>
       ) : item.opened ? (
         <div className="max-w-[78%] rounded-2xl v-surface-2 v-fg rounded-bl-md px-3 py-2 flex items-center gap-2">
           <span className="text-2xl">{item.giftEmoji}</span>
-          <div><p className="text-[10px] uppercase tracking-wide v-fg-muted">Cadeau de {item.senderName}</p><p className="text-sm font-semibold">{item.giftName}</p></div>
+          <div><p className="text-[10px] uppercase tracking-wide v-fg-muted">{t("chat.gift.fromName", { name: item.senderName })}</p><p className="text-sm font-semibold">{item.giftName}</p></div>
           <span className="text-[9px] v-fg-muted ml-2">{time}</span>
         </div>
       ) : (
@@ -780,9 +785,9 @@ function GiftBubble({ item, onOpen, animateIn = true }: { item: Extract<Timeline
           <span className="absolute inset-0 -translate-x-full animate-[shimmer_2.5s_infinite] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
           <motion.div animate={{ rotate: [0, 8, -8, 0] }} transition={{ duration: 3, repeat: Infinity }} className="relative text-3xl">🎁</motion.div>
           <div className="relative text-left">
-            <p className="text-[10px] uppercase tracking-wide text-white/70">{item.senderName} t'offre</p>
-            <p className="text-sm font-bold text-white">Un cadeau surprise</p>
-            <p className="text-[10px] text-white/70 mt-0.5">👆 Tape pour ouvrir</p>
+            <p className="text-[10px] uppercase tracking-wide text-white/70">{t("chat.gift.offersYou", { name: item.senderName })}</p>
+            <p className="text-sm font-bold text-white">{t("chat.gift.surprise")}</p>
+            <p className="text-[10px] text-white/70 mt-0.5">{t("chat.gift.tapToOpen")}</p>
           </div>
           <span className="relative text-[9px] text-white/70 ml-2">{time}</span>
         </motion.button>

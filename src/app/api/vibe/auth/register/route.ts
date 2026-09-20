@@ -11,6 +11,7 @@ import { setCurrentUser, hashPin } from "@/lib/vibe/session";
 import { detectCurrencyFromCountry, FALLBACK_RATES } from "@/lib/vibe/constants";
 import { getSettings } from "@/lib/vibe/settings";
 import { notifyWelcome } from "@/lib/vibe/notify";
+import { resolveRequestLang } from "@/lib/vibe/i18n/server";
 
 export async function POST(req: Request) {
   const { phone, pin } = await req.json().catch(() => ({} as any));
@@ -20,6 +21,10 @@ export async function POST(req: Request) {
   const normalized = phone.trim();
   const country = req.headers.get("x-vercel-ip-country") || req.headers.get("x-country") || "CM";
   const currency = detectCurrencyFromCountry(country);
+  // Langue UI du nouveau compte : choix explicite du visiteur (cookie) ou
+  // langue détectée (Accept-Language) — les notifications seront créées dans
+  // cette langue dès l'inscription.
+  const lang = resolveRequestLang(req);
 
   // Parallelize independent queries: user lookup + settings + rates.
   const [existing, { welcomeGems }, rateRows] = await Promise.all([
@@ -55,6 +60,7 @@ export async function POST(req: Request) {
         phone: normalized,
         pinHash,
         currency,
+        lang,
         country: country ?? null,
         gems: welcomeGems,
         freeGems: welcomeGems, // welcome bonus is free (not usable for gifts)
@@ -71,7 +77,7 @@ export async function POST(req: Request) {
 
   // Fire-and-forget: welcome notification does not block the response.
   if (gaveWelcome) {
-    notifyWelcome(user.id).catch(() => {});
+    notifyWelcome(user.id, welcomeGems).catch(() => {});
   }
 
   // Build rates from pre-fetched rows.
@@ -87,6 +93,7 @@ export async function POST(req: Request) {
       name: user.name,
       role: user.role,
       currency: user.currency,
+      lang: user.lang,
       country: user.country,
       gems: user.gems,
       freeGems: user.freeGems,

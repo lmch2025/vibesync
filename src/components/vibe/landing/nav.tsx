@@ -3,18 +3,22 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, ShieldCheck, Rocket, X } from "lucide-react";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
+import { LangSwitcher } from "@/components/vibe/lang-switcher";
+import { useI18n } from "@/lib/vibe/i18n";
 import { cn } from "@/lib/utils";
 
-const LINKS = [
-  { href: "#concept", label: "Concept" },
-  { href: "#fonctionnalites", label: "Fonctionnalités" },
-  { href: "#tarifs", label: "Tarifs" },
-  { href: "#faq", label: "FAQ" },
-];
-
 export function Nav({ onEnterApp, onEnterAdmin }: { onEnterApp: () => void; onEnterAdmin: () => void }) {
+  const { t } = useI18n();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Liens d'ancrage — libellés localisés (les href restent des ancres stables).
+  const LINKS = [
+    { href: "#concept", label: t("landing.nav.concept") },
+    { href: "#fonctionnalites", label: t("landing.nav.features") },
+    { href: "#tarifs", label: t("landing.nav.pricing") },
+    { href: "#faq", label: t("landing.nav.faq") },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -55,12 +59,13 @@ export function Nav({ onEnterApp, onEnterAdmin }: { onEnterApp: () => void; onEn
         </nav>
 
         <div className="flex items-center gap-2">
+          <LangSwitcher className="hidden sm:inline-flex" withGlobe />
           <button
             onClick={onEnterAdmin}
             className="hidden lg:inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ring-1 ring-border bg-card/60 hover:bg-accent/10 transition"
           >
             <ShieldCheck className="h-3.5 w-3.5 text-vibe-purple" />
-            Espace Admin
+            {t("landing.nav.admin")}
           </button>
           <motion.button
             onClick={onEnterApp}
@@ -69,14 +74,14 @@ export function Nav({ onEnterApp, onEnterAdmin }: { onEnterApp: () => void; onEn
             className="hidden sm:inline-flex items-center gap-1.5 rounded-full vibe-gradient vibe-glow px-4 py-2 text-sm font-semibold text-white"
           >
             <Rocket className="h-3.5 w-3.5" />
-            Rejoins l'expérience
+            {t("landing.nav.cta")}
           </motion.button>
 
           {/* Mobile hamburger */}
           <button
             className="md:hidden grid place-items-center h-9 w-9 rounded-full ring-1 ring-border bg-card/60"
             onClick={() => setMobileOpen(true)}
-            aria-label="Ouvrir le menu"
+            aria-label={t("landing.nav.openMenu")}
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -103,13 +108,16 @@ export function Nav({ onEnterApp, onEnterAdmin }: { onEnterApp: () => void; onEn
             >
               <div className="flex items-center justify-between">
                 <VibeLogo />
-                <button
-                  className="grid place-items-center h-9 w-9 rounded-full ring-1 ring-border"
-                  onClick={() => setMobileOpen(false)}
-                  aria-label="Fermer le menu"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <LangSwitcher />
+                  <button
+                    className="grid place-items-center h-9 w-9 rounded-full ring-1 ring-border"
+                    onClick={() => setMobileOpen(false)}
+                    aria-label={t("landing.nav.closeMenu")}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <nav className="flex flex-col gap-1">
                 {LINKS.map((l) => (
@@ -132,7 +140,7 @@ export function Nav({ onEnterApp, onEnterAdmin }: { onEnterApp: () => void; onEn
                   className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold ring-1 ring-border bg-card/60"
                 >
                   <ShieldCheck className="h-4 w-4 text-vibe-purple" />
-                  Espace Admin
+                  {t("landing.nav.admin")}
                 </button>
                 <button
                   onClick={() => {
@@ -142,7 +150,7 @@ export function Nav({ onEnterApp, onEnterAdmin }: { onEnterApp: () => void; onEn
                   className="inline-flex items-center justify-center gap-2 rounded-full vibe-gradient vibe-glow px-4 py-3 text-sm font-semibold text-white"
                 >
                   <Rocket className="h-4 w-4" />
-                  Rejoins l'expérience
+                  {t("landing.nav.cta")}
                 </button>
               </div>
             </motion.div>

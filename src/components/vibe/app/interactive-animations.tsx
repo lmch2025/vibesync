@@ -596,7 +596,7 @@ export function TypingDots({
     <span
       className={`inline-flex items-center gap-1.5 ${className}`}
       role="status"
-      aria-label={label ?? "En train d'écrire"}
+      aria-label={label ?? "Typing"}
     >
       {label && <span className="text-[11px] opacity-70">{label}</span>}
       <span className="inline-flex items-center gap-[3px]">

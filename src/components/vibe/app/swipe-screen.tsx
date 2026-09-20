@@ -19,6 +19,7 @@ import { PremiumActionsSheet } from "./premium-actions-sheet";
 import { SmartNudgeBanner, useNudgeSlot, type SmartNudge } from "./smart-nudge";
 import { vibeToast } from "./center-feedback";
 import { useVibe } from "@/lib/vibe/store";
+import { useI18n } from "@/lib/vibe/i18n";
 import { GEM_ACTIONS, GIFTS, VIBE_QUESTIONS } from "@/lib/vibe/constants";
 import { useCurrency } from "@/lib/vibe/use-currency";
 import { toast } from "sonner";
@@ -70,6 +71,7 @@ export function SwipeScreen({
   const me = useVibe((s) => s.me);
   const patchMe = useVibe((s) => s.patchMe);
   const requireVibes = useVibe((s) => s.requireVibes);
+  const { t, apiErr } = useI18n();
   const [deck, setDeck] = useState<Profile[]>([]);
   const [history, setHistory] = useState<{ profile: Profile; direction: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -188,8 +190,8 @@ export function SwipeScreen({
         {
           id: "low-balance-recharge",
           emoji: "💎",
-          text: "Ton stock de Vibes est presque à sec — garde ton élan pour les Super-Likes et cadeaux.",
-          ctaLabel: "Recharger",
+          text: t("swipe.nudge.lowBalance.text"),
+          ctaLabel: t("swipe.nudge.lowBalance.cta"),
           onCta: onOpenWallet,
         },
         "day",
@@ -201,8 +203,8 @@ export function SwipeScreen({
         {
           id: "superlike-vibe",
           emoji: "⭐",
-          text: `Ta vibe matche avec ${topCard.displayName} — un Super-Like te place en haut de sa file.`,
-          ctaLabel: "Super-Liker (5 💎)",
+          text: t("swipe.nudge.superlikeVibe.text", { name: topCard.displayName }),
+          ctaLabel: t("swipe.nudge.superlikeVibe.cta"),
           onCta: () => swipe(topCard, "superlike"),
         },
         "session",
@@ -212,8 +214,8 @@ export function SwipeScreen({
         {
           id: "compat-check",
           emoji: "🧬",
-          text: `${topCard.displayName} garde son mystère — vérifie votre compatibilité avant de swiper.`,
-          ctaLabel: "Analyser (20 💎)",
+          text: t("swipe.nudge.compatCheck.text", { name: topCard.displayName }),
+          ctaLabel: t("swipe.nudge.compatCheck.cta"),
           onCta: () => setCardActions(topCard),
           tone: "cool",
         },
@@ -227,8 +229,8 @@ export function SwipeScreen({
         {
           id: "vibe-radar-evening",
           emoji: "📍",
-          text: "C'est l'heure où le monde est en ligne — vois qui est près de toi en ce moment.",
-          ctaLabel: "Radar (25 💎)",
+          text: t("swipe.nudge.eveningRadar.text"),
+          ctaLabel: t("swipe.nudge.eveningRadar.cta"),
           onCta: openPremium,
           tone: "cool",
         },
@@ -242,8 +244,8 @@ export function SwipeScreen({
       {
         id: "gift-standout",
         emoji: "🎁",
-        text: `Sors du lot auprès de ${topCard.displayName} — un cadeau attire l'œil avant même le premier message.`,
-        ctaLabel: "Offrir (dès 10 💎)",
+        text: t("swipe.nudge.giftStandout.text", { name: topCard.displayName }),
+        ctaLabel: t("swipe.nudge.giftStandout.cta"),
         onCta: () => setGiftTarget(topCard),
         tone: "gold",
       },
@@ -263,8 +265,8 @@ export function SwipeScreen({
             {
               id: "see-likes-tease",
               emoji: "👁️",
-              text: "Quelqu'un t'a liké récemment — dévoile qui.",
-              ctaLabel: "Dévoiler (20 💎)",
+              text: t("swipe.nudge.seeLikes.text"),
+              ctaLabel: t("swipe.nudge.seeLikes.cta"),
               onCta: openPremium,
               tone: "gold",
             },
@@ -294,8 +296,8 @@ export function SwipeScreen({
             {
               id: "rewind-rescue",
               emoji: "↩️",
-              text: `${profile.displayName} était très compatible… un Rewind le/la ramène dans ton deck.`,
-              ctaLabel: "Annuler (2 💎)",
+              text: t("swipe.nudge.rewindRescue.text", { name: profile.displayName }),
+              ctaLabel: t("swipe.nudge.rewindRescue.cta"),
               onCta: () => rewind(),
             },
             "session",
@@ -307,8 +309,8 @@ export function SwipeScreen({
             {
               id: "time-freeze-passes",
               emoji: "❄️",
-              text: "Trois passes d'affilée ? Aperçois les 3 prochains profils avant de décider.",
-              ctaLabel: "Apercevoir (45 💎)",
+              text: t("swipe.nudge.timeFreeze.text"),
+              ctaLabel: t("swipe.nudge.timeFreeze.cta"),
               onCta: () => window.dispatchEvent(new Event("vivilov:open-premium-contextual")),
               tone: "cool",
             },
@@ -328,8 +330,8 @@ export function SwipeScreen({
           {
             id: "boost-like-streak",
             emoji: "🚀",
-            text: `${likeStreakRef.current} likes sans match ? Les profils Boostés sont vus en premier — passe devant tout le monde.`,
-            ctaLabel: "Booster (50 💎)",
+            text: t("swipe.nudge.boostStreak.text", { n: likeStreakRef.current }),
+            ctaLabel: t("swipe.nudge.boostStreak.cta"),
             onCta: () => window.dispatchEvent(new Event("vivilov:open-premium-contextual")),
             tone: "gold",
           },
@@ -343,8 +345,8 @@ export function SwipeScreen({
           {
             id: "spotlight-visibility",
             emoji: "🔦",
-            text: "Tu swipes beaucoup — fais-toi voir : ton profil en tête de 20 decks pendant 1h.",
-            ctaLabel: "Briller (40 💎)",
+            text: t("swipe.nudge.spotlight.text"),
+            ctaLabel: t("swipe.nudge.spotlight.cta"),
             onCta: () => window.dispatchEvent(new Event("vivilov:open-premium-contextual")),
             tone: "gold",
           },
@@ -360,7 +362,7 @@ export function SwipeScreen({
         });
         const data: SwipeResult = await res.json();
         if (!res.ok) {
-          if (data.locked) toast.info(data.error);
+          if (data.locked) toast.info(apiErr(data.error));
           return;
         }
         if (data.gems !== undefined) patchMe({ gems: data.gems, freeGems: data.freeGems });
@@ -374,7 +376,7 @@ export function SwipeScreen({
       }
     };
     if (cost > 0) {
-      requireVibes(cost, "Super-Like (5 Vibes)", doSwipe);
+      requireVibes(cost, t("swipe.cost.superlike"), doSwipe);
     } else {
       doSwipe();
     }
@@ -382,10 +384,10 @@ export function SwipeScreen({
 
   function rewind() {
     if (history.length === 0) {
-      toast.info("Rien à annuler");
+      toast.info(t("swipe.nothingToRewind"));
       return;
     }
-    requireVibes(GEM_ACTIONS.rewind, "Rewind (2 Vibes)", async () => {
+    requireVibes(GEM_ACTIONS.rewind, t("swipe.cost.rewind"), async () => {
       try {
         const res = await fetch("/api/vibe/gems/spend", {
           method: "POST",
@@ -400,11 +402,11 @@ export function SwipeScreen({
         setDeck((d) => [last.profile, ...d]);
         vibeToast({
           emoji: "↩️",
-          title: "Swipe annulé",
-          sub: `${last.profile.displayName} est de retour dans ton deck`,
+          title: t("swipe.rewind.title"),
+          sub: t("swipe.rewind.sub", { name: last.profile.displayName }),
         });
       } catch (e: any) {
-        toast.error(e.message || "Erreur");
+        toast.error(apiErr(e.message));
       }
     });
   }
@@ -445,13 +447,13 @@ export function SwipeScreen({
         setGiftBurst((k) => k + 1);
         vibeToast({
           emoji: gift.emoji,
-          title: `${gift.name} pour ${data.targetName ?? target.displayName}`,
-          sub: "Notification envoyée 🎁",
+          title: t("swipe.giftSent.title", { gift: gift.name, name: data.targetName ?? target.displayName }),
+          sub: t("swipe.giftSent.sub"),
         });
         setGiftTarget(null);
         setGiftNote("");
       } catch (e: any) {
-        toast.error(e.message || "Erreur");
+        toast.error(apiErr(e.message));
       }
     });
   }
@@ -463,12 +465,12 @@ export function SwipeScreen({
       {/* top bar */}
       <div className="absolute top-9 inset-x-0 z-20 flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-2">
-          <span className="font-display font-bold text-lg v-text-gradient">Découvrir</span>
+          <span className="font-display font-bold text-lg v-text-gradient">{t("swipe.title")}</span>
           {/* Discreet filter toggle — a small dot signals active filters */}
           <motion.button
             onClick={() => { sfx.play("pop"); setFilterOpen(true); }}
             whileTap={{ scale: 0.85 }}
-            aria-label="Filtres de découverte"
+            aria-label={t("swipe.filters.title")}
             className="relative h-8 w-8 grid place-items-center rounded-full v-surface-1 ring-1 ring-[var(--v-divider)] v-fg-muted hover:v-fg hover:v-surface-2 transition"
           >
             <SlidersHorizontal className="h-4 w-4" />
@@ -488,12 +490,12 @@ export function SwipeScreen({
                 const leftH = passportUntil
                   ? Math.max(1, Math.round((new Date(passportUntil).getTime() - Date.now()) / 3600000))
                   : null;
-                toast.info(`✈️ Passport actif — tu découvres ${passportCity}${leftH ? ` · encore ${leftH} h` : ""}`, {
-                  description: "Ta destination et son compte à rebours restent visibles dans Profil → Actions premium.",
+                toast.info(`${t("swipe.passport.toastTitle", { city: passportCity })}${leftH ? t("swipe.passport.hoursLeft", { n: leftH }) : ""}`, {
+                  description: t("swipe.passport.toastDesc"),
                   duration: 5000,
                 });
               }}
-              aria-label="Passport actif — afficher la destination"
+              aria-label={t("swipe.passport.chipAria")}
               className="inline-flex items-center gap-1 rounded-full vibe-gradient-soft ring-1 ring-accent/30 px-2.5 py-1 text-[10px] font-bold text-vibe-purple dark:text-vibe-pink hover:ring-accent/60 transition"
             >
               <Plane className="h-3 w-3" /> Passport
@@ -551,7 +553,7 @@ export function SwipeScreen({
       {/* deck */}
       <div className="absolute inset-0 pt-20 pb-44 px-4">
         {loading ? (
-          <div className="relative h-full w-full" aria-busy="true" aria-label="Chargement des profils">
+          <div className="relative h-full w-full" aria-busy="true" aria-label={t("swipe.loading")}>
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
@@ -610,10 +612,10 @@ export function SwipeScreen({
       {/* action bar — sits above the bottom nav */}
       <div className="absolute bottom-[76px] inset-x-0 z-20 pb-1 pt-2 v-fade-bottom">
         <div className="flex items-center justify-center gap-3">
-          <ActionButton onClick={rewind} label="Rewind" cost={GEM_ACTIONS.rewind} tone="amber">
+          <ActionButton onClick={rewind} label={t("swipe.action.rewind")} cost={GEM_ACTIONS.rewind} tone="amber">
             <RotateCcw className="h-5 w-5" />
           </ActionButton>
-          <ActionButton onClick={() => top && swipe(top, "pass")} label="Pass" tone="red" big>
+          <ActionButton onClick={() => top && swipe(top, "pass")} label={t("swipe.action.pass")} tone="red" big>
             <X className="h-7 w-7" />
           </ActionButton>
           <div className="relative">
@@ -622,7 +624,7 @@ export function SwipeScreen({
                 if (!top) return;
                 setGiftTarget(top);
               }}
-              label="Cadeau"
+              label={t("swipe.action.gift")}
               tone="rose"
               big
               sound="chime"
@@ -638,7 +640,7 @@ export function SwipeScreen({
                 setLikeBurst((k) => k + 1);
                 swipe(top, "like");
               }}
-              label="Like"
+              label={t("swipe.action.like")}
               tone="green"
               big
             >
@@ -664,6 +666,7 @@ function SwipeCard({
   /// Opens the detailed profile view — only ever provided for the top card.
   onOpenDetail?: () => void;
 }) {
+  const { t } = useI18n();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-18, 18]);
@@ -723,10 +726,10 @@ function SwipeCard({
   // Premium visibility chips (from the deck API — each flag is a real,
   // paid premium effect, not decoration).
   const chips: { emoji: string; label: string; cls: string }[] = [];
-  if (profile.goldenHeart) chips.push({ emoji: "💛", label: "Cœur d'Or", cls: "bg-amber-400/25 ring-amber-300/60 text-amber-100" });
-  if (profile.spotlight) chips.push({ emoji: "🔦", label: "Projecteur", cls: "bg-fuchsia-500/25 ring-fuchsia-300/50 text-fuchsia-100" });
-  if (profile.boosted) chips.push({ emoji: "🚀", label: "Boost", cls: "bg-orange-500/25 ring-orange-300/50 text-orange-100" });
-  if (profile.passport) chips.push({ emoji: "✈️", label: "Passport", cls: "bg-sky-500/25 ring-sky-300/50 text-sky-100" });
+  if (profile.goldenHeart) chips.push({ emoji: "💛", label: t("swipe.chip.goldenHeart"), cls: "bg-amber-400/25 ring-amber-300/60 text-amber-100" });
+  if (profile.spotlight) chips.push({ emoji: "🔦", label: t("swipe.chip.spotlight"), cls: "bg-fuchsia-500/25 ring-fuchsia-300/50 text-fuchsia-100" });
+  if (profile.boosted) chips.push({ emoji: "🚀", label: t("swipe.chip.boost"), cls: "bg-orange-500/25 ring-orange-300/50 text-orange-100" });
+  if (profile.passport) chips.push({ emoji: "✈️", label: t("swipe.chip.passport"), cls: "bg-sky-500/25 ring-sky-300/50 text-sky-100" });
 
   return (
     <motion.div
@@ -761,7 +764,7 @@ function SwipeCard({
         ) : (
           <img
             src={profile.photos[0]}
-            alt={`Photo de ${profile.displayName}`}
+            alt={t("swipe.card.photoAlt", { name: profile.displayName })}
             draggable={false}
             className="absolute inset-0 w-full h-full object-cover select-none"
           />
@@ -771,13 +774,13 @@ function SwipeCard({
 
       {/* stamps */}
       <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-6 -rotate-12">
-        <span className="text-4xl font-black text-green-400 ring-4 ring-green-400 rounded-xl px-3 py-1">LIKE</span>
+        <span className="text-4xl font-black text-green-400 ring-4 ring-green-400 rounded-xl px-3 py-1">{t("swipe.stamp.like")}</span>
       </motion.div>
       <motion.div style={{ opacity: nopeOpacity }} className="absolute top-8 right-6 rotate-12">
-        <span className="text-4xl font-black text-red-400 ring-4 ring-red-400 rounded-xl px-3 py-1">NOPE</span>
+        <span className="text-4xl font-black text-red-400 ring-4 ring-red-400 rounded-xl px-3 py-1">{t("swipe.stamp.nope")}</span>
       </motion.div>
       <motion.div style={{ opacity: superOpacity }} className="absolute top-10 left-1/2 -translate-x-1/2">
-        <span className="text-3xl font-black text-cyan-300 ring-4 ring-cyan-300 rounded-xl px-3 py-1">SUPER</span>
+        <span className="text-3xl font-black text-cyan-300 ring-4 ring-cyan-300 rounded-xl px-3 py-1">{t("swipe.stamp.super")}</span>
       </motion.div>
 
       {/* verified badge — the only chip over the video, kept minimal so the
@@ -809,7 +812,7 @@ function SwipeCard({
               onPointerDown={(e) => e.stopPropagation()}
               onPointerUp={(e) => e.stopPropagation()}
               whileTap={{ scale: 0.88 }}
-              aria-label="Voir le profil détaillé"
+              aria-label={t("swipe.card.openDetailAria")}
               className="h-8 w-8 rounded-full glass-dark grid place-items-center text-white/90 hover:text-white opacity-80 hover:opacity-100 transition shrink-0 self-start"
             >
               <Maximize2 className="h-3.5 w-3.5" />
@@ -830,7 +833,7 @@ function SwipeCard({
           </div>
         )}
         <p className="text-xs text-white/70 mt-2 line-clamp-2">{profile.bio}</p>
-        <p className="text-[10px] text-white/70 mt-2">Glisse ← pass · → like · ↑ super-like</p>
+        <p className="text-[10px] text-white/70 mt-2">{t("swipe.card.gestureHint")}</p>
       </div>
     </motion.div>
   );
@@ -884,18 +887,19 @@ function ActionButton({
 }
 
 function EmptyDeck({ onReload, onPassport }: { onReload: () => void; onPassport: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="h-full grid place-items-center text-center px-6">
       <div>
         <div className="text-5xl mb-3">🎉</div>
-        <h3 className="font-display text-xl font-bold mb-1">C&apos;est tout pour aujourd&apos;hui !</h3>
-        <p className="text-sm v-fg-muted mb-4">Reviens demain ou explore une autre ville avec ton Passport.</p>
+        <h3 className="font-display text-xl font-bold mb-1">{t("swipe.empty.title")}</h3>
+        <p className="text-sm v-fg-muted mb-4">{t("swipe.empty.sub")}</p>
         <div className="flex flex-col gap-2">
           <button onClick={onPassport} className="h-10 px-5 rounded-full vibe-gradient text-white font-semibold text-sm">
-            ✈️ Explorer une autre ville
+            {t("swipe.empty.passportCta")}
           </button>
           <button onClick={onReload} className="h-10 px-5 rounded-full v-surface-1 ring-1 ring-[var(--v-divider)] v-fg-muted font-semibold text-sm hover:v-surface-2 transition">
-            Recharger la file
+            {t("swipe.empty.reload")}
           </button>
         </div>
       </div>
@@ -926,6 +930,7 @@ function GiftTraySheet({
   onSend: (giftKey: string) => void;
   gems: number;
 }) {
+  const { t } = useI18n();
   const { moneyCents } = useCurrency();
 
   return (
@@ -945,7 +950,7 @@ function GiftTraySheet({
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 320, damping: 32 }}
             role="dialog"
-            aria-label={`Offrir un cadeau à ${target.displayName}`}
+            aria-label={t("swipe.giftTray.aria", { name: target.displayName })}
             className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl v-surface-solid v-fg ring-1 ring-(--v-divider) max-h-[78vh] overflow-y-auto no-scrollbar"
           >
             {/* Gradient header — receiver identity + balance */}
@@ -957,10 +962,10 @@ function GiftTraySheet({
                 </span>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-display font-bold text-lg text-white leading-tight">
-                    Offrir un cadeau
+                    {t("swipe.giftTray.title")}
                   </h3>
                   <p className="text-[11px] text-white/80 truncate">
-                    à <span className="font-semibold text-white">{target.displayName}</span>
+                    {t("swipe.giftTray.to")} <span className="font-semibold text-white">{target.displayName}</span>
                     {" · "}
                     {target.city}
                   </p>
@@ -968,15 +973,14 @@ function GiftTraySheet({
                 <motion.button
                   onClick={() => onOpenChange(false)}
                   whileTap={{ scale: 0.88 }}
-                  aria-label="Fermer"
+                  aria-label={t("swipe.giftTray.closeAria")}
                   className="h-8 w-8 grid place-items-center rounded-full bg-white/15 text-white hover:bg-white/25 transition shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </motion.button>
               </div>
               <p className="relative text-[10px] text-white/75 mt-2 leading-relaxed">
-                Il/elle recevra une notification avec ton prénom — un cadeau attire
-                l&apos;œil bien avant le premier message. ✨
+                {t("swipe.giftTray.notice")}
               </p>
               <div className="relative mt-3 flex items-center gap-1.5 rounded-full bg-white/15 ring-1 ring-white/25 px-3 py-1.5 w-fit">
                 <GemIcon className="h-3.5 w-3.5 text-white" />
@@ -991,7 +995,7 @@ function GiftTraySheet({
                 value={note}
                 onChange={(e) => onNoteChange(e.target.value)}
                 maxLength={200}
-                placeholder="Ajoute un petit mot qui accompagnera ton cadeau (optionnel)…"
+                placeholder={t("swipe.giftTray.notePlaceholder")}
                 className="w-full h-10 rounded-xl v-surface-1 ring-1 ring-(--v-divider) px-3 text-sm placeholder:v-fg-muted outline-none focus:ring-vibe-purple/50 mb-3"
               />
               <div className="grid grid-cols-4 gap-2">
@@ -1002,7 +1006,7 @@ function GiftTraySheet({
                       key={g.key}
                       onClick={() => onSend(g.key)}
                       whileTap={{ scale: 0.93 }}
-                      aria-label={`Offrir ${g.name} — ${g.gemCost} Vibes`}
+                      aria-label={t("swipe.giftTray.giftAria", { name: g.name, cost: g.gemCost })}
                       className={`relative flex flex-col items-center gap-1 rounded-2xl v-surface-1 ring-1 ring-(--v-divider) p-2.5 hover:v-surface-2 hover:ring-vibe-purple/40 transition text-center ${
                         affordable ? "" : "opacity-55"
                       }`}
@@ -1020,18 +1024,17 @@ function GiftTraySheet({
                         <GemIcon className="h-2.5 w-2.5" /> {g.gemCost}
                       </span>
                       <span className="text-[8px] text-emerald-600 dark:text-emerald-300/80">
-                        ≈ {moneyCents(g.eurValueCents * 0.7)} pour lui/elle
+                        {t("swipe.giftTray.shareValue", { value: moneyCents(g.eurValueCents * 0.7) })}
                       </span>
                       {!affordable && (
-                        <span className="text-[8px] v-fg-muted">recharge requise</span>
+                        <span className="text-[8px] v-fg-muted">{t("swipe.giftTray.rechargeNeeded")}</span>
                       )}
                     </motion.button>
                   );
                 })}
               </div>
               <p className="text-[10px] v-fg-muted text-center mt-3 leading-relaxed">
-                Les cadeaux s&apos;offrent avec des Vibes achetées (les Vibes gratuites sont
-                réservées aux actions premium). Le destinataire touche 70% de la valeur.
+                {t("swipe.giftTray.footnote")}
               </p>
             </div>
           </motion.div>
@@ -1056,6 +1059,7 @@ function FilterSheet({
 }) {
   const me = useVibe((s) => s.me);
   const patchMe = useVibe((s) => s.patchMe);
+  const { t, apiErr } = useI18n();
   const pref = me?.profile as any;
 
   const [maxDistance, setMaxDistance] = useState<number>(pref?.prefMaxDistance ?? 50);
@@ -1096,24 +1100,24 @@ function FilterSheet({
       }
       sfx.play("success");
       haptic(12);
-      toast.success("Filtres enregistrés", {
-        description: "Ta file de découverte a été mise à jour.",
+      toast.success(t("swipe.filters.saved.title"), {
+        description: t("swipe.filters.saved.desc"),
         duration: 2500,
       });
       onOpenChange(false);
       onSaved();
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      toast.error(apiErr(e.message));
     } finally {
       setSaving(false);
     }
   }
 
   const genderOptions = [
-    { v: "f", l: "Femmes", e: "👩" },
-    { v: "m", l: "Hommes", e: "👨" },
-    { v: "nb", l: "NB", e: "🌈" },
-    { v: "all", l: "Tous", e: "✨" },
+    { v: "f", l: t("swipe.filters.gender.f"), e: "👩" },
+    { v: "m", l: t("swipe.filters.gender.m"), e: "👨" },
+    { v: "nb", l: t("swipe.filters.gender.nb"), e: "🌈" },
+    { v: "all", l: t("swipe.filters.gender.all"), e: "✨" },
   ];
 
   return (
@@ -1134,21 +1138,21 @@ function FilterSheet({
             className="w-full rounded-t-3xl v-surface-solid ring-1 ring-[var(--v-divider)] p-5 pb-8"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
-            aria-label="Filtres de découverte"
+            aria-label={t("swipe.filters.title")}
           >
             {/* grabber */}
             <div className="mx-auto h-1 w-10 rounded-full v-surface-3 mb-4" />
 
-            <h3 className="font-display font-bold text-lg mb-1">Filtres de découverte</h3>
+            <h3 className="font-display font-bold text-lg mb-1">{t("swipe.filters.title")}</h3>
             <p className="text-[11px] v-fg-muted mb-5">
-              Affine les profils recommandés. Les changements s'appliquent immédiatement à ta file.
+              {t("swipe.filters.sub")}
             </p>
 
             {/* Distance */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2.5">
                 <span className="text-sm font-medium flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-accent" /> Distance max
+                  <MapPin className="h-3.5 w-3.5 text-accent" /> {t("swipe.filters.distance")}
                 </span>
                 <span className="text-sm font-bold tabular-nums vibe-text-gradient">{maxDistance} km</span>
               </div>
@@ -1158,7 +1162,7 @@ function FilterSheet({
                 min={1}
                 max={500}
                 step={1}
-                aria-label="Distance maximum"
+                aria-label={t("swipe.filters.distanceAria")}
               />
               <div className="flex justify-between text-[10px] v-fg-muted mt-1.5">
                 <span>1 km</span>
@@ -1170,10 +1174,10 @@ function FilterSheet({
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2.5">
                 <span className="text-sm font-medium flex items-center gap-1.5">
-                  <Star className="h-3.5 w-3.5 text-amber-500 dark:text-amber-300" /> Âge recherché
+                  <Star className="h-3.5 w-3.5 text-amber-500 dark:text-amber-300" /> {t("swipe.filters.age")}
                 </span>
                 <span className="text-sm font-bold tabular-nums vibe-text-gradient">
-                  {ageRange[0]} – {ageRange[1] === 99 ? "99+" : ageRange[1]} ans
+                  {ageRange[0]} – {ageRange[1] === 99 ? "99+" : ageRange[1]} {t("swipe.filters.yearsShort")}
                 </span>
               </div>
               <Slider
@@ -1182,10 +1186,10 @@ function FilterSheet({
                 min={18}
                 max={99}
                 step={1}
-                aria-label="Tranche d'âge"
+                aria-label={t("swipe.filters.ageAria")}
               />
               <div className="flex justify-between text-[10px] v-fg-muted mt-1.5">
-                <span>18 ans</span>
+                <span>18 {t("swipe.filters.yearsShort")}</span>
                 <span>99+</span>
               </div>
             </div>
@@ -1193,7 +1197,7 @@ function FilterSheet({
             {/* Gender preference */}
             <div className="mb-7">
               <span className="text-sm font-medium flex items-center gap-1.5 mb-2.5">
-                <Heart className="h-3.5 w-3.5 text-pink-400" /> Je cherche
+                <Heart className="h-3.5 w-3.5 text-pink-400" /> {t("swipe.filters.lookingFor")}
               </span>
               <div className="grid grid-cols-4 gap-2">
                 {genderOptions.map((g) => (
@@ -1225,7 +1229,7 @@ function FilterSheet({
                 }}
                 className="flex-1 h-12 rounded-2xl v-surface-1 ring-1 ring-[var(--v-divider)] v-fg-muted font-semibold hover:v-surface-2 transition"
               >
-                Tout afficher
+                {t("swipe.filters.showAll")}
               </motion.button>
               <motion.button
                 whileTap={saving ? undefined : { scale: 0.95 }}
@@ -1234,7 +1238,7 @@ function FilterSheet({
                 className="flex-1 h-12 rounded-2xl vibe-gradient text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {saving ? "Enregistrement…" : "Appliquer"}
+                {saving ? t("swipe.filters.saving") : t("swipe.filters.apply")}
               </motion.button>
             </div>
           </motion.div>

@@ -18,6 +18,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import { useI18n } from "@/lib/vibe/i18n";
 import { CountdownRing } from "./countdown-ring";
 import { ConfettiBurst, haptic } from "./interactive-animations";
 import type { BuffType } from "@/lib/vibe/use-active-buffs";
@@ -45,14 +46,15 @@ const BUFF_DURATIONS_MS: Record<BuffType, number> = {
   goldenHeart: 60 * 60 * 1000,
 };
 
-const BUFF_META: Partial<Record<BuffType, { emoji: string; label: string }>> = {
-  boost: { emoji: "🚀", label: "Boost" },
-  spotlight: { emoji: "🔦", label: "Projecteur" },
-  ghostMode: { emoji: "👻", label: "Mode Fantôme" },
-  passport: { emoji: "✈️", label: "Passport" },
-  timeFreeze: { emoji: "❄️", label: "Temps Gelé" },
-  crushAlert: { emoji: "💘", label: "Crush Alert" },
-  goldenHeart: { emoji: "💛", label: "Cœur d'Or" },
+// Métadonnées d'affichage des buffs — labelKey : clé i18n traduite au rendu.
+const BUFF_META: Partial<Record<BuffType, { emoji: string; labelKey: string }>> = {
+  boost: { emoji: "🚀", labelKey: "wallet.action.buff.boost" },
+  spotlight: { emoji: "🔦", labelKey: "wallet.action.buff.spotlight" },
+  ghostMode: { emoji: "👻", labelKey: "wallet.action.buff.ghostMode" },
+  passport: { emoji: "✈️", labelKey: "wallet.action.buff.passport" },
+  timeFreeze: { emoji: "❄️", labelKey: "wallet.action.buff.timeFreeze" },
+  crushAlert: { emoji: "💘", labelKey: "wallet.action.buff.crushAlert" },
+  goldenHeart: { emoji: "💛", labelKey: "wallet.action.buff.goldenHeart" },
 };
 
 export function ActionSuccessModal({
@@ -80,6 +82,7 @@ export function ActionSuccessModal({
   /// line only, never a button: the sheet stays one tap away.
   tip?: string;
 }) {
+  const { t } = useI18n();
   const isBuff = !!buffType && BUFF_TYPES.includes(buffType);
 
   useEffect(() => {
@@ -126,7 +129,7 @@ export function ActionSuccessModal({
             <button
               onClick={() => onOpenChange(false)}
               className="absolute top-3 right-3 z-30 h-9 w-9 grid place-items-center rounded-full v-surface-2 backdrop-blur text-white hover:v-surface-3 transition"
-              aria-label="Fermer"
+              aria-label={t("common.close")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -148,7 +151,7 @@ export function ActionSuccessModal({
                 transition={{ delay: 0.1, type: "spring", stiffness: 280 }}
                 className="inline-flex items-center gap-1.5 rounded-full vibe-gradient px-3 py-1 text-[10px] font-bold text-white mb-4"
               >
-                ✨ Action activée !
+                ✨ {t("wallet.action.badge")}
               </motion.div>
 
               {/* Emoji spring bounce */}
@@ -192,9 +195,9 @@ export function ActionSuccessModal({
                     tone="media"
                   />
                   <p className="text-[11px] text-white/70 -mt-1">
-                    {buffMeta?.emoji} {buffMeta?.label} actif — reste{" "}
+                    {buffMeta?.emoji} {buffMeta ? t(buffMeta.labelKey) : ""} {t("wallet.action.active")}{" "}
                     <span className="text-white font-semibold">
-                      {formatShort(totalMs)}
+                      {formatShort(totalMs, t)}
                     </span>
                   </p>
                 </motion.div>
@@ -232,7 +235,7 @@ export function ActionSuccessModal({
                 onClick={() => onOpenChange(false)}
                 className="mt-5 w-full h-11 rounded-2xl vibe-gradient text-white font-display font-bold text-sm active:scale-95 transition vibe-glow"
               >
-                Continuer
+                {t("common.continue")}
               </motion.button>
             </div>
           </motion.div>
@@ -243,10 +246,13 @@ export function ActionSuccessModal({
 }
 
 /// Format ms as a short human-readable duration ("30 min", "1 h", "24 h").
-function formatShort(ms: number): string {
+function formatShort(
+  ms: number,
+  t: (key: string) => string,
+): string {
   const totalMin = Math.floor(ms / 60000);
   if (totalMin < 60) return `${totalMin} min`;
   const h = Math.floor(totalMin / 60);
   if (h < 24) return `${h} h`;
-  return `${Math.floor(h / 24)} j`;
+  return `${Math.floor(h / 24)} ${t("wallet.action.dayShort")}`;
 }

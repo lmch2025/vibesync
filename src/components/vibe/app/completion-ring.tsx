@@ -11,6 +11,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import { useVibe } from "@/lib/vibe/store";
+import { useI18n } from "@/lib/vibe/i18n";
 import { AnimatedNumber, ConfettiBurst } from "./interactive-animations";
 import type { CompletionTask } from "@/app/api/vibe/completion-rate/route";
 
@@ -23,21 +24,22 @@ type CompletionData = {
 
 export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) => void }) {
   const me = useVibe((s) => s.me);
-  
+  const { t } = useI18n();
+
   const profile = me?.profile;
   const tasks = [
-    { key: "account_created", label: "Compte créé", emoji: "✅", done: true },
-    { key: "profile_created", label: "Profil créé", emoji: "👤", done: !!profile },
-    { key: "video_uploaded", label: "Vidéo 15s", emoji: "🎬", done: !!profile?.videoUrl && profile.videoUrl.length > 0 },
-    { key: "poster_uploaded", label: "Vignette", emoji: "🖼️", done: !!profile?.posterUrl && profile.posterUrl.length > 0 },
-    { key: "bio_filled", label: "Bio", emoji: "📝", done: !!profile?.bio && profile.bio.trim().length >= 10 },
-    { key: "city_set", label: "Ville", emoji: "📍", done: !!profile?.city && profile.city.trim().length > 0 },
-    { key: "age_set", label: "Âge", emoji: "🎂", done: !!profile?.age && profile.age > 0 },
-    { key: "gender_set", label: "Sexe", emoji: "⚧", done: !!profile?.gender },
-    { key: "looking_for_set", label: "Tu cherches", emoji: "💘", done: !!profile?.lookingFor },
-    { key: "vibe_answered", label: "Vibe Check", emoji: "🎯", done: !!profile?.vibeAnswer },
-    { key: "verified", label: "Compte vérifié", emoji: "✔️", done: !!me?.verified },
-    { key: "streak_started", label: "Série lancée", emoji: "🔥", done: (me as any)?.streak >= 1 },
+    { key: "account_created", label: t("profile.task.accountCreated"), emoji: "✅", done: true },
+    { key: "profile_created", label: t("profile.task.profileCreated"), emoji: "👤", done: !!profile },
+    { key: "video_uploaded", label: t("profile.task.videoUploaded"), emoji: "🎬", done: !!profile?.videoUrl && profile.videoUrl.length > 0 },
+    { key: "poster_uploaded", label: t("profile.task.posterUploaded"), emoji: "🖼️", done: !!profile?.posterUrl && profile.posterUrl.length > 0 },
+    { key: "bio_filled", label: t("profile.task.bio"), emoji: "📝", done: !!profile?.bio && profile.bio.trim().length >= 10 },
+    { key: "city_set", label: t("profile.task.city"), emoji: "📍", done: !!profile?.city && profile.city.trim().length > 0 },
+    { key: "age_set", label: t("profile.task.age"), emoji: "🎂", done: !!profile?.age && profile.age > 0 },
+    { key: "gender_set", label: t("profile.task.gender"), emoji: "⚧", done: !!profile?.gender },
+    { key: "looking_for_set", label: t("profile.task.lookingFor"), emoji: "💘", done: !!profile?.lookingFor },
+    { key: "vibe_answered", label: t("profile.task.vibe"), emoji: "🎯", done: !!profile?.vibeAnswer },
+    { key: "verified", label: t("profile.task.verified"), emoji: "✔️", done: !!me?.verified },
+    { key: "streak_started", label: t("profile.task.streak"), emoji: "🔥", done: (me as any)?.streak >= 1 },
   ];
   
   const totalCount = 12;
@@ -92,7 +94,7 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
 
       <div className="relative flex flex-col items-center gap-4">
         <h3 className="font-display font-bold text-sm v-fg self-start flex items-center gap-1.5">
-          <span className="text-base">🎯</span> Complétion du profil
+          <span className="text-base">🎯</span> {t("profile.completion.title")}
         </h3>
 
         {/* Ring */}
@@ -166,35 +168,37 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
           {/* Task chips */}
           {!loading && (
             <div className="grid grid-cols-4 gap-1.5 w-full">
-              {tasks.map((t, i) => (
+              {/* Paramètre renommé t → task : le `t` du hook useI18n ne doit
+                  pas être masqué dans ce callback. */}
+              {tasks.map((task, i) => (
               <motion.div
-                key={t.key}
+                key={task.key}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.04 * i }}
-                onClick={() => !t.done && onTaskClick && onTaskClick(t.key)}
+                onClick={() => !task.done && onTaskClick && onTaskClick(task.key)}
                 className={`flex flex-col items-center gap-0.5 rounded-xl p-1.5 text-center transition ${
-                  t.done
+                  task.done
                     ? "bg-emerald-500/10 ring-1 ring-emerald-400/20 cursor-default"
                     : `v-surface-1 ring-1 ring-(--v-divider) ${onTaskClick ? "cursor-pointer hover:v-surface-2 hover:ring-primary/25 active:scale-95" : ""}`
                 }`}
-                title={t.label}
+                title={task.label}
               >
                 <span className="text-sm leading-none">
-                  {t.done ? (
+                  {task.done ? (
                     <span className="grid place-items-center h-4 w-4 rounded-full bg-emerald-500 text-white">
                       <Check className="h-2.5 w-2.5" strokeWidth={3} />
                     </span>
                   ) : (
-                    <span>{t.emoji}</span>
+                    <span>{task.emoji}</span>
                   )}
                 </span>
                 <span
                   className={`text-[8px] leading-tight ${
-                    t.done ? "text-emerald-600 dark:text-emerald-300" : "v-fg-muted"
+                    task.done ? "text-emerald-600 dark:text-emerald-300" : "v-fg-muted"
                   }`}
                 >
-                  {t.label}
+                  {task.label}
                 </span>
               </motion.div>
             ))}
@@ -204,15 +208,15 @@ export function CompletionRing({ onTaskClick }: { onTaskClick?: (key: string) =>
         {!loading && percentage < 100 && (
           <p className="text-[11px] v-fg-muted text-center">
             {percentage >= 80
-              ? "Presque parfait ! 🎉"
+              ? t("profile.completion.almost")
               : percentage >= 50
-                ? "Belle avancée — continue !"
-                : "Complète ton profil pour plus de matchs."}
+                ? t("profile.completion.goodProgress")
+                : t("profile.completion.start")}
             </p>
           )}
           {!loading && percentage === 100 && (
             <p className="text-[11px] text-emerald-600 dark:text-emerald-300 text-center font-semibold">
-              Profil complet ! Tu rayonnes ✨
+              {t("profile.completion.complete")}
             </p>
           )}
         </div>

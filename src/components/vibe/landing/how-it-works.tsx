@@ -2,40 +2,43 @@
 import { motion } from "framer-motion";
 import { Gift, Heart, Video } from "lucide-react";
 import { Reveal, SectionHeading, staggerChild, staggerParent } from "./primitives";
+import { useI18n } from "@/lib/vibe/i18n";
 
+// Les titres/corps sont des clés i18n (résolues au rendu via t()).
 const STEPS = [
   {
     n: 1,
     icon: Video,
-    title: "Enregistre ta vidéo 15s",
-    body: "Présente-toi en mouvement, sans filtre ni photo retouchée. Une vidéo brute = zéro catfish.",
+    title: "landing.how.s1.title",
+    body: "landing.how.s1.body",
     accent: "from-vibe-purple to-vibe-pink",
   },
   {
     n: 2,
     icon: Heart,
-    title: "Swipe, match, vibe check",
-    body: "Like les profils qui te font vibrer. Réponds au Vibe Check : si vous choisissez pareil, le match s'ouvre.",
+    title: "landing.how.s2.title",
+    body: "landing.how.s2.body",
     accent: "from-vibe-pink to-vibe-orange",
   },
   {
     n: 3,
     icon: Gift,
-    title: "Offre des cadeaux, gagne des €",
-    body: "Envoie des cadeaux virtuels payés en Vibes. Reçois-en ? Ils se convertissent en € retirable via Stripe.",
+    title: "landing.how.s3.title",
+    body: "landing.how.s3.body",
     accent: "from-vibe-orange to-vibe-purple",
   },
 ];
 
 export function HowItWorks() {
+  const { t } = useI18n();
   return (
     <section id="concept" className="relative py-16 sm:py-24 scroll-mt-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <Reveal>
           <SectionHeading
-            eyebrow="Comment ça marche"
-            title={<>3 vibrations pour passer du swipe au <span className="vibe-text-gradient">match réel</span></>}
-            subtitle="Vivilov remplace le profil figé par une vidéo vivante. Trois étapes, c'est tout."
+            eyebrow={t("landing.how.eyebrow")}
+            title={<>{t("landing.how.titleA")} <span className="vibe-text-gradient">{t("landing.how.titleB")}</span></>}
+            subtitle={t("landing.how.subtitle")}
           />
         </Reveal>
 
@@ -60,8 +63,8 @@ export function HowItWorks() {
                       </div>
                       <span className="font-display text-5xl font-black text-muted-foreground/15">0{s.n}</span>
                     </div>
-                    <h3 className="font-display text-xl font-bold">{s.title}</h3>
-                    <p className="text-sm text-muted-foreground text-pretty">{s.body}</p>
+                    <h3 className="font-display text-xl font-bold">{t(s.title)}</h3>
+                    <p className="text-sm text-muted-foreground text-pretty">{t(s.body)}</p>
                   </div>
                 </div>
               </motion.div>

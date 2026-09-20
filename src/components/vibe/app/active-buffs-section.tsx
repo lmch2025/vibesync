@@ -23,6 +23,7 @@ import { Sparkles, X } from "lucide-react";
 import { useActiveBuffs, type ActiveBuff, type BuffType } from "@/lib/vibe/use-active-buffs";
 import { CountdownRing } from "./countdown-ring";
 import { haptic } from "./interactive-animations";
+import { useI18n } from "@/lib/vibe/i18n";
 
 /// Palette par type — reprend les dégradés de CountdownRing pour le
 /// liseré de carte et le halo ambiant (couleurs pleines, opacité gérée
@@ -38,12 +39,56 @@ const BUFF_COLORS: Record<BuffType, { edge: string; glow: string; soft: string }
   goldenHeart:{ edge: "oklch(0.82 0.16 85)",  glow: "oklch(0.82 0.16 85 / 0.20)",  soft: "oklch(0.82 0.16 85 / 0.10)" },
 };
 
+/// Clés i18n des libellés/descriptions de buffs — l'API /active-buffs
+/// renvoie des textes FR (BUFF_META serveur) ; on traduit au rendu par type,
+/// avec repli sur le texte serveur si le type n'est pas mappé.
+const BUFF_LABEL_KEYS: Record<BuffType, string> = {
+  boost: "premium.buff.boost.label",
+  spotlight: "premium.buff.spotlight.label",
+  ghostMode: "premium.buff.ghostMode.label",
+  passport: "premium.buff.passport.label",
+  timeFreeze: "premium.buff.timeFreeze.label",
+  dailyDouble: "premium.buff.dailyDouble.label",
+  crushAlert: "premium.buff.crushAlert.label",
+  goldenHeart: "premium.buff.goldenHeart.label",
+};
+const BUFF_DESC_KEYS: Record<BuffType, string> = {
+  boost: "premium.buff.boost.desc",
+  spotlight: "premium.buff.spotlight.desc",
+  ghostMode: "premium.buff.ghostMode.desc",
+  passport: "premium.buff.passport.desc",
+  timeFreeze: "premium.buff.timeFreeze.desc",
+  dailyDouble: "premium.buff.dailyDouble.desc",
+  crushAlert: "premium.buff.crushAlert.desc",
+  goldenHeart: "premium.buff.goldenHeart.desc",
+};
+
+/// Fonction t() du hook useI18n (helpers module-level).
+type TFunc = ReturnType<typeof useI18n>["t"];
+
+function buffLabel(t: TFunc, buff: ActiveBuff): string {
+  const k = BUFF_LABEL_KEYS[buff.type];
+  return k ? t(k) : buff.label;
+}
+
+function buffDesc(t: TFunc, buff: ActiveBuff): string {
+  // Passport : le serveur remplace la desc par « Tu découvres {ville} » —
+  // on extrait la ville pour la traduire, sinon desc canonique par type.
+  if (buff.type === "passport") {
+    const m = buff.desc.match(/^Tu découvres (.+)$/);
+    if (m) return t("premium.buff.passport.cityDesc", { city: m[1] });
+  }
+  const k = BUFF_DESC_KEYS[buff.type];
+  return k ? t(k) : buff.desc;
+}
+
 export function ActiveBuffsSection({ onOpenPremium }: { onOpenPremium?: () => void }) {
   const { buffs, loading } = useActiveBuffs();
+  const { t } = useI18n();
   const [detail, setDetail] = useState<ActiveBuff | null>(null);
 
   return (
-    <section aria-label="Actions premium actives" className="mb-5">
+    <section aria-label={t("premium.buffs.aria")} className="mb-5">
       {/* ── En-tête de l'espace réservé ─────────────────────────── */}
       <div className="flex items-center justify-between mb-2.5 px-1">
         <div className="flex items-center gap-2">
@@ -60,7 +105,7 @@ export function ActiveBuffsSection({ onOpenPremium }: { onOpenPremium?: () => vo
             />
           </span>
           <h3 className="font-display font-bold text-sm tracking-tight">
-            Actions actives
+            {t("premium.buffs.title")}
           </h3>
           {buffs.length > 0 && (
             <motion.span
@@ -74,7 +119,7 @@ export function ActiveBuffsSection({ onOpenPremium }: { onOpenPremium?: () => vo
           )}
         </div>
         <span className="text-[10px] v-fg-faint font-medium">
-          {buffs.length > 0 ? "en direct · toc pour détails" : loading ? "…" : "aucune"}
+          {buffs.length > 0 ? t("premium.buffs.liveHint") : loading ? "…" : t("premium.buffs.none")}
         </span>
       </div>
 
@@ -115,15 +160,14 @@ export function ActiveBuffsSection({ onOpenPremium }: { onOpenPremium?: () => vo
           </div>
           <div className="relative flex-1 min-w-0">
             <p className="font-display font-bold text-[13px] leading-tight">
-              Aucune action active
+              {t("premium.buffs.empty.title")}
             </p>
             <p className="text-[11px] v-fg-muted leading-snug mt-0.5">
-              Boost, Projecteur, Passport… tes actions premium actives
-              s'afficheront ici avec leur compte à rebours.
+              {t("premium.buffs.empty.body")}
             </p>
           </div>
           <span className="relative shrink-0 text-[11px] font-semibold text-vibe-purple dark:text-vibe-pink group-active:scale-95 transition-transform">
-            Découvrir →
+            {t("premium.buffs.empty.cta")}
           </span>
         </motion.button>
       )}
@@ -167,6 +211,7 @@ function BuffCard({
   index: number;
   onOpen: () => void;
 }) {
+  const { t } = useI18n();
   const colors = BUFF_COLORS[buff.type] ?? BUFF_COLORS.ghostMode;
   const urgent = buff.remainingMs < 60_000;
 
@@ -183,7 +228,7 @@ function BuffCard({
       }}
       whileTap={{ scale: 0.985 }}
       onClick={onOpen}
-      aria-label={`${buff.label} actif — ${formatExpiryLabel(buff)} — voir les détails`}
+      aria-label={t("premium.buffs.cardAria", { label: buffLabel(t, buff), time: formatExpiryLabel(t, buff) })}
       className="group relative w-full rounded-2xl v-surface-1 ring-1 ring-(--v-divider) overflow-hidden text-left"
     >
       {/* Liseré dégradé vertical (signature du type) */}
@@ -236,18 +281,18 @@ function BuffCard({
             <span className="text-[15px] leading-none" aria-hidden>
               {buff.emoji}
             </span>
-            <p className="font-display font-bold text-[13px] truncate">{buff.label}</p>
+            <p className="font-display font-bold text-[13px] truncate">{buffLabel(t, buff)}</p>
             {urgent && (
               <span className="shrink-0 rounded-full bg-red-500/15 text-red-500 dark:text-red-400 text-[9px] font-bold px-1.5 py-0.5 leading-none">
-                BIENTÔT FINI
+                {t("premium.buffs.urgent")}
               </span>
             )}
           </div>
           <p className="text-[11px] v-fg-muted leading-snug mt-0.5 line-clamp-2">
-            {buff.desc}
+            {buffDesc(t, buff)}
           </p>
           <p className="text-[10px] v-fg-faint mt-1 tabular-nums">
-            expire à {formatExpiryClock(buff.expiresAt)}
+            {t("premium.buffs.expiresAt", { time: formatExpiryClock(buff.expiresAt) })}
           </p>
         </div>
 
@@ -277,6 +322,7 @@ function BuffDetailSheet({
   onClose: () => void;
   onExtend: () => void;
 }) {
+  const { t } = useI18n();
   const colors = buff ? (BUFF_COLORS[buff.type] ?? BUFF_COLORS.ghostMode) : BUFF_COLORS.ghostMode;
 
   return (
@@ -296,7 +342,7 @@ function BuffDetailSheet({
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 340, damping: 34 }}
             role="dialog"
-            aria-label={`Détails de l'action ${buff.label}`}
+            aria-label={t("premium.buffs.detailAria", { label: buffLabel(t, buff) })}
             className="fixed bottom-0 inset-x-0 z-[71] rounded-t-3xl v-surface-solid v-fg ring-1 ring-(--v-divider) overflow-hidden max-h-[80vh]"
           >
             {/* Poignée de glissement */}
@@ -313,7 +359,7 @@ function BuffDetailSheet({
 
             <button
               onClick={onClose}
-              aria-label="Fermer les détails"
+              aria-label={t("premium.buffs.closeDetailAria")}
               className="absolute top-3 right-3 z-10 h-9 w-9 grid place-items-center rounded-full v-surface-2 v-fg-muted hover:v-surface-3 transition"
             >
               <X className="h-4 w-4" />
@@ -348,7 +394,7 @@ function BuffDetailSheet({
                   {buff.emoji}
                 </span>
                 <h4 className="font-display font-bold text-lg tracking-tight">
-                  {buff.label}
+                  {buffLabel(t, buff)}
                 </h4>
               </motion.div>
 
@@ -358,7 +404,7 @@ function BuffDetailSheet({
                 transition={{ delay: 0.16 }}
                 className="text-sm v-fg-muted max-w-[280px] leading-snug mb-4"
               >
-                {buff.desc}
+                {buffDesc(t, buff)}
               </motion.p>
 
               {/* Métadonnées : activation / expiration */}
@@ -370,18 +416,18 @@ function BuffDetailSheet({
               >
                 <div className="rounded-xl v-surface-1 ring-1 ring-(--v-divider) px-3 py-2.5">
                   <p className="text-[9px] uppercase tracking-wide v-fg-faint font-semibold">
-                    Activée
+                    {t("premium.buffs.activated")}
                   </p>
                   <p className="text-xs font-bold tabular-nums mt-0.5">
-                    il y a {formatElapsedLabel(buff)}
+                    {t("premium.buffs.ago", { time: formatElapsedLabel(t, buff) })}
                   </p>
                 </div>
                 <div className="rounded-xl v-surface-1 ring-1 ring-(--v-divider) px-3 py-2.5">
                   <p className="text-[9px] uppercase tracking-wide v-fg-faint font-semibold">
-                    Expire
+                    {t("premium.buffs.expires")}
                   </p>
                   <p className="text-xs font-bold tabular-nums mt-0.5">
-                    à {formatExpiryClock(buff.expiresAt)}
+                    {t("premium.buffs.at", { time: formatExpiryClock(buff.expiresAt) })}
                   </p>
                 </div>
               </motion.div>
@@ -398,7 +444,7 @@ function BuffDetailSheet({
                 whileTap={{ scale: 0.97 }}
                 className="w-full max-w-xs h-12 rounded-2xl vibe-gradient text-white font-display font-bold text-sm relative overflow-hidden"
               >
-                Prolonger l'action
+                {t("premium.buffs.extend")}
                 <span
                   aria-hidden
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
@@ -412,7 +458,7 @@ function BuffDetailSheet({
                 onClick={onClose}
                 className="mt-2 text-[12px] v-fg-muted font-medium hover:v-fg transition-colors py-1.5"
               >
-                Fermer
+                {t("common.close")}
               </button>
             </div>
 
@@ -443,17 +489,17 @@ function formatExpiryClock(expiresAt: string): string {
 }
 
 /// Libellé court du temps restant (« ~30 min », « ~2 h »).
-function formatExpiryLabel(buff: ActiveBuff): string {
+function formatExpiryLabel(t: TFunc, buff: ActiveBuff): string {
   const min = Math.max(0, Math.round(buff.remainingMs / 60000));
-  if (min < 60) return `reste ~${min} min`;
+  if (min < 60) return t("premium.buffs.remaining.min", { n: min });
   const h = Math.round(min / 60);
-  return `reste ~${h} h`;
+  return t("premium.buffs.remaining.hours", { n: h });
 }
 
 /// « 12 min », « 1 h 05 »… depuis l'activation (totalMs − remainingMs).
-function formatElapsedLabel(buff: ActiveBuff): string {
+function formatElapsedLabel(t: TFunc, buff: ActiveBuff): string {
   const min = Math.max(0, Math.round((buff.totalMs - buff.remainingMs) / 60000));
-  if (min < 1) return "quelques secondes";
+  if (min < 1) return t("premium.buffs.elapsedSeconds");
   if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60);
   const m = min % 60;

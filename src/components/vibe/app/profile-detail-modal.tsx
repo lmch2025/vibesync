@@ -26,6 +26,7 @@ import { HeartHandshake } from "lucide-react";
 import { VideoPlayer } from "./video-player";
 import { sfx, haptic, type SfxName } from "./interactive-animations";
 import { GEM_ACTIONS, VIBE_QUESTIONS } from "@/lib/vibe/constants";
+import { useI18n } from "@/lib/vibe/i18n";
 
 export type DetailProfile = {
   id: string;
@@ -65,17 +66,19 @@ function buildSlides(profile: DetailProfile): Slide[] {
   ];
 }
 
-/// Libellés lisibles des intentions (mêmes valeurs que l'onboarding).
-const LOOKING_FOR_LABELS: Record<string, string> = {
-  f: "Femmes",
-  m: "Hommes",
-  nb: "Personnes non-binaires",
-  all: "Tout le monde",
+/// Clés i18n des intentions (mêmes valeurs que l'onboarding) — les
+/// libellés lisibles vivent dans le dictionnaire swipe.* et sont traduits
+/// au rendu via t().
+const LOOKING_FOR_KEYS: Record<string, string> = {
+  f: "swipe.detail.lookingFor.f",
+  m: "swipe.detail.lookingFor.m",
+  nb: "swipe.detail.lookingFor.nb",
+  all: "swipe.detail.lookingFor.all",
 };
-const RELATIONSHIP_LABELS: Record<string, string> = {
-  serious: "Relation sérieuse",
-  casual: "Sans lendemain",
-  friendship: "Amitié",
+const RELATIONSHIP_KEYS: Record<string, string> = {
+  serious: "swipe.detail.relationship.serious",
+  casual: "swipe.detail.relationship.casual",
+  friendship: "swipe.detail.relationship.friendship",
 };
 
 /// La réponse Vibe stockée est le libellé lisible ("plage", "chien"…) tel
@@ -105,6 +108,7 @@ export function ProfileDetailModal({
   onGift: () => void;
   gems: number;
 }) {
+  const { t } = useI18n();
   // Escape → ferme (le clic backdrop et le bouton ✕ ferment aussi).
   useEffect(() => {
     if (!profile) return;
@@ -137,7 +141,7 @@ export function ProfileDetailModal({
             transition={{ type: "spring", stiffness: 320, damping: 30 }}
             role="dialog"
             aria-modal="true"
-            aria-label={`Profil de ${profile.displayName}`}
+            aria-label={t("swipe.detail.aria", { name: profile.displayName })}
             className="relative w-[92%] max-w-md h-[88%] flex flex-col overflow-hidden rounded-3xl v-bg-app v-fg shadow-2xl ring-1 ring-(--v-divider)"
           >
             <MediaGallery profile={profile} onClose={() => { sfx.play("pop"); onOpenChange(false); }} />
@@ -164,6 +168,7 @@ export function ProfileDetailModal({
 
 // ─── Galerie média (55 % haut) ─────────────────────────────────────────────
 function MediaGallery({ profile, onClose }: { profile: DetailProfile; onClose: () => void }) {
+  const { t } = useI18n();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [active, setActive] = useState(0);
   const slides = buildSlides(profile);
@@ -201,7 +206,7 @@ function MediaGallery({ profile, onClose }: { profile: DetailProfile; onClose: (
                   className="absolute inset-0"
                 />
               ) : (
-                <PhotoSlide src={s.url} alt={`Photo ${i + 1} de ${profile.displayName}`} />
+                <PhotoSlide src={s.url} alt={t("swipe.detail.photoAlt", { n: i + 1, name: profile.displayName })} />
               )}
             </div>
           ))}
@@ -237,7 +242,7 @@ function MediaGallery({ profile, onClose }: { profile: DetailProfile; onClose: (
       <motion.button
         onClick={onClose}
         whileTap={{ scale: 0.88 }}
-        aria-label="Fermer le profil"
+        aria-label={t("swipe.detail.closeAria")}
         className="absolute top-3 left-3 z-30 h-9 w-9 rounded-full glass-dark grid place-items-center text-white/90 hover:text-white transition"
       >
         <X className="h-4 w-4" />
@@ -264,20 +269,23 @@ function PhotoSlide({ src, alt }: { src: string; alt: string }) {
 
 // ─── Zone info (scrollable) ────────────────────────────────────────────────
 function InfoSection({ profile }: { profile: DetailProfile }) {
+  const { t } = useI18n();
   // Chips premium — même mapping/symbolique que la SwipeCard du deck, en
   // teintes lisibles sur le fond de la carte (clair ou sombre).
   const chips: { emoji: string; label: string; cls: string }[] = [];
-  if (profile.goldenHeart) chips.push({ emoji: "💛", label: "Cœur d'Or", cls: "ring-amber-400/50 text-amber-600 dark:text-amber-300" });
-  if (profile.spotlight) chips.push({ emoji: "🔦", label: "Projecteur", cls: "ring-fuchsia-400/50 text-fuchsia-600 dark:text-fuchsia-300" });
-  if (profile.boosted) chips.push({ emoji: "🚀", label: "Boost", cls: "ring-orange-400/50 text-orange-600 dark:text-orange-300" });
-  if (profile.passport) chips.push({ emoji: "✈️", label: "Passport", cls: "ring-sky-400/50 text-sky-600 dark:text-sky-300" });
+  if (profile.goldenHeart) chips.push({ emoji: "💛", label: t("swipe.chip.goldenHeart"), cls: "ring-amber-400/50 text-amber-600 dark:text-amber-300" });
+  if (profile.spotlight) chips.push({ emoji: "🔦", label: t("swipe.chip.spotlight"), cls: "ring-fuchsia-400/50 text-fuchsia-600 dark:text-fuchsia-300" });
+  if (profile.boosted) chips.push({ emoji: "🚀", label: t("swipe.chip.boost"), cls: "ring-orange-400/50 text-orange-600 dark:text-orange-300" });
+  if (profile.passport) chips.push({ emoji: "✈️", label: t("swipe.chip.passport"), cls: "ring-sky-400/50 text-sky-600 dark:text-sky-300" });
 
   const answer = readableVibeAnswer(profile);
   const answerLabel = answer ? answer.charAt(0).toUpperCase() + answer.slice(1) : "";
 
   // Intentions du profil — « Recherche : Femmes · Relation sérieuse ».
-  const lookingLabel = LOOKING_FOR_LABELS[profile.lookingFor ?? ""];
-  const relLabel = RELATIONSHIP_LABELS[profile.relationshipType ?? ""];
+  const lookingKey = LOOKING_FOR_KEYS[profile.lookingFor ?? ""];
+  const relKey = RELATIONSHIP_KEYS[profile.relationshipType ?? ""];
+  const lookingLabel = lookingKey ? t(lookingKey) : undefined;
+  const relLabel = relKey ? t(relKey) : undefined;
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 pb-4 pt-2">
@@ -286,7 +294,7 @@ function InfoSection({ profile }: { profile: DetailProfile }) {
           {profile.displayName}, {profile.age}
         </h2>
         {profile.verified && (
-          <BadgeCheck className="h-5 w-5 text-cyan-500 dark:text-cyan-300 shrink-0" aria-label="Profil vérifié" />
+          <BadgeCheck className="h-5 w-5 text-cyan-500 dark:text-cyan-300 shrink-0" aria-label={t("swipe.detail.verifiedAria")} />
         )}
       </div>
       <p className="text-sm v-fg-muted flex items-center gap-1 mt-0.5">
@@ -297,7 +305,7 @@ function InfoSection({ profile }: { profile: DetailProfile }) {
       {(lookingLabel || relLabel) && (
         <p className="text-[13px] v-fg-muted flex items-center gap-1.5 mt-1">
           <HeartHandshake className="h-3.5 w-3.5 shrink-0 text-rose-400" aria-hidden />
-          Recherche&nbsp;: {lookingLabel ?? relLabel}
+          {t("swipe.detail.lookingForPrefix")} {lookingLabel ?? relLabel}
           {lookingLabel && relLabel ? ` · ${relLabel}` : ""}
         </p>
       )}
@@ -325,7 +333,7 @@ function InfoSection({ profile }: { profile: DetailProfile }) {
           <p className="text-sm font-semibold mt-1">{profile.vibeQuestion}</p>
           {answerLabel && (
             <div className="mt-2 flex items-center gap-2 flex-wrap">
-              <span className="text-xs v-fg-muted">Sa réponse :</span>
+              <span className="text-xs v-fg-muted">{t("swipe.detail.theirAnswer")}</span>
               <span className="inline-flex items-center rounded-full vibe-gradient-soft ring-1 ring-accent/30 px-2.5 py-0.5 text-[11px] font-bold text-vibe-purple dark:text-vibe-pink">
                 {answerLabel}
               </span>
@@ -347,22 +355,23 @@ function ModalActions({
   onAct: (dir: "pass" | "like" | "superlike") => void;
   onGiftAction: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="shrink-0 p-4 pt-2">
       <div className="flex items-center justify-center gap-3">
-        <ModalActionButton onClick={() => onAct("pass")} label="Pass" aria="Passer ce profil" tone="red">
+        <ModalActionButton onClick={() => onAct("pass")} label={t("swipe.detail.pass")} aria={t("swipe.detail.passAria")} tone="red">
           <X className="h-6 w-6" />
         </ModalActionButton>
-        <ModalActionButton onClick={onGiftAction} label="Cadeau" aria="Offrir un cadeau" tone="rose" sound="chime">
+        <ModalActionButton onClick={onGiftAction} label={t("swipe.detail.gift")} aria={t("swipe.detail.giftAria")} tone="rose" sound="chime">
           <Gift className="h-5 w-5" />
         </ModalActionButton>
-        <ModalActionButton onClick={() => onAct("like")} label="Like" aria="Liker ce profil" tone="green" big>
+        <ModalActionButton onClick={() => onAct("like")} label={t("swipe.detail.like")} aria={t("swipe.detail.likeAria")} tone="green" big>
           <Heart className="h-7 w-7" />
         </ModalActionButton>
         <ModalActionButton
           onClick={() => onAct("superlike")}
-          label={`Super-Like ·${GEM_ACTIONS.superlike}`}
-          aria="Super-Liker ce profil"
+          label={t("swipe.detail.superlike", { cost: GEM_ACTIONS.superlike })}
+          aria={t("swipe.detail.superlikeAria")}
           tone="blue"
           dim={gems < GEM_ACTIONS.superlike}
         >

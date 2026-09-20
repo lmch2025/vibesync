@@ -9,55 +9,58 @@ import {
   Video,
 } from "lucide-react";
 import { Reveal, SectionHeading, staggerChild, staggerParent } from "./primitives";
+import { useI18n } from "@/lib/vibe/i18n";
 
+// Les titres/corps sont des clés i18n (résolues au rendu via t()).
 const FEATURES = [
   {
     icon: Video,
-    title: "Vidéo 15s authentique",
-    body: "Une vidéo mouvante plutôt que 6 photos figées. Fini le catfish et les fausses identités.",
+    title: "landing.features.f1.title",
+    body: "landing.features.f1.body",
     accent: "from-vibe-purple to-vibe-pink",
   },
   {
     icon: Waves,
-    title: "Vibe Check",
-    body: "Mini-jeu de compatibilité avant le match. Vous voyez la réponse de l'autre seulement si vous répondez pareil.",
+    title: "landing.features.f2.title",
+    body: "landing.features.f2.body",
     accent: "from-vibe-pink to-vibe-orange",
   },
   {
     icon: Mic,
-    title: "Audio Dating / Blind Swipe",
-    body: "Mode voix + flou artistique pour découvrir la personnalité avant le visage. Le slow dating version sonore.",
+    title: "landing.features.f3.title",
+    body: "landing.features.f3.body",
     accent: "from-vibe-orange to-vibe-purple",
   },
   {
     icon: ShieldCheck,
-    title: "IA de modération",
-    body: "Rejet automatique des contenus inappropriés (nudité, mineurs,deepfakes). La sécurité avant tout.",
+    title: "landing.features.f4.title",
+    body: "landing.features.f4.body",
     accent: "from-vibe-purple to-vibe-pink",
   },
   {
     icon: Eye,
-    title: "Messagerie anti-spam",
-    body: "Tu peux ouvrir la conversation, mais pour la poursuivre il faut un match réel. Débloque avec quelques Vibes.",
+    title: "landing.features.f5.title",
+    body: "landing.features.f5.body",
     accent: "from-vibe-pink to-vibe-orange",
   },
   {
     icon: Gift,
-    title: "Cadeaux virtuels monétisables",
-    body: "Offre une Rose, un Dîner Romantique ou un Weekend. Chaque cadeau reçu = valeur en € dans ton wallet.",
+    title: "landing.features.f6.title",
+    body: "landing.features.f6.body",
     accent: "from-vibe-orange to-vibe-purple",
   },
 ];
 
 export function Features() {
+  const { t } = useI18n();
   return (
     <section id="fonctionnalites" className="relative py-16 sm:py-24 scroll-mt-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <Reveal>
           <SectionHeading
-            eyebrow="Pourquoi Vivilov"
-            title={<>Le dating repensé pour la <span className="vibe-text-gradient">vraie vie</span></>}
-            subtitle="Six briques qui cassent le modèle de l'abonnement et réinventent la rencontre en ligne."
+            eyebrow={t("landing.features.eyebrow")}
+            title={<>{t("landing.features.titleA")} <span className="vibe-text-gradient">{t("landing.features.titleB")}</span></>}
+            subtitle={t("landing.features.subtitle")}
           />
         </Reveal>
 
@@ -81,8 +84,8 @@ export function Features() {
                 <div className={`inline-grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br ${f.accent} text-white shadow-lg mb-4`}>
                   <Icon className="h-6 w-6" />
                 </div>
-                <h3 className="font-display text-lg font-bold mb-1.5">{f.title}</h3>
-                <p className="text-sm text-muted-foreground text-pretty">{f.body}</p>
+                <h3 className="font-display text-lg font-bold mb-1.5">{t(f.title)}</h3>
+                <p className="text-sm text-muted-foreground text-pretty">{t(f.body)}</p>
                 <span className="absolute right-5 top-5 h-1.5 w-1.5 rounded-full bg-vibe-orange opacity-0 group-hover:opacity-100 transition-opacity" />
               </motion.div>
             );

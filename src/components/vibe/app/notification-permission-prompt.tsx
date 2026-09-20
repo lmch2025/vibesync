@@ -18,6 +18,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Check, Heart, MessageCircle, Gift, Flame, X } from "lucide-react";
+import { useI18n } from "@/lib/vibe/i18n";
 
 const SESSION_KEY = "notif_prompt_shown";
 const DISMISS_KEY = "notif_dismiss_count";
@@ -26,8 +27,9 @@ const SHOW_DELAY_MS = 4000;
 
 type NotifPreview = {
   emoji: string;
-  label: string;
-  desc: string;
+  /// Clés i18n (dictionnaire misc) — label/desc traduits au rendu.
+  labelKey: string;
+  descKey: string;
   icon: React.ReactNode;
   accent: string;
 };
@@ -35,35 +37,36 @@ type NotifPreview = {
 const NOTIF_PREVIEWS: NotifPreview[] = [
   {
     emoji: "💜",
-    label: "Matchs",
-    desc: "Nouveau match immédiat",
+    labelKey: "misc.catMatches",
+    descKey: "misc.permPrevMatches",
     icon: <Heart className="h-3.5 w-3.5" />,
     accent: "text-vibe-pink",
   },
   {
     emoji: "💬",
-    label: "Messages",
-    desc: "Quelqu'un t'écrit",
+    labelKey: "misc.catMessages",
+    descKey: "misc.catMessagesDesc",
     icon: <MessageCircle className="h-3.5 w-3.5" />,
     accent: "text-sky-500 dark:text-sky-300",
   },
   {
     emoji: "🎁",
-    label: "Cadeaux",
-    desc: "Tu reçois un cadeau",
+    labelKey: "misc.catGifts",
+    descKey: "misc.catGiftsDesc",
     icon: <Gift className="h-3.5 w-3.5" />,
     accent: "text-emerald-500 dark:text-emerald-300",
   },
   {
     emoji: "🔥",
-    label: "Série",
-    desc: "Rappel streak quotidien",
+    labelKey: "misc.catStreak",
+    descKey: "misc.catStreakDesc",
     icon: <Flame className="h-3.5 w-3.5" />,
     accent: "text-amber-500 dark:text-amber-300",
   },
 ];
 
 export function NotificationPermissionPrompt() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
 
@@ -166,7 +169,7 @@ export function NotificationPermissionPrompt() {
             <button
               onClick={dismiss}
               className="absolute top-3 right-3 h-9 w-9 grid place-items-center rounded-full v-surface-2 v-fg hover:v-surface-3 transition"
-              aria-label="Fermer"
+              aria-label={t("common.close")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -182,18 +185,17 @@ export function NotificationPermissionPrompt() {
             </motion.div>
 
             <h3 className="font-display text-xl font-bold text-center v-fg">
-              Reste connecté·e
+              {t("misc.permTitle")}
             </h3>
             <p className="text-sm v-fg-muted text-center mt-1 mb-5">
-              Active les notifications pour ne rien manquer de tes
-              rencontres. On ne spamme jamais — promis.
+              {t("misc.permBody")}
             </p>
 
             {/* Notification type previews */}
             <div className="grid grid-cols-2 gap-2 mb-5">
               {NOTIF_PREVIEWS.map((p, i) => (
                 <motion.div
-                  key={p.label}
+                  key={p.labelKey}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 + i * 0.05 }}
@@ -202,9 +204,9 @@ export function NotificationPermissionPrompt() {
                   <span className="text-xl">{p.emoji}</span>
                   <div className="min-w-0">
                     <p className={`text-xs font-bold ${p.accent} flex items-center gap-1`}>
-                      {p.label}
+                      {t(p.labelKey)}
                     </p>
-                    <p className="text-[9px] v-fg-muted truncate">{p.desc}</p>
+                    <p className="text-[9px] v-fg-muted truncate">{t(p.descKey)}</p>
                   </div>
                 </motion.div>
               ))}
@@ -219,11 +221,11 @@ export function NotificationPermissionPrompt() {
               {subscribing ? (
                 <>
                   <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Activation…
+                  {t("misc.permActivating")}
                 </>
               ) : (
                 <>
-                  <Check className="h-5 w-5" /> Activer les notifications
+                  <Check className="h-5 w-5" /> {t("misc.permEnable")}
                 </>
               )}
             </button>
@@ -231,7 +233,7 @@ export function NotificationPermissionPrompt() {
               onClick={dismiss}
               className="w-full text-center text-[11px] v-fg-muted hover:v-fg transition mt-3"
             >
-              Plus tard
+              {t("misc.later")}
             </button>
           </motion.div>
         </motion.div>

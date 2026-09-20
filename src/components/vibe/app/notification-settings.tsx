@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import { Bell, BellRing, Heart, MessageCircle, Gift, ThumbsUp, Megaphone, Send } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/vibe/i18n";
 import { vibeToast } from "./center-feedback";
 
 type NotifPrefs = {
@@ -40,6 +41,7 @@ const DEFAULT_PREFS: NotifPrefs = {
 type Permission = "default" | "granted" | "denied" | "unsupported";
 
 export function NotificationSettings() {
+  const { t, apiErr } = useI18n();
   const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS);
   const [permission, setPermission] = useState<Permission>("default");
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,7 @@ export function NotificationSettings() {
     if (typeof Notification === "undefined") return;
     const perm = await Notification.requestPermission();
     setPermission(perm as Permission);
-    if (perm === "granted") vibeToast({ emoji: "🔔", title: "Notifications activées" });
+    if (perm === "granted") vibeToast({ emoji: "🔔", title: t("misc.enabledToast") });
   }
 
   async function sendTest() {
@@ -103,12 +105,12 @@ export function NotificationSettings() {
       });
       const data = await res.json();
       if (data?.ok || data?.inApp) {
-        vibeToast({ emoji: "🔔", title: "Test envoyé", sub: "Vérifie tes notifications" });
+        vibeToast({ emoji: "🔔", title: t("misc.testSentTitle"), sub: t("misc.testSentSub") });
       } else {
-        toast.error(data?.warning || "Test échoué");
+        toast.error(apiErr(data?.warning) || t("misc.testFailed"));
       }
     } catch (e: any) {
-      toast.error(e.message || "Test échoué");
+      toast.error(apiErr(e?.message) || t("misc.testFailed"));
     } finally {
       setTesting(false);
     }
@@ -117,7 +119,7 @@ export function NotificationSettings() {
   return (
     <div className="rounded-2xl v-surface-1 ring-1 ring-[var(--v-divider)] p-4">
       <h3 className="font-display font-bold text-sm mb-3 flex items-center gap-1.5">
-        <BellRing className="h-4 w-4 text-accent" /> Notifications
+        <BellRing className="h-4 w-4 text-accent" /> {t("misc.title")}
       </h3>
 
       {/* Push permission status + Test button */}
@@ -126,15 +128,15 @@ export function NotificationSettings() {
           <div className="flex items-center gap-2 min-w-0">
             <Bell className="h-4 w-4 v-fg-muted shrink-0" />
             <div className="min-w-0">
-              <p className="text-xs font-semibold">Push navigateur</p>
+              <p className="text-xs font-semibold">{t("misc.pushTitle")}</p>
               <p className="text-[10px] v-fg-muted">
                 {permission === "granted"
-                  ? "✅ Accordé"
+                  ? t("misc.permGranted")
                   : permission === "denied"
-                    ? "❌ Refusé"
+                    ? t("misc.permDenied")
                     : permission === "unsupported"
-                      ? "Non supporté"
-                      : "À demander"}
+                      ? t("misc.permUnsupported")
+                      : t("misc.permToAsk")}
               </p>
             </div>
           </div>
@@ -144,7 +146,7 @@ export function NotificationSettings() {
                 onClick={requestPermission}
                 className="h-7 px-2.5 rounded-lg v-surface-2 ring-1 ring-[var(--v-divider)] text-[10px] font-semibold hover:v-surface-3 transition"
               >
-                Autoriser
+                {t("misc.allow")}
               </button>
             )}
             <button
@@ -157,7 +159,7 @@ export function NotificationSettings() {
               ) : (
                 <Send className="h-3 w-3" />
               )}
-              Tester
+              {t("misc.test")}
             </button>
           </div>
         </div>
@@ -167,40 +169,40 @@ export function NotificationSettings() {
       <div className="space-y-1">
         <ToggleRow
           icon={<Heart className="h-3.5 w-3.5 text-vibe-pink" />}
-          label="Matchs"
-          desc="Nouveau match mutuel"
+          label={t("misc.catMatches")}
+          desc={t("misc.catMatchesDesc")}
           checked={prefs.matchesEnabled}
           disabled={loading}
           onChange={(v) => updatePref("matchesEnabled", v)}
         />
         <ToggleRow
           icon={<MessageCircle className="h-3.5 w-3.5 text-sky-500 dark:text-sky-300" />}
-          label="Messages"
-          desc="Quelqu'un t'écrit"
+          label={t("misc.catMessages")}
+          desc={t("misc.catMessagesDesc")}
           checked={prefs.messagesEnabled}
           disabled={loading}
           onChange={(v) => updatePref("messagesEnabled", v)}
         />
         <ToggleRow
           icon={<Gift className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-300" />}
-          label="Cadeaux"
-          desc="Tu reçois un cadeau"
+          label={t("misc.catGifts")}
+          desc={t("misc.catGiftsDesc")}
           checked={prefs.giftsEnabled}
           disabled={loading}
           onChange={(v) => updatePref("giftsEnabled", v)}
         />
         <ToggleRow
           icon={<ThumbsUp className="h-3.5 w-3.5 text-amber-500 dark:text-amber-300" />}
-          label="Likes"
-          desc="Quelqu'un t'a liké"
+          label={t("misc.catLikes")}
+          desc={t("misc.catLikesDesc")}
           checked={prefs.likesEnabled}
           disabled={loading}
           onChange={(v) => updatePref("likesEnabled", v)}
         />
         <ToggleRow
           icon={<Megaphone className="h-3.5 w-3.5 text-fuchsia-500 dark:text-fuchsia-300" />}
-          label="Marketing"
-          desc="News, promos, nouveautés"
+          label={t("misc.catMarketing")}
+          desc={t("misc.catMarketingDesc")}
           checked={prefs.marketingEnabled}
           disabled={loading}
           onChange={(v) => updatePref("marketingEnabled", v)}

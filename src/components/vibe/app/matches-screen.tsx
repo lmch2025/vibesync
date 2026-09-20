@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Gift, Lock, MessageCircle, BadgeCheck, MapPin, Zap } from "lucide-react";
 import { useVibe } from "@/lib/vibe/store";
+import { useI18n } from "@/lib/vibe/i18n";
 import { prefetchChat } from "./chat-screen";
 import { Floating, sfx } from "./interactive-animations";
 import { SmartNudgeBanner, type SmartNudge } from "./smart-nudge";
@@ -35,6 +36,7 @@ type MatchRow = {
 };
 
 export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: string, name: string, poster: string | null }) => void }) {
+  const { t } = useI18n();
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -95,8 +97,8 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
       setBoostNudge({
         id: "message-boost-locked-list",
         emoji: "⚡",
-        text: `Ton message à ${first.other?.displayName ?? "ton match"} attend une réponse — le Boost passe l'anti-spam et l'épingle en tête.`,
-        ctaLabel: "Booster (10 💎)",
+        text: t("chat.nudge.lockedList", { name: first.other?.displayName ?? t("chat.matchFallback") }),
+        ctaLabel: t("chat.boost.cta"),
         onCta: () => {
           if (first.other) {
             onOpenChat({ id: first.id, name: first.other.displayName, poster: first.other.posterUrl });
@@ -133,8 +135,8 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
       setGiftNudge({
         id: "gift-cold-match",
         emoji: "🎁",
-        text: `Ton match avec ${cold.other.displayName} attend un premier signe — un cadeau fait toujours mouche avant le premier mot.`,
-        ctaLabel: "Ouvrir",
+        text: t("chat.nudge.coldMatch", { name: cold.other.displayName }),
+        ctaLabel: t("chat.nudge.open"),
         onCta: () => {
           onOpenChat({ id: cold.id, name: cold.other!.displayName, poster: cold.other!.posterUrl });
         },
@@ -148,7 +150,7 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
   return (
     <div className="absolute inset-0 v-bg-app v-fg overflow-hidden">
       <div className="absolute top-9 inset-x-0 z-20 px-4 py-2 flex items-center justify-between">
-        <span className="font-display font-bold text-lg v-text-gradient">Matchs</span>
+        <span className="font-display font-bold text-lg v-text-gradient">{t("chat.matches.title")}</span>
         <div className="flex items-center gap-3">
           {boostedCount > 0 && (
             <motion.span
@@ -156,12 +158,12 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
               animate={{ scale: 1 }}
               className="text-[11px] text-amber-600 dark:text-amber-300 flex items-center gap-1 bg-amber-400/10 rounded-full px-2 py-0.5"
             >
-              <Zap className="h-3 w-3" fill="currentColor" /> {boostedCount} boosté{boostedCount > 1 ? "s" : ""}
+              <Zap className="h-3 w-3" fill="currentColor" /> {boostedCount > 1 ? t("chat.matches.boosted.many", { n: boostedCount }) : t("chat.matches.boosted.one", { n: boostedCount })}
             </motion.span>
           )}
           {lockedMatches.length > 0 && (
             <span className="text-[11px] text-amber-600 dark:text-amber-300 flex items-center gap-1">
-              <Lock className="h-3 w-3" /> {lockedMatches.length} en attente
+              <Lock className="h-3 w-3" /> {t("chat.matches.pending", { n: lockedMatches.length })}
             </span>
           )}
         </div>
@@ -178,7 +180,7 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
         </div>
 
         {loading ? (
-          <div className="space-y-2.5" aria-busy="true" aria-label="Chargement des matchs">
+          <div className="space-y-2.5" aria-busy="true" aria-label={t("chat.matches.loading")}>
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
@@ -198,8 +200,8 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
         ) : active.length === 0 ? (
           <div className="grid place-items-center py-24 text-center px-6">
             <Floating amplitude={10} duration={3.5} className="text-5xl mb-3">💭</Floating>
-            <h3 className="font-display text-lg font-bold mb-1">Aucun match pour l&apos;instant</h3>
-            <p className="text-sm v-fg-muted">Continue à swiper — ton premier match est tout proche.</p>
+            <h3 className="font-display text-lg font-bold mb-1">{t("chat.matches.empty.title")}</h3>
+            <p className="text-sm v-fg-muted">{t("chat.matches.empty.sub")}</p>
           </div>
         ) : (
           <ul className="space-y-2.5">
@@ -250,7 +252,7 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
                         <MapPin className="h-3 w-3" /> {m.other!.city}
                       </p>
                       <p className={`text-xs truncate mt-0.5 ${isBoosted ? "text-amber-700 dark:text-amber-200 font-medium" : "v-fg-muted"}`}>
-                        {m.lastMessage ?? "Nouveau match — dis bonjour ! 👋"}
+                        {m.lastMessage ?? t("chat.matches.newMatch")}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
@@ -274,7 +276,7 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
                         </span>
                       )}
                       {!m.unlocked && m.isInitiator && !isBoosted && (
-                        <span className="text-[9px] text-amber-700/80 dark:text-amber-300/80">Anti-spam {m.myMessagesCount}/3</span>
+                        <span className="text-[9px] text-amber-700/80 dark:text-amber-300/80">{t("chat.matches.antiSpam", { n: m.myMessagesCount })}</span>
                       )}
                     </div>
                   </motion.button>

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { Heart, MessageCircle, Wallet as WalletIcon, User, ArrowLeft, Crown } from "lucide-react";
 import { useVibe } from "@/lib/vibe/store";
+import { useI18n } from "@/lib/vibe/i18n";
 import { AuthScreen } from "./auth-screen";
 import { OnboardingFlow } from "./onboarding-flow";
 import { SwipeScreen } from "./swipe-screen";
@@ -31,6 +32,7 @@ type MatchData = {
 };
 
 export function AppDemo({ onExit }: { onExit: () => void }) {
+  const { t } = useI18n();
   const me = useVibe((s) => s.me);
   const setMe = useVibe((s) => s.setMe);
   const [tab, setTab] = useState<Tab>("swipe");
@@ -184,10 +186,10 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
       {!chatTarget && (
         <div className="absolute bottom-0 inset-x-0 z-30 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 v-fade-bottom pointer-events-none">
           <div className="mx-3 rounded-2xl v-glass flex items-center justify-around p-1.5 pointer-events-auto shadow-lg">
-            <NavBtn icon={<Heart className="h-5 w-5" />} label="Découvrir" active={tab === "swipe"} onClick={() => selectTab("swipe")} />
-            <NavBtn icon={<MessageCircle className="h-5 w-5" />} label="Matchs" active={tab === "matches"} onClick={() => selectTab("matches")} />
-            <NavBtn icon={<WalletIcon className="h-5 w-5" />} label="Boutique" active={tab === "wallet"} onClick={() => selectTab("wallet")} />
-            <NavBtn icon={<User className="h-5 w-5" />} label="Profil" active={tab === "profile"} onClick={() => selectTab("profile")} />
+            <NavBtn icon={<Heart className="h-5 w-5" />} label={t("app.nav.discover")} active={tab === "swipe"} onClick={() => selectTab("swipe")} />
+            <NavBtn icon={<MessageCircle className="h-5 w-5" />} label={t("app.nav.matches")} active={tab === "matches"} onClick={() => selectTab("matches")} />
+            <NavBtn icon={<WalletIcon className="h-5 w-5" />} label={t("app.nav.shop")} active={tab === "wallet"} onClick={() => selectTab("wallet")} />
+            <NavBtn icon={<User className="h-5 w-5" />} label={t("app.nav.profile")} active={tab === "profile"} onClick={() => selectTab("profile")} />
           </div>
         </div>
       )}
@@ -242,10 +244,10 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
                 ],
               }}
               transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-              aria-label="Actions premium"
+              aria-label={t("app.premiumAria")}
               className="inline-flex items-center gap-1 rounded-full vibe-gradient px-3 py-1.5 text-[11px] font-bold text-white shadow-lg shadow-accent/25"
             >
-              <Crown className="h-3.5 w-3.5" /> Premium
+              <Crown className="h-3.5 w-3.5" /> {t("app.premium")}
             </motion.button>
           </div>
           <PremiumActionsSheet
@@ -272,6 +274,7 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
 /// page) with a contextual toast. The pending action is kept in the store and
 /// resumes automatically after a successful pack purchase (wallet-screen).
 function GoBuyVibesRedirect({ onGoWallet }: { onGoWallet: () => void }) {
+  const { t } = useI18n();
   // Keep the latest navigation callback without re-subscribing every render.
   const goRef = useRef(onGoWallet);
   useEffect(() => {
@@ -285,8 +288,11 @@ function GoBuyVibesRedirect({ onGoWallet }: { onGoWallet: () => void }) {
       const missing = Math.max(0, (needed ?? 0) - (have ?? 0));
       vibeToast({
         emoji: "💎",
-        title: "Plus assez de Vibes",
-        sub: `Il te manque ${missing} — ${actionLabel ?? "cette action"} reprendra après recharge ✨`,
+        title: t("app.vibesToastTitle"),
+        sub: t("app.vibesMissing", {
+          missing,
+          action: actionLabel ?? t("app.vibesMissingFallback"),
+        }),
       });
     };
     window.addEventListener("vivilov:go-buy-vibes", handler);

@@ -27,13 +27,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
 import { useVibe } from "@/lib/vibe/store";
-import { COUNTRY_CODES, type Country } from "@/lib/vibe/country-codes";
+import { COUNTRY_CODES, countryName, type Country } from "@/lib/vibe/country-codes";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/vibe/i18n";
 
 type Step = "phone" | "pin-create" | "pin-confirm" | "pin-login";
 
 export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; onOpenChange: (o: boolean) => void; onSuccess: () => void }) {
+  const { t, apiErr } = useI18n();
   const setMe = useVibe((s) => s.setMe);
   const [step, setStep] = useState<Step>("phone");
   const [country, setCountry] = useState<Country>(
@@ -64,7 +66,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
 
   async function checkPhone() {
     if (phone.replace(/\s/g, "").length < 6) {
-      toast.error("Numéro invalide");
+      toast.error(t("landing.auth.invalidPhone"));
       return;
     }
     setLoading(true);
@@ -79,7 +81,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
       setUserExists(!!data.exists);
       setStep(data.exists ? "pin-login" : "pin-create");
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      toast.error(apiErr(e.message) || t("landing.auth.error"));
     } finally {
       setLoading(false);
     }
@@ -99,11 +101,11 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
         setMe(data.user);
         useVibe.getState().setRates(data.rates ?? {});
       }
-      toast.success("Bienvenue sur Vivilov ! +25 Vibes offertes 🎁");
+      toast.success(t("landing.auth.welcome"));
       onOpenChange(false);
       onSuccess();
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      toast.error(apiErr(e.message) || t("landing.auth.error"));
       setStep("pin-create");
       setPin("");
     } finally {
@@ -125,11 +127,11 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
         setMe(data.user);
         useVibe.getState().setRates(data.rates ?? {});
       }
-      toast.success("Content de te revoir 👋");
+      toast.success(t("landing.auth.welcomeBack"));
       onOpenChange(false);
       onSuccess();
     } catch (e: any) {
-      toast.error(e.message || "Erreur");
+      toast.error(apiErr(e.message) || t("landing.auth.error"));
       setPin("");
     } finally {
       setLoading(false);
@@ -146,22 +148,22 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
           <div className="relative flex items-center justify-between">
             <VibeLogo className="[&_span]:text-white" />
             <span className="text-[11px] font-semibold text-white/80 bg-white/15 rounded-full px-2.5 py-1 backdrop-blur">
-              {step === "phone" && "Étape 1/3"}
-              {(step === "pin-create" || step === "pin-confirm" || step === "pin-login") && "Sécurité"}
+              {step === "phone" && t("landing.auth.stepBadge")}
+              {(step === "pin-create" || step === "pin-confirm" || step === "pin-login") && t("landing.auth.security")}
             </span>
           </div>
           <div className="relative mt-3 text-white">
             <DialogTitle className="font-display text-xl font-bold">
-              {step === "phone" && "Ton numéro, ta vibe."}
-              {step === "pin-create" && "Crée ton code PIN"}
-              {step === "pin-confirm" && "Confirme ton PIN"}
-              {step === "pin-login" && "Heureux de te revoir"}
+              {step === "phone" && t("landing.auth.titlePhone")}
+              {step === "pin-create" && t("landing.auth.titleCreate")}
+              {step === "pin-confirm" && t("landing.auth.titleConfirm")}
+              {step === "pin-login" && t("landing.auth.titleLogin")}
             </DialogTitle>
             <DialogDescription className="text-white/80 text-sm mt-0.5">
-              {step === "phone" && "Aucun compte à créer — juste ton numéro et un code."}
-              {step === "pin-create" && "4 chiffres pour te reconnecter vite. Hashé, jamais partagé."}
-              {step === "pin-confirm" && "Retape les 4 chiffres pour confirmer."}
-              {step === "pin-login" && "Entre ton PIN à 4 chiffres."}
+              {step === "phone" && t("landing.auth.descPhone")}
+              {step === "pin-create" && t("landing.auth.descCreate")}
+              {step === "pin-confirm" && t("landing.auth.descConfirm")}
+              {step === "pin-login" && t("landing.auth.descLogin")}
             </DialogDescription>
           </div>
         </div>
@@ -171,13 +173,13 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
           <AnimatePresence mode="wait">
             {step === "phone" && (
               <motion.div key="phone" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col">
-                <label className="text-xs font-semibold text-white/75 mb-2">Téléphone</label>
+                <label className="text-xs font-semibold text-white/75 mb-2">{t("landing.auth.phone")}</label>
                 <div className="flex gap-2">
                   <CountryCodeSelect value={country} onChange={setCountry} />
                   <Input
                     type="tel"
                     inputMode="tel"
-                    placeholder="6 12 34 56 78"
+                    placeholder={t("landing.auth.phonePlaceholder")}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="flex-1 h-12 rounded-2xl text-base bg-white/5 border-white/15 text-white placeholder:text-white/50"
@@ -189,11 +191,11 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
                   disabled={loading}
                   className="mt-5 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-60"
                 >
-                  {loading ? "Vérification…" : "Continuer"}
+                  {loading ? t("landing.auth.checking") : t("common.continue")}
                   <ArrowRight className="h-4 w-4" />
                 </button>
                 <p className="text-[11px] text-white/70 text-center mt-5 leading-relaxed">
-                  En continuant, tu acceptes nos CGU et notre Politique RGPD.<br />Ton numéro n&apos;est jamais affiché.
+                  {t("landing.auth.legal1")}<br />{t("landing.auth.legal2")}
                 </p>
               </motion.div>
             )}
@@ -218,7 +220,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
                       onClick={() => setStep("pin-confirm")}
                       className="mt-5 h-11 px-5 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center gap-2 active:scale-95 transition"
                     >
-                      Continuer <ArrowRight className="h-4 w-4" />
+                      {t("common.continue")} <ArrowRight className="h-4 w-4" />
                     </motion.button>
                   )}
                 </AnimatePresence>
@@ -234,7 +236,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
                   onChange={(v) => {
                     setConfirmPin(v);
                     if (v.length === 4 && v === pin) register();
-                    else if (v.length === 4 && v !== pin) toast.error("Les codes ne correspondent pas");
+                    else if (v.length === 4 && v !== pin) toast.error(t("landing.auth.pinMismatch"));
                   }}
                 >
                   <InputOTPGroup className="gap-2">
@@ -244,7 +246,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
                     <InputOTPSlot index={3} className="h-14 w-12 text-xl rounded-xl border-white/15 bg-white/5 text-white" />
                   </InputOTPGroup>
                 </InputOTP>
-                {loading && <p className="text-sm text-white/75 mt-5">Création du compte…</p>}
+                {loading && <p className="text-sm text-white/75 mt-5">{t("landing.auth.creating")}</p>}
               </motion.div>
             )}
 
@@ -268,7 +270,7 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
                       onClick={login}
                       className="mt-5 h-11 px-5 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center gap-2 active:scale-95 transition"
                     >
-                      {loading ? "…" : "Se connecter"}
+                      {loading ? "…" : t("landing.auth.signIn")}
                     </motion.button>
                   )}
                 </AnimatePresence>
@@ -282,14 +284,16 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
 }
 
 function BackBtn({ onClick }: { onClick: () => void }) {
+  const { t } = useI18n();
   return (
     <button onClick={onClick} className="self-start mb-4 text-sm text-white/75 hover:text-white flex items-center gap-1 transition">
-      <ArrowLeft className="h-4 w-4" /> Retour
+      <ArrowLeft className="h-4 w-4" /> {t("common.back")}
     </button>
   );
 }
 
 function CountryCodeSelect({ value, onChange }: { value: Country; onChange: (c: Country) => void }) {
+  const { t, lang } = useI18n();
   const [open, setOpen] = useState(false);
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -297,7 +301,7 @@ function CountryCodeSelect({ value, onChange }: { value: Country; onChange: (c: 
         <button
           type="button"
           className="inline-flex items-center gap-1.5 h-12 rounded-2xl border border-white/15 v-surface-1 px-3 text-sm font-medium text-white hover:v-surface-2 transition shrink-0"
-          aria-label="Choisir le code pays"
+          aria-label={t("landing.auth.chooseCountry")}
         >
           <span className="text-xl leading-none">{value.flag}</span>
           <span className="tabular-nums">{value.dial}</span>
@@ -308,15 +312,15 @@ function CountryCodeSelect({ value, onChange }: { value: Country; onChange: (c: 
         <Command className="[&_input]:bg-transparent [&_input]:text-white [&_input]:placeholder:text-white/50">
           <div className="flex items-center border-b border-white/10 px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 text-white/50" />
-            <CommandInput placeholder="Rechercher un pays…" className="h-9" />
+            <CommandInput placeholder={t("landing.auth.searchCountry")} className="h-9" />
           </div>
           <CommandList className="max-h-[280px]">
-            <CommandEmpty>Aucun pays trouvé.</CommandEmpty>
+            <CommandEmpty>{t("landing.auth.noCountry")}</CommandEmpty>
             <CommandGroup>
               {COUNTRY_CODES.map((c) => (
                 <CommandItem
                   key={c.iso}
-                  value={`${c.name} ${c.iso} ${c.dial}`}
+                  value={`${countryName(c, lang)} ${c.iso} ${c.dial}`}
                   onSelect={() => {
                     onChange(c);
                     setOpen(false);
@@ -324,7 +328,7 @@ function CountryCodeSelect({ value, onChange }: { value: Country; onChange: (c: 
                   className="gap-2.5 data-[selected=true]:bg-white/10 data-[selected=true]:text-white"
                 >
                   <span className="text-xl leading-none">{c.flag}</span>
-                  <span className="flex-1 truncate">{c.name}</span>
+                  <span className="flex-1 truncate">{countryName(c, lang)}</span>
                   <span className="text-white/70 tabular-nums text-sm">{c.dial}</span>
                   {c.iso === value.iso && <Check className="h-4 w-4 text-primary" />}
                 </CommandItem>

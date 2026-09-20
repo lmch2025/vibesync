@@ -2,15 +2,18 @@
 import { motion } from "framer-motion";
 import { BadgeCheck, Waves } from "lucide-react";
 import { Reveal, SectionHeading } from "./primitives";
+import { useI18n } from "@/lib/vibe/i18n";
 
-const QUESTION = "Plage ou Montagne ?";
+// Question et options : clés i18n (résolues au rendu via t()).
+const QUESTION = "landing.vibecheck.q";
 const OPTIONS = [
-  { key: "plage", label: "Plage", emoji: "🏖️" },
-  { key: "montagne", label: "Montagne", emoji: "⛰️" },
+  { key: "plage", label: "landing.vibecheck.beach", emoji: "🏖️" },
+  { key: "montagne", label: "landing.vibecheck.mountain", emoji: "⛰️" },
 ];
 const MATCH_KEY = "plage";
 
 export function VibeCheckShowcase() {
+  const { t } = useI18n();
   return (
     <section className="relative py-16 sm:py-24 overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10">
@@ -50,7 +53,7 @@ export function VibeCheckShowcase() {
                     <Waves className="h-3.5 w-3.5 text-vibe-orange" />
                     Vibe Check
                   </div>
-                  <p className="text-white font-display font-bold text-lg text-center mb-3">{QUESTION}</p>
+                  <p className="text-white font-display font-bold text-lg text-center mb-3">{t(QUESTION)}</p>
                   <div className="grid grid-cols-2 gap-2.5">
                     {OPTIONS.map((o) => {
                       const isMatch = o.key === MATCH_KEY;
@@ -65,7 +68,7 @@ export function VibeCheckShowcase() {
                           style={isMatch ? { backgroundImage: "linear-gradient(135deg, var(--vibe-purple), var(--vibe-pink))" } : undefined}
                         >
                           <span className="mr-1">{o.emoji}</span>
-                          {o.label}
+                          {t(o.label)}
                           {isMatch && (
                             <span className="absolute -top-2 -right-2 grid h-5 w-5 place-items-center rounded-full bg-vibe-orange text-[10px] font-black text-white ring-2 ring-white">
                               ✓
@@ -85,20 +88,20 @@ export function VibeCheckShowcase() {
             <SectionHeading
               align="left"
               eyebrow="Vibe Check"
-              title={<>Le match qui <span className="vibe-text-gradient">communique vraiment</span></>}
-              subtitle="Avant d'ouvrir une conversation, vous répondez tous les deux à une question légère. La réponse de l'autre ne s'affiche que si elle correspond à la tienne. 87 % des matchs viennent d'ici."
+              title={<>{t("landing.vibecheck.titleA")} <span className="vibe-text-gradient">{t("landing.vibecheck.titleB")}</span></>}
+              subtitle={t("landing.vibecheck.subtitle")}
             />
             <ul className="mt-6 space-y-3 text-sm">
               {[
-                "Pas de mauvaises surprises : tu sais déjà si vous partagez une vibe.",
-                "Aucune réponse forcée : tu peux skipper la question si elle ne te parle pas.",
-                "Plus de 50 questions rotatives pour garder la fraîcheur.",
-              ].map((t, i) => (
+                t("landing.vibecheck.b1"),
+                t("landing.vibecheck.b2"),
+                t("landing.vibecheck.b3"),
+              ].map((line, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span className="mt-1 grid h-5 w-5 place-items-center rounded-full vibe-gradient text-white text-[10px] font-bold shrink-0">
                     ✓
                   </span>
-                  <span className="text-foreground/80">{t}</span>
+                  <span className="text-foreground/80">{line}</span>
                 </li>
               ))}
             </ul>

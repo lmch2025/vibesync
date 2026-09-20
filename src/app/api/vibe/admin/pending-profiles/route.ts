@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/vibe/session";
 import { notify } from "@/lib/vibe/notify";
+import { getUserLang, tFor } from "@/lib/vibe/i18n/server";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -60,13 +61,13 @@ export async function POST(req: Request) {
   });
 
   // Real feedback to the user — their profile visibility just changed.
+  // Localisé dans la langue du compte du destinataire.
+  const lang = await getUserLang(profile.userId);
   await notify(
     profile.userId,
     action === "approve" ? "system" : "marketing",
-    action === "approve" ? "Ta vidéo est validée 🎉" : "Ta vidéo a été refusée",
-    action === "approve"
-      ? "Ton profil est maintenant visible dans le Découvrir. Bonne chance ! 💜"
-      : "Remplace ta vidéo de présentation pour redevenir visible dans le Découvrir.",
+    tFor(lang, action === "approve" ? "notif.videoApproved.title" : "notif.videoRejected.title"),
+    tFor(lang, action === "approve" ? "notif.videoApproved.body" : "notif.videoRejected.body"),
     action === "approve" ? "🎉" : "📹"
   );
 

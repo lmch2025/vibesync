@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
 import { ConfettiBurst } from "./interactive-animations";
+import { useI18n } from "@/lib/vibe/i18n";
 
 type MatchData = {
   id: string;
@@ -25,6 +26,7 @@ export function MatchOverlay({
   onMessage: (target: { id: string, name: string, poster: string | null }) => void;
   myPoster?: string;
 }) {
+  const { t } = useI18n();
   // The REAL limit configured in the admin panel (fallback 3 = product default).
   const [msgLimit, setMsgLimit] = useState<number>(cachedMsgLimit ?? 3);
 
@@ -79,7 +81,7 @@ export function MatchOverlay({
               transition={{ type: "spring", stiffness: 200, damping: 12 }}
               className="font-display text-5xl font-black text-white drop-shadow-lg mb-1"
             >
-              C&apos;est un match !
+              {t("swipe.match.title")}
             </motion.h2>
             <motion.p
               initial={{ y: 10, opacity: 0 }}
@@ -87,7 +89,7 @@ export function MatchOverlay({
               transition={{ delay: 0.2 }}
               className="text-white/80 mb-8"
             >
-              Vous vous êtes swipés mutuellement. 🎉
+              {t("swipe.match.sub")}
             </motion.p>
 
             <div className="relative flex items-center justify-center gap-4 mb-8">
@@ -101,7 +103,7 @@ export function MatchOverlay({
                   transition={{ type: "spring", stiffness: 200, damping: 14, delay: 0.1 }}
                   className="relative h-36 w-28 rounded-2xl overflow-hidden ring-4 ring-white shadow-2xl"
                 >
-                  <img src={myPoster} alt="Toi" className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={myPoster} alt={t("swipe.match.you")} className="absolute inset-0 w-full h-full object-cover" />
                 </motion.div>
               )}
               <motion.div
@@ -123,7 +125,7 @@ export function MatchOverlay({
             </div>
 
             <p className="text-white font-display text-lg mb-6">
-              Toi &amp; {match.withProfile.displayName}
+              {t("swipe.match.you")} &amp; {match.withProfile.displayName}
             </p>
 
             <div className="flex flex-col gap-2.5 max-w-[220px] mx-auto">
@@ -131,17 +133,19 @@ export function MatchOverlay({
                 onClick={() => onMessage({ id: match.id, name: match.withProfile.displayName, poster: match.withProfile.posterUrl })}
                 className="h-12 rounded-2xl bg-white text-primary font-bold flex items-center justify-center gap-2 active:scale-95 transition shadow-lg"
               >
-                <MessageCircle className="h-5 w-5" /> Envoyer un message
+                <MessageCircle className="h-5 w-5" /> {t("swipe.match.sendMessage")}
               </button>
               <button
                 onClick={onClose}
                 className="h-11 rounded-2xl bg-black/20 backdrop-blur text-white font-semibold active:scale-95 transition"
               >
-                Continuer à swiper
+                {t("swipe.match.keepSwiping")}
               </button>
             </div>
             <p className="text-white/70 text-[10px] mt-5">
-              ⚠️ Anti-spam : tu peux envoyer {msgLimit} message{msgLimit > 1 ? "s" : ""} max tant que {match.withProfile.displayName} ne répond pas.
+              {msgLimit > 1
+                ? t("swipe.match.antispam.many", { n: msgLimit, name: match.withProfile.displayName })
+                : t("swipe.match.antispam.one", { n: msgLimit, name: match.withProfile.displayName })}
             </p>
           </div>
         </motion.div>

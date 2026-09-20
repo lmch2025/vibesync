@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/vibe/session";
+import { isValidLang } from "@/lib/vibe/i18n/core";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -16,6 +17,7 @@ export async function GET() {
       name: user.name,
       role: user.role,
       currency: user.currency,
+      lang: user.lang,
       country: user.country,
       gems: user.gems,
       freeGems: user.freeGems,
@@ -59,4 +61,18 @@ export async function GET() {
     },
     rates: rateMap,
   });
+}
+
+// PATCH /api/vibe/me — persiste la langue UI choisie par l'utilisateur
+// (appelé par le sélecteur FR/EN). Choix explicite → suit le compte sur
+// tous ses appareils.
+export async function PATCH(req: Request) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  const body = await req.json().catch(() => ({} as any));
+  if (!isValidLang(body?.lang)) {
+    return NextResponse.json({ error: "Langue invalide" }, { status: 400 });
+  }
+  await db.user.update({ where: { id: user.id }, data: { lang: body.lang } });
+  return NextResponse.json({ ok: true, lang: body.lang });
 }

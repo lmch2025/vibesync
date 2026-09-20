@@ -23,6 +23,7 @@ import { useVibe } from "@/lib/vibe/store";
 import { toast } from "sonner";
 import { ActionSuccessModal } from "./action-success-modal";
 import { celebrate } from "./interactive-animations";
+import { useI18n } from "@/lib/vibe/i18n";
 import type { BuffType } from "@/lib/vibe/use-active-buffs";
 
 /// Result payload returned by POST /api/vibe/gems/spend — the shape varies
@@ -60,13 +61,13 @@ type ActiveEffect = {
 /// moment of highest delight — one muted line suggesting the complementary
 /// action, never a button. Only the natural pairs are mapped; everything
 /// else stays clean (no forced cross-sell).
-const COMBO_TIPS: Partial<Record<PremiumAction["key"], string>> = {
-  boost: "💡 Astuce : le Projecteur (40 💎) ajoute ton profil à 20 decks — le combo idéal avec ton Boost.",
-  spotlight: "💡 Astuce : le Boost (50 💎) te place en tête de la file pendant ton Projecteur — visibilité doublée.",
-  superlike: "💡 Astuce : le Cœur d'Or (60 💎) est un super-like doré avec badge spécial — impossible à manquer.",
-  passport: "💡 Astuce : le Vibe Radar (25 💎) montre qui est en ligne maintenant, où que tu voyages.",
-  rewind: "💡 Astuce : le Super Rewind (15 💎) annule tes 5 derniers swipes d'un coup.",
-  seeLikes: "💡 Astuce : un Super-Like (5 💎) te place en haut de SA file quand tu aimes quelqu'un.",
+const COMBO_TIP_KEYS: Partial<Record<PremiumAction["key"], string>> = {
+  boost: "premium.tip.boost",
+  spotlight: "premium.tip.spotlight",
+  superlike: "premium.tip.superlike",
+  passport: "premium.tip.passport",
+  rewind: "premium.tip.rewind",
+  seeLikes: "premium.tip.seeLikes",
 };
 
 /// Premium actions that grant a timed buff — mapped onto the shared BuffType
@@ -83,11 +84,77 @@ const BUFF_ACTION_KEYS: Partial<Record<PremiumAction["key"], BuffType>> = {
 
 /// Actions that need a target profile — executable only in contextual mode.
 const NEEDS_PROFILE: PremiumAction["key"][] = ["goldenHeart", "crushAlert", "moodRing", "compatibilityReport"];
-/// Flow-specific actions — always shown as hints, never charged from here.
-const FLOW_HINTS: Partial<Record<PremiumAction["key"], string>> = {
-  superlike: "Glisse la carte vers le haut ⬆️ pour Super-Liker",
-  messageBoost: "Active l'éclair ⚡ dans une conversation",
+/// Flow-specific actions — always shown as hints, never charged from here
+/// (clés i18n, traduites au rendu).
+const FLOW_HINT_KEYS: Partial<Record<PremiumAction["key"], string>> = {
+  superlike: "premium.flow.superlike",
+  messageBoost: "premium.flow.messageBoost",
 };
+
+/// Libellés & descriptions des actions premium — constants.ts reste la
+/// source de vérité (FR, coûts, emojis) ; on traduit au rendu via ces clés,
+/// avec repli sur le libellé d'origine si l'action n'est pas mappée.
+const ACTION_LABEL_KEYS: Partial<Record<PremiumAction["key"], string>> = {
+  superlike: "premium.action.superlike",
+  rewind: "premium.action.rewind",
+  boost: "premium.action.boost",
+  superRewind: "premium.action.superRewind",
+  goldenHeart: "premium.action.goldenHeart",
+  timeFreeze: "premium.action.timeFreeze",
+  vibeRadar: "premium.action.vibeRadar",
+  crushAlert: "premium.action.crushAlert",
+  seeLikes: "premium.action.seeLikes",
+  icebreaker: "premium.action.icebreaker",
+  messageBoost: "premium.action.messageBoost",
+  passport: "premium.action.passport",
+  spotlight: "premium.action.spotlight",
+  compatibilityReport: "premium.action.compatibilityReport",
+  moodRing: "premium.action.moodRing",
+  ghostMode: "premium.action.ghostMode",
+  dailyDouble: "premium.action.dailyDouble",
+};
+const ACTION_DESC_KEYS: Partial<Record<PremiumAction["key"], string>> = {
+  superlike: "premium.action.superlike.desc",
+  rewind: "premium.action.rewind.desc",
+  boost: "premium.action.boost.desc",
+  superRewind: "premium.action.superRewind.desc",
+  goldenHeart: "premium.action.goldenHeart.desc",
+  timeFreeze: "premium.action.timeFreeze.desc",
+  vibeRadar: "premium.action.vibeRadar.desc",
+  crushAlert: "premium.action.crushAlert.desc",
+  seeLikes: "premium.action.seeLikes.desc",
+  icebreaker: "premium.action.icebreaker.desc",
+  messageBoost: "premium.action.messageBoost.desc",
+  passport: "premium.action.passport.desc",
+  spotlight: "premium.action.spotlight.desc",
+  compatibilityReport: "premium.action.compatibilityReport.desc",
+  moodRing: "premium.action.moodRing.desc",
+  ghostMode: "premium.action.ghostMode.desc",
+  dailyDouble: "premium.action.dailyDouble.desc",
+};
+
+/// Fonction t() du hook useI18n (pour les helpers module-level).
+type TFunc = ReturnType<typeof useI18n>["t"];
+
+function actionLabel(t: TFunc, a: PremiumAction): string {
+  const k = ACTION_LABEL_KEYS[a.key];
+  return k ? t(k) : a.label;
+}
+
+function actionDesc(t: TFunc, a: PremiumAction): string {
+  const k = ACTION_DESC_KEYS[a.key];
+  return k ? t(k) : a.description;
+}
+
+function comboTip(t: TFunc, key: PremiumAction["key"]): string | undefined {
+  const k = COMBO_TIP_KEYS[key];
+  return k ? t(k) : undefined;
+}
+
+function flowHint(t: TFunc, key: PremiumAction["key"]): string | undefined {
+  const k = FLOW_HINT_KEYS[key];
+  return k ? t(k) : undefined;
+}
 
 export function PremiumActionsSheet({
   open,
@@ -108,6 +175,7 @@ export function PremiumActionsSheet({
   const me = useVibe((s) => s.me);
   const patchMe = useVibe((s) => s.patchMe);
   const requireVibes = useVibe((s) => s.requireVibes);
+  const { t, apiErr } = useI18n();
   const [activeEffect, setActiveEffect] = useState<ActiveEffect>(null);
   const [busy, setBusy] = useState<string | null>(null);
   // Inline passport city picker (replaces the grid until a city is chosen).
@@ -132,10 +200,10 @@ export function PremiumActionsSheet({
   // In contextual mode, group by executable vs flow-hint; in generic mode,
   // show profile-targeted actions in a dedicated "contextuelles" group.
   const executable = actions.filter(
-    (a) => !FLOW_HINTS[a.key] && (!NEEDS_PROFILE.includes(a.key) || contextual),
+    (a) => !FLOW_HINT_KEYS[a.key] && (!NEEDS_PROFILE.includes(a.key) || contextual),
   );
   const contextualOnly = actions.filter((a) => NEEDS_PROFILE.includes(a.key) && !contextual);
-  const flowHinted = actions.filter((a) => FLOW_HINTS[a.key]);
+  const flowHinted = actions.filter((a) => FLOW_HINT_KEYS[a.key]);
 
   const grouped = {
     swipe: executable.filter((a) => a.category === "swipe"),
@@ -161,7 +229,7 @@ export function PremiumActionsSheet({
     // happened so busy is released by the async flow's `finally` (the spinner
     // now really shows) — or immediately when the action never started.
     let started = false;
-    requireVibes(action.cost, `${action.emoji} ${action.label} (${action.cost} Vibes)`, async () => {
+    requireVibes(action.cost, `${action.emoji} ${actionLabel(t, action)} (${action.cost} Vibes)`, async () => {
       started = true;
       // Light launch feedback — the real celebration lives in ActionSuccessModal.
       celebrate({ sound: "pop", confettiCount: 0, hapticPattern: 10 });
@@ -190,7 +258,7 @@ export function PremiumActionsSheet({
         setPassportPick(false);
         onOpenChange(false);
       } catch (e: any) {
-        toast.error(e.message || "Erreur");
+        toast.error(apiErr(e.message) || t("premium.error"));
       } finally {
         setBusy(null);
       }
@@ -205,15 +273,15 @@ export function PremiumActionsSheet({
       return;
     }
     // Flow-specific actions redirect with a hint (never charge).
-    const hint = FLOW_HINTS[action.key];
+    const hint = flowHint(t, action.key);
     if (hint) {
-      toast.info(`${action.emoji} ${action.label}`, { description: hint, duration: 4000 });
+      toast.info(`${action.emoji} ${actionLabel(t, action)}`, { description: hint, duration: 4000 });
       return;
     }
     // Profile-targeted action without context → explain where to use it.
     if (NEEDS_PROFILE.includes(action.key) && !contextual) {
-      toast.info(`${action.emoji} ${action.label}`, {
-        description: "Depuis l'onglet Découvrir, ouvre 👑 Premium en haut à droite — les actions cibleront le profil affiché.",
+      toast.info(`${action.emoji} ${actionLabel(t, action)}`, {
+        description: t("premium.needsProfile"),
         duration: 4000,
       });
       return;
@@ -239,24 +307,24 @@ export function PremiumActionsSheet({
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
               role="dialog"
-              aria-label="Actions premium"
+              aria-label={t("premium.sheet.aria")}
               className="fixed bottom-0 inset-x-0 z-50 rounded-t-3xl v-surface-solid v-fg ring-1 ring-(--v-divider) p-4 pb-6 max-h-[74vh] overflow-y-auto no-scrollbar"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="min-w-0">
                   <h3 className="font-display font-bold text-lg flex items-center gap-1.5">
-                    <Crown className="h-5 w-5 text-accent" /> Actions Premium
+                    <Crown className="h-5 w-5 text-accent" /> {t("premium.sheet.title")}
                   </h3>
                   {contextual && profileName && (
                     <p className="text-[11px] v-fg-muted truncate">
-                      pour <span className="font-semibold v-fg">{profileName}</span>
+                      {t("premium.sheet.for")} <span className="font-semibold v-fg">{profileName}</span>
                     </p>
                   )}
                 </div>
                 <motion.button
                   onClick={() => { setPassportPick(false); onOpenChange(false); }}
                   whileTap={{ scale: 0.88 }}
-                  aria-label="Fermer"
+                  aria-label={t("common.close")}
                   className="h-8 w-8 grid place-items-center rounded-full hover:v-surface-2 shrink-0"
                 >
                   <X className="h-4 w-4" />
@@ -277,12 +345,12 @@ export function PremiumActionsSheet({
                       onClick={() => setPassportPick(false)}
                       className="text-[11px] v-fg-muted font-medium hover:v-fg transition"
                     >
-                      ← Retour
+                      ← {t("common.back")}
                     </button>
                   </div>
-                  <p className="font-display font-bold text-sm mb-0.5">✈️ Choisis ta destination</p>
+                  <p className="font-display font-bold text-sm mb-0.5">{t("premium.passport.title")}</p>
                   <p className="text-[11px] v-fg-muted mb-3">
-                    Tu découvriras les profils de cette ville pendant 24h.
+                    {t("premium.passport.sub")}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {cityOptions.map((c) => (
@@ -307,7 +375,7 @@ export function PremiumActionsSheet({
                   {Object.entries(grouped).map(([cat, items]) => items.length > 0 && (
                     <div key={cat} className="mb-4">
                       <p className="text-[10px] uppercase tracking-wide v-fg-muted font-semibold mb-2">
-                        {cat === "swipe" ? "🎯 Swipe" : cat === "social" ? "💬 Social" : cat === "profile" ? "👤 Profil" : "⚙️ Méta"}
+                        {cat === "swipe" ? t("premium.cat.swipe") : cat === "social" ? t("premium.cat.social") : cat === "profile" ? t("premium.cat.profile") : t("premium.cat.meta")}
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         {items.map((action) => (
@@ -327,7 +395,7 @@ export function PremiumActionsSheet({
                   {contextualOnly.length > 0 && (
                     <div className="mb-4">
                       <p className="text-[10px] uppercase tracking-wide v-fg-muted font-semibold mb-2">
-                        ✨ À utiliser depuis un profil
+                        {t("premium.contextual.title")}
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         {contextualOnly.map((action) => (
@@ -335,7 +403,7 @@ export function PremiumActionsSheet({
                         ))}
                       </div>
                       <p className="text-[10px] v-fg-faint mt-2 px-1">
-                        Astuce : touche ✨ sur une carte dans Découvrir pour cibler un profil.
+                        {t("premium.contextual.hint")}
                       </p>
                     </div>
                   )}
@@ -344,7 +412,7 @@ export function PremiumActionsSheet({
                   {flowHinted.length > 0 && (
                     <div className="mb-1">
                       <p className="text-[10px] uppercase tracking-wide v-fg-muted font-semibold mb-2">
-                        🔎 Où les trouver ?
+                        {t("premium.flow.title")}
                       </p>
                       <div className="space-y-1.5">
                         {flowHinted.map((action) => (
@@ -355,8 +423,8 @@ export function PremiumActionsSheet({
                           >
                             <span className="text-xl shrink-0">{action.emoji}</span>
                             <span className="min-w-0 flex-1">
-                              <span className="block text-xs font-bold">{action.label}</span>
-                              <span className="block text-[10px] v-fg-muted truncate">{FLOW_HINTS[action.key]}</span>
+                              <span className="block text-xs font-bold">{actionLabel(t, action)}</span>
+                              <span className="block text-[10px] v-fg-muted truncate">{flowHint(t, action.key)}</span>
                             </span>
                             <Zap className="h-3 w-3 v-fg-faint shrink-0" />
                           </button>
@@ -377,11 +445,11 @@ export function PremiumActionsSheet({
         open={activeEffect !== null}
         onOpenChange={closeSuccess}
         emoji={activeEffect?.action.emoji ?? "✨"}
-        title={activeEffect?.action.label ?? ""}
-        message={activeEffect?.action.description}
+        title={activeEffect ? actionLabel(t, activeEffect.action) : ""}
+        message={activeEffect ? actionDesc(t, activeEffect.action) : undefined}
         buffType={activeEffect ? BUFF_ACTION_KEYS[activeEffect.action.key] : undefined}
         result={activeEffect ? <EffectResult result={activeEffect.result} /> : undefined}
-        tip={activeEffect ? COMBO_TIPS[activeEffect.action.key] : undefined}
+        tip={activeEffect ? comboTip(t, activeEffect.action.key) : undefined}
       />
     </>
   );
@@ -402,12 +470,13 @@ function ActionTile({
   highlight?: boolean;
   onClick: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <motion.button
       onClick={onClick}
       disabled={busy}
       whileTap={{ scale: 0.95 }}
-      aria-label={`${action.label} — ${action.cost} Vibes${dimmed ? " (depuis un profil)" : ""}`}
+      aria-label={`${actionLabel(t, action)} — ${action.cost} Vibes${dimmed ? t("premium.tile.fromProfileSuffix") : ""}`}
       className={`relative flex flex-col items-start gap-1 rounded-2xl p-3 text-left transition disabled:opacity-50 ring-1 ${
         highlight
           ? "v-surface-2 ring-accent/40 hover:v-surface-3"
@@ -416,10 +485,10 @@ function ActionTile({
     >
       <span className="text-2xl">{action.emoji}</span>
       <span className="text-xs font-bold leading-tight flex items-center gap-1">
-        {action.label}
+        {actionLabel(t, action)}
         {highlight && <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" aria-hidden />}
       </span>
-      <span className="text-[10px] v-fg-muted leading-tight">{action.description}</span>
+      <span className="text-[10px] v-fg-muted leading-tight">{actionDesc(t, action)}</span>
       <span className="flex items-center gap-0.5 text-[10px] text-fuchsia-600 dark:text-fuchsia-300 font-semibold mt-1">
         <GemIcon className="h-2.5 w-2.5" /> {action.cost}
       </span>
@@ -437,6 +506,7 @@ function ActionTile({
 /// compatibility score, AI analysis, mood, rewind count, icebreaker…).
 export function EffectResult({ result }: { result: ActionResult }) {
   const [copied, setCopied] = useState(false);
+  const { t } = useI18n();
   return (
     <div className="space-y-2">
       {result.message && (
@@ -447,7 +517,7 @@ export function EffectResult({ result }: { result: ActionResult }) {
 
       {result.peek && result.peek.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-white/70 font-semibold">❄️ Aperçu des 3 prochains</p>
+          <p className="text-[10px] uppercase tracking-wide text-white/70 font-semibold">{t("premium.result.peek")}</p>
           {result.peek.map((p) => (
             <div key={p.id} className="flex items-center gap-2.5 rounded-xl v-surface-1 px-3 py-2">
               <ProfileThumb posterUrl={p.posterUrl} />
@@ -462,7 +532,7 @@ export function EffectResult({ result }: { result: ActionResult }) {
 
       {result.online && result.online.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-emerald-400 font-semibold">📍 En ligne maintenant</p>
+          <p className="text-[10px] uppercase tracking-wide text-emerald-400 font-semibold">{t("premium.result.online")}</p>
           {result.online.map((p) => (
             <div key={p.id} className="flex items-center gap-2.5 rounded-xl v-surface-1 px-3 py-2">
               <ProfileThumb posterUrl={p.posterUrl} online />
@@ -477,7 +547,7 @@ export function EffectResult({ result }: { result: ActionResult }) {
 
       {result.likers && result.likers.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-amber-300 font-semibold">👁️ Ils t'ont liké</p>
+          <p className="text-[10px] uppercase tracking-wide text-amber-300 font-semibold">{t("premium.result.likers")}</p>
           {result.likers.map((l) => (
             <div key={l.id} className="flex items-center gap-2.5 rounded-xl v-surface-1 px-3 py-2">
               <ProfileThumb posterUrl={l.posterUrl} />
@@ -489,7 +559,7 @@ export function EffectResult({ result }: { result: ActionResult }) {
           ))}
           {result.hiddenByGhost ? (
             <p className="text-[10px] text-white/60 text-center px-2">
-              + {result.hiddenByGhost} visiteur{result.hiddenByGhost > 1 ? "s" : ""} en Mode Fantôme 👻 (invisible{result.hiddenByGhost > 1 ? "s" : ""})
+              {t(result.hiddenByGhost > 1 ? "premium.result.ghostVisitors.many" : "premium.result.ghostVisitors.one", { n: result.hiddenByGhost })}
             </p>
           ) : null}
         </div>
@@ -497,8 +567,8 @@ export function EffectResult({ result }: { result: ActionResult }) {
 
       {result.ghostTease ? (
         <div className="rounded-xl bg-vibe-gradient-soft ring-1 ring-white/10 px-4 py-3 text-center">
-          <p className="text-sm font-semibold text-white/90">👻 {result.ghostTease} personne{result.ghostTease > 1 ? "s" : ""} te parcoure{result.ghostTease > 1 ? "nt" : ""} en Mode Fantôme…</p>
-          <p className="text-[11px] text-white/70 mt-0.5">Invisible{result.ghostTease > 1 ? "s" : ""} jusqu&apos;à la fin de leur buff — reviens plus tard !</p>
+          <p className="text-sm font-semibold text-white/90">{t(result.ghostTease > 1 ? "premium.result.ghostTease.many" : "premium.result.ghostTease.one", { n: result.ghostTease })}</p>
+          <p className="text-[11px] text-white/70 mt-0.5">{t(result.ghostTease > 1 ? "premium.result.ghostTeaseHidden.many" : "premium.result.ghostTeaseHidden.one")}</p>
         </div>
       ) : null}
 
@@ -506,7 +576,7 @@ export function EffectResult({ result }: { result: ActionResult }) {
         <div className="space-y-2">
           <div className="rounded-xl bg-gradient-to-br from-vibe-purple/20 to-vibe-pink/20 ring-1 ring-white/10 px-4 py-3 text-center">
             <p className="text-[10px] uppercase tracking-wide text-white/70">
-              Compatibilité avec {result.profileName ?? "ce profil"}
+              {t("premium.result.compatWith", { name: result.profileName ?? t("premium.result.thisProfile") })}
             </p>
             <motion.p
               initial={{ scale: 0 }}
@@ -527,13 +597,13 @@ export function EffectResult({ result }: { result: ActionResult }) {
           )}
           {result.aiAnalysis && (
             <div className="rounded-xl v-surface-1 ring-1 ring-white/10 px-3 py-2.5">
-              <p className="text-[10px] uppercase tracking-wide text-white/70 font-semibold mb-1">🧬 Analyse IA</p>
+              <p className="text-[10px] uppercase tracking-wide text-white/70 font-semibold mb-1">{t("premium.result.aiAnalysis")}</p>
               <p className="text-[12px] text-white/85 leading-relaxed">{result.aiAnalysis}</p>
             </div>
           )}
           {result.score >= 80 && (
             <p className="text-[10px] text-amber-200/80 text-center px-2 leading-relaxed">
-              💛 Envie de te démarquer ? Le Cœur d'Or place ton profil en tête de sa file avec un badge doré.
+              {t("premium.result.goldenHeartTip")}
             </p>
           )}
         </div>
@@ -542,7 +612,7 @@ export function EffectResult({ result }: { result: ActionResult }) {
       {result.mood && (
         <div className="rounded-xl bg-gradient-to-br from-vibe-purple/20 to-vibe-pink/20 ring-1 ring-white/10 px-4 py-3 text-center">
           <p className="text-[10px] uppercase tracking-wide text-white/70">
-            Humeur de {result.profileName ?? "aujourd'hui"}
+            {t("premium.result.moodOf", { name: result.profileName ?? t("premium.result.today") })}
           </p>
           <p className="font-display text-2xl font-bold">{result.mood}</p>
         </div>
@@ -550,13 +620,13 @@ export function EffectResult({ result }: { result: ActionResult }) {
 
       {result.undoneCount !== undefined && result.undoneCount > 0 && (
         <div className="rounded-xl v-surface-1 ring-1 ring-white/10 px-3 py-2 text-sm text-white/80 text-center">
-          ↩️ {result.undoneCount} swipe{result.undoneCount > 1 ? "s" : ""} annulé{result.undoneCount > 1 ? "s" : ""} — le{result.undoneCount > 1 ? "s" : ""} profil{result.undoneCount > 1 ? "s" : ""} revient{result.undoneCount > 1 ? "ent" : ""} dans ton deck !
+          {t(result.undoneCount > 1 ? "premium.result.undone.many" : "premium.result.undone.one", { n: result.undoneCount })}
         </div>
       )}
 
       {result.active && !result.message && (
         <div className="rounded-xl bg-emerald-500/10 ring-1 ring-emerald-400/30 px-3 py-2 text-sm text-emerald-300 text-center">
-          ✅ Action activée avec succès !
+          ✅ {t("premium.result.activated")}
         </div>
       )}
 
@@ -577,7 +647,7 @@ export function EffectResult({ result }: { result: ActionResult }) {
               className="inline-flex items-center gap-1.5 rounded-full v-surface-2 ring-1 ring-white/10 px-3 py-1 text-[11px] font-semibold text-white/85 hover:v-surface-3 transition"
             >
               {copied ? <Check className="h-3 w-3 text-emerald-300" /> : <Copy className="h-3 w-3" />}
-              {copied ? "Copié !" : "Copier"}
+              {copied ? t("premium.icebreaker.copied") : t("premium.icebreaker.copy")}
             </button>
           </div>
         </div>

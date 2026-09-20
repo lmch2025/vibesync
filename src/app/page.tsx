@@ -1,7 +1,8 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { SESSION_COOKIE, getCurrentUser } from "@/lib/vibe/session";
 import { getSettings } from "@/lib/vibe/settings";
 import { db } from "@/lib/db";
+import { detectLangFromAcceptLanguage, isValidLang, type Lang } from "@/lib/vibe/i18n/core";
 import { ClientHome } from "./client-page";
 
 export default async function Home() {
@@ -24,6 +25,7 @@ export default async function Home() {
         name: user.name,
         role: user.role,
         currency: user.currency,
+        lang: user.lang,
         country: user.country,
         gems: user.gems,
         freeGems: user.freeGems,
@@ -77,5 +79,22 @@ export default async function Home() {
   // profile tab button, NOT on boot) resume straight into the app on refresh.
   const initialView = initialUser ? "app" : "landing";
 
-  return <ClientHome initialView={initialView as any} initialUser={initialUser} initialRates={initialRates} initialLandingVideo={initialLandingVideo} />;
+  // ── Langue initiale (rendu serveur, zéro flash) ─────────────────────────
+  // Priorité : choix explicite (cookie du sélecteur) → langue du compte →
+  // dernière langue effective (cookie) → Accept-Language → français.
+  const headerList = await headers();
+  let initialLang: Lang = "fr";
+  const explicitChoice = cookieStore.get("vibe_lang_choice")?.value;
+  const effectiveCookie = cookieStore.get("vibe_lang")?.value;
+  if (isValidLang(explicitChoice)) {
+    initialLang = explicitChoice;
+  } else if (isValidLang(initialUser?.lang)) {
+    initialLang = initialUser.lang as Lang;
+  } else if (isValidLang(effectiveCookie)) {
+    initialLang = effectiveCookie as Lang;
+  } else {
+    initialLang = detectLangFromAcceptLanguage(headerList.get("accept-language"));
+  }
+
+  return <ClientHome initialView={initialView as any} initialUser={initialUser} initialRates={initialRates} initialLandingVideo={initialLandingVideo} initialLang={initialLang} />;
 }

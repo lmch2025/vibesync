@@ -1,5 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/vibe/i18n";
 
 export function GemIcon({ className }: { className?: string }) {
   return (
@@ -32,6 +33,7 @@ export function GemBadge({
   className?: string;
   onClick?: () => void;
 }) {
+  const { lang } = useI18n();
   const Comp = onClick ? "button" : "div";
   return (
     <Comp
@@ -43,7 +45,7 @@ export function GemBadge({
       )}
     >
       <GemIcon className="h-3.5 w-3.5" />
-      <span className="tabular-nums">{new Intl.NumberFormat("fr-FR").format(gems)}</span>
+      <span className="tabular-nums">{new Intl.NumberFormat(lang === "en" ? "en-US" : "fr-FR").format(gems)}</span>
       <span className="text-xs font-medium ml-0.5">Vibes</span>
       {onClick && <span className="v-fg-muted text-xs ml-0.5">+</span>}
     </Comp>

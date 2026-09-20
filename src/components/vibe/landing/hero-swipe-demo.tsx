@@ -5,27 +5,29 @@ import { AnimatePresence, motion } from "framer-motion";
 import { BadgeCheck, Heart, Waves, Rocket, X } from "lucide-react";
 import { PhoneFrame, PhoneStatusBar } from "@/components/vibe/phone-frame";
 import { GemIcon } from "@/components/vibe/gem-badge";
+import { useI18n } from "@/lib/vibe/i18n";
 
 type Profile = {
   name: string;
   age: number;
   city: string;
   poster: string;
-  vibe: string;
-  myAnswer: string; // which chip will be highlighted as "their match"
+  vibe: string; // clé i18n de la question Vibe Check (ex "landing.demo.q1")
+  myAnswer: 0 | 1; // index of the chip highlighted as "their match"
 };
 
 const PROFILES: Profile[] = [
-  { name: "Léa", age: 24, city: "Paris", poster: "/profiles/lea.png", vibe: "Plage ou Montagne ?", myAnswer: "plage" },
-  { name: "Marco", age: 27, city: "Lyon", poster: "/profiles/marco.png", vibe: "Chien ou Chat ?", myAnswer: "chien" },
-  { name: "Sofia", age: 25, city: "Marseille", poster: "/profiles/sofia.png", vibe: "Aventure ou Confort ?", myAnswer: "aventure" },
-  { name: "Yann", age: 28, city: "Nantes", poster: "/profiles/yann.png", vibe: "Café ou Thé ?", myAnswer: "cafe" },
-  { name: "Aria", age: 23, city: "Bordeaux", poster: "/profiles/aria.png", vibe: "Ville ou Nature ?", myAnswer: "nature" },
-  { name: "Tom", age: 26, city: "Lille", poster: "/profiles/tom.png", vibe: "Plage ou Montagne ?", myAnswer: "montagne" },
+  { name: "Léa", age: 24, city: "Paris", poster: "/profiles/lea.png", vibe: "landing.demo.q1", myAnswer: 0 },
+  { name: "Marco", age: 27, city: "Lyon", poster: "/profiles/marco.png", vibe: "landing.demo.q2", myAnswer: 0 },
+  { name: "Sofia", age: 25, city: "Marseille", poster: "/profiles/sofia.png", vibe: "landing.demo.q3", myAnswer: 0 },
+  { name: "Yann", age: 28, city: "Nantes", poster: "/profiles/yann.png", vibe: "landing.demo.q4", myAnswer: 0 },
+  { name: "Aria", age: 23, city: "Bordeaux", poster: "/profiles/aria.png", vibe: "landing.demo.q5", myAnswer: 1 },
+  { name: "Tom", age: 26, city: "Lille", poster: "/profiles/tom.png", vibe: "landing.demo.q1", myAnswer: 1 },
 ];
 
 function parseVibe(v: string) {
-  const [a, b] = v.split(" ou ").map((s) => s.replace(" ?", "").trim());
+  // Bilingue : sépare sur " ou " (fr) ou " or " (en) — le "?" final est retiré.
+  const [a, b] = v.split(/ (?:ou|or) /).map((s) => s.replace(" ?", "").replace("?", "").trim());
   return { a, b };
 }
 
@@ -35,25 +37,26 @@ function parseVibe(v: string) {
  * Vibe Check overlay, and LIKE / NOPE stamps.
  */
 export function HeroSwipeDemo() {
+  const { t } = useI18n();
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [showHint, setShowHint] = useState(true);
 
   useEffect(() => {
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       setDirection(1);
       setIndex((i) => (i + 1) % PROFILES.length);
     }, 3500);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowHint(false), 4200);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setShowHint(false), 4200);
+    return () => clearTimeout(timer);
   }, []);
 
   const profile = PROFILES[index];
-  const { a, b } = parseVibe(profile.vibe);
+  const { a, b } = parseVibe(t(profile.vibe));
 
   return (
     <PhoneFrame className="relative z-10">
@@ -77,7 +80,7 @@ export function HeroSwipeDemo() {
           >
             <Image
               src={profile.poster}
-              alt={`${profile.name}, ${profile.age} ans, ${profile.city}`}
+              alt={t("landing.demo.alt", { name: profile.name, age: profile.age, city: profile.city })}
               fill
               sizes="320px"
               priority
@@ -97,10 +100,10 @@ export function HeroSwipeDemo() {
             {/* Vibe Check overlay — question + 2 chips */}
             <div className="absolute top-20 left-3 right-3 z-10">
               <div className="glass-dark rounded-2xl p-3">
-                <p className="text-center text-white text-xs font-medium mb-2">{profile.vibe}</p>
+                <p className="text-center text-white text-xs font-medium mb-2">{t(profile.vibe)}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[a, b].map((opt, i) => {
-                    const isMatch = (i === 0 && profile.myAnswer === a.toLowerCase()) || (i === 1 && profile.myAnswer === b.toLowerCase());
+                    const isMatch = i === profile.myAnswer;
                     return (
                       <div
                         key={opt}
@@ -163,13 +166,13 @@ export function HeroSwipeDemo() {
         {/* Action buttons row */}
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
           <button
-            aria-label="Passer"
+            aria-label={t("landing.demo.skip")}
             className="grid h-9 w-9 place-items-center rounded-full bg-white/15 backdrop-blur ring-1 ring-white/30 text-white"
           >
             <X className="h-4 w-4" />
           </button>
           <button
-            aria-label="Super-like"
+            aria-label={t("landing.demo.superlike")}
             className="grid h-11 w-11 place-items-center rounded-full vibe-gradient vibe-glow text-white shadow-lg"
           >
             <Heart className="h-5 w-5" />

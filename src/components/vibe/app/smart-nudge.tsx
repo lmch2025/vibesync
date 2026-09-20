@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { haptic } from "./interactive-animations";
 import { nudgeOnce } from "@/lib/vibe/nudges";
+import { useI18n } from "@/lib/vibe/i18n";
 
 export type SmartNudge = {
   id: string;
@@ -52,11 +53,13 @@ export function SmartNudgeBanner({
   nudge: SmartNudge | null;
   onDismiss: () => void;
 }) {
+  const { t } = useI18n();
   // Auto-dismiss timer — resets whenever a NEW nudge arrives.
   useEffect(() => {
     if (!nudge) return;
-    const t = setTimeout(() => onDismiss(), AUTO_DISMISS_MS);
-    return () => clearTimeout(t);
+    // (renommé « timer » pour ne pas masquer le t() de useI18n)
+    const timer = setTimeout(() => onDismiss(), AUTO_DISMISS_MS);
+    return () => clearTimeout(timer);
   }, [nudge, onDismiss]);
 
   return (
@@ -104,7 +107,7 @@ export function SmartNudgeBanner({
             </motion.button>
             <button
               onClick={onDismiss}
-              aria-label="Masquer la suggestion"
+              aria-label={t("swipe.nudge.dismissAria")}
               className="shrink-0 h-6 w-6 grid place-items-center rounded-full v-fg-faint hover:v-fg transition"
             >
               <X className="h-3 w-3" />

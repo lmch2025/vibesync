@@ -1,30 +1,32 @@
 "use client";
 import { Instagram, Twitter, Coffee, Youtube } from "lucide-react";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
+import { useI18n } from "@/lib/vibe/i18n";
 
+// title/label = clés i18n (résolues au rendu via t()).
 const COLUMNS = [
   {
-    title: "Produit",
+    title: "landing.footer.product",
     links: [
-      { label: "Concept", href: "#concept" },
-      { label: "Tarifs", href: "#tarifs" },
-      { label: "Sécurité", href: "#faq" },
+      { label: "landing.nav.concept", href: "#concept" },
+      { label: "landing.nav.pricing", href: "#tarifs" },
+      { label: "landing.footer.security", href: "#faq" },
     ],
   },
   {
-    title: "Entreprise",
+    title: "landing.footer.company",
     links: [
-      { label: "À propos", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Carrières", href: "#" },
+      { label: "landing.footer.about", href: "#" },
+      { label: "landing.footer.blog", href: "#" },
+      { label: "landing.footer.careers", href: "#" },
     ],
   },
   {
-    title: "Légal",
+    title: "landing.footer.legal",
     links: [
-      { label: "CGU", href: "#" },
-      { label: "RGPD", href: "#" },
-      { label: "Cookies", href: "#" },
+      { label: "landing.footer.tos", href: "#" },
+      { label: "landing.footer.gdpr", href: "#" },
+      { label: "landing.footer.cookies", href: "#" },
     ],
   },
 ];
@@ -38,6 +40,7 @@ function TikTokIcon({ className }: { className?: string }) {
 }
 
 export function Footer() {
+  const { t } = useI18n();
   return (
     <footer className="relative mt-auto border-t border-border/60 bg-card/40 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-14">
@@ -46,8 +49,7 @@ export function Footer() {
           <div>
             <VibeLogo />
             <p className="mt-4 text-sm text-muted-foreground max-w-xs text-pretty">
-              Rencontre authentique par vidéo de 15s. Zéro abonnement, juste des Vibes.
-              Vibrer sur la bonne fréquence, partout dans le monde.
+              {t("landing.footer.tagline")}
             </p>
             <div className="mt-5 flex items-center gap-2">
               {[
@@ -70,9 +72,9 @@ export function Footer() {
 
           {/* Link columns */}
           {COLUMNS.map((col) => (
-            <nav key={col.title} aria-label={col.title}>
+            <nav key={col.title} aria-label={t(col.title)}>
               <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
-                {col.title}
+                {t(col.title)}
               </h3>
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((l) => (
@@ -81,7 +83,7 @@ export function Footer() {
                       href={l.href}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {l.label}
+                      {t(l.label)}
                     </a>
                   </li>
                 ))}
@@ -91,9 +93,9 @@ export function Footer() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} Vivilov. Tous droits réservés.</span>
+          <span>{t("landing.footer.rights", { year: new Date().getFullYear() })}</span>
           <span className="inline-flex items-center gap-1.5">
-            Fait avec <span className="text-vibe-pink">❤️</span> et du bon café
+            {t("landing.footer.madeWith")} <span className="text-vibe-pink">❤️</span> {t("landing.footer.andCoffee")}
             <Coffee className="h-3.5 w-3.5 text-vibe-orange" />
           </span>
         </div>

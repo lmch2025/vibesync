@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Send, X } from "lucide-react";
+import { useI18n } from "@/lib/vibe/i18n";
 
 export function VoiceRecorder({
   onSend,
@@ -13,6 +14,7 @@ export function VoiceRecorder({
   onSend: (base64: string, duration: number) => void;
   onCancel: () => void;
 }) {
+  const { t } = useI18n();
   const [recording, setRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [waveform, setWaveform] = useState<number[]>(Array(40).fill(0.1));
@@ -91,7 +93,7 @@ export function VoiceRecorder({
       };
       updateWaveform();
     } catch (e: any) {
-      setError("Microphone inaccessible. Vérifie les permissions.");
+      setError(t("chat.voice.micDenied"));
       setRecording(false);
     }
   }
@@ -129,7 +131,7 @@ export function VoiceRecorder({
       <div className="flex items-center gap-2 px-3 py-2 text-xs text-red-500 dark:text-red-300">
         <X className="h-4 w-4" />
         {error}
-        <button onClick={onCancel} className="ml-auto v-fg-muted underline">Fermer</button>
+        <button onClick={onCancel} className="ml-auto v-fg-muted underline">{t("common.close")}</button>
       </div>
     );
   }
@@ -139,7 +141,7 @@ export function VoiceRecorder({
     return (
       <div className="flex-1 flex items-center justify-center h-10">
         <div className="h-5 w-5 rounded-full border-2 v-divider border-t-vibe-purple animate-spin" />
-        <span className="ml-2 text-xs v-fg-muted">Micro…</span>
+        <span className="ml-2 text-xs v-fg-muted">{t("chat.voice.micLoading")}</span>
       </div>
     );
   }
@@ -150,7 +152,7 @@ export function VoiceRecorder({
       <button
         onClick={cancel}
         className="h-10 w-10 grid place-items-center rounded-full bg-red-500/20 text-red-500 dark:text-red-300 hover:bg-red-500/30 transition shrink-0"
-        aria-label="Annuler"
+        aria-label={t("common.cancel")}
       >
         <X className="h-5 w-5" />
       </button>
@@ -177,7 +179,7 @@ export function VoiceRecorder({
       <button
         onClick={stopAndSend}
         className="h-10 w-10 grid place-items-center rounded-full vibe-gradient text-white shrink-0 active:scale-95 transition"
-        aria-label="Envoyer le vocal"
+        aria-label={t("chat.voice.send")}
       >
         <Send className="h-4 w-4" />
       </button>

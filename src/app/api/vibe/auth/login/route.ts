@@ -58,6 +58,7 @@ export async function POST(req: Request) {
       name: user.name,
       role: user.role,
       currency: user.currency,
+      lang: user.lang,
       country: user.country,
       gems: user.gems,
       freeGems: user.freeGems,

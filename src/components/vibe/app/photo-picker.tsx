@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { compressImage } from "@/lib/vibe/image-compress";
 import { uploadToCloudinary } from "@/lib/cloudinary-client";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/vibe/i18n";
 
 export type PhotoPickerProps = {
   photos: string[];
@@ -55,6 +56,7 @@ export function PhotoPicker({
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const { t, apiErr } = useI18n();
   // « Mode bac à sable » : un seul toast par session de picking (pas par photo).
   const sandboxToastRef = useRef(false);
   const busy = disabled || uploading;
@@ -76,8 +78,8 @@ export function PhotoPicker({
     if (files.length > room) {
       toast.info(
         room === 1
-          ? `Maximum ${max} photos — seule la première sera ajoutée.`
-          : `Maximum ${max} photos — seules les ${room} premières seront ajoutées.`,
+          ? t("profile.picker.maxOne", { max })
+          : t("profile.picker.maxMany", { max, n: room }),
       );
     }
 
@@ -100,7 +102,7 @@ export function PhotoPicker({
         } catch {
           if (!sandboxToastRef.current) {
             sandboxToastRef.current = true;
-            toast.info("Mode bac à sable : photo sauvegardée localement.");
+            toast.info(t("profile.picker.sandbox"));
           }
           uploaded.push(dataUrl);
         }
@@ -109,7 +111,7 @@ export function PhotoPicker({
     } catch (err: any) {
       // Erreurs de compression déjà formulées : format invalide, > 15 Mo,
       // image illisible… On les affiche telles quelles, en élégant.
-      toast.error(err?.message || "Impossible d'ajouter cette photo.");
+      toast.error(apiErr(err?.message) || t("profile.picker.error"));
     } finally {
       setUploading(false);
       setProgress(0);
@@ -126,7 +128,7 @@ export function PhotoPicker({
     <div
       className="grid grid-cols-5 gap-2"
       role="group"
-      aria-label={`Photos de profil (${photos.length}/${max})`}
+      aria-label={t("profile.picker.groupAria", { n: photos.length, max })}
     >
       {photos.map((src, i) => (
         <div
@@ -143,7 +145,7 @@ export function PhotoPicker({
         >
           <img
             src={src}
-            alt={`Photo ${i + 1}`}
+            alt={t("profile.picker.photoAlt", { n: i + 1 })}
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -160,7 +162,7 @@ export function PhotoPicker({
               onClick={() => { if (!busy) onSelect(i); }}
               disabled={busy}
               whileTap={busy ? undefined : { scale: 0.94 }}
-              aria-label={`Afficher la photo ${i + 1}`}
+              aria-label={t("profile.picker.showAria", { n: i + 1 })}
               className="absolute inset-0 z-10 cursor-pointer"
             />
           )}
@@ -169,7 +171,7 @@ export function PhotoPicker({
             onClick={() => removeAt(i)}
             disabled={busy}
             whileTap={busy ? undefined : { scale: 0.9 }}
-            aria-label={`Retirer la photo ${i + 1}`}
+            aria-label={t("profile.picker.removeAria", { n: i + 1 })}
             className="absolute top-1 right-1 z-20 h-5 w-5 grid place-items-center rounded-full bg-black/50 backdrop-blur text-white/90 hover:bg-black/70 hover:text-white transition disabled:opacity-40"
           >
             <X className="h-3 w-3" />
@@ -186,8 +188,8 @@ export function PhotoPicker({
           whileTap={busy ? undefined : { scale: 0.94 }}
           aria-label={
             photos.length === 0
-              ? "Ajouter des photos"
-              : `Ajouter des photos (${photos.length}/${max})`
+              ? t("profile.picker.addAria")
+              : t("profile.picker.addAriaCount", { n: photos.length, max })
           }
           className={cn(
             "relative aspect-[3/4] rounded-xl grid place-items-center border-2 border-dashed border-(--v-divider) transition",

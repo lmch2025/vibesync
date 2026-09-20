@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { useVibe } from "@/lib/vibe/store";
+import { useI18n } from "@/lib/vibe/i18n";
 import { useCurrency } from "@/lib/vibe/use-currency";
 import { formatIn } from "@/lib/vibe/currency";
 import { GEM_PACKS, GEM_ACTIONS, WITHDRAWAL_THRESHOLD_EUR, PLATFORM_COMMISSION } from "@/lib/vibe/constants";
@@ -38,9 +39,43 @@ type Tx = {
 
 type HistoryFilter = "all" | "purchase" | "gift" | "spend" | "reward" | "withdrawal";
 
+// Libellés de transactions renvoyés en français par l'API → clés i18n,
+// traduites au rendu dans TxRow (raison inconnue → libellé brut du serveur).
+// Les cadeaux (libellé « {emoji} {nom} envoyé/reçu ») sont gérés à part,
+// via les clés de suffixe wallet.tx.sentSuffix / receivedSuffix.
+const TX_LABEL_KEYS: Record<string, string> = {
+  // Achats & bonus
+  "Achat de Vibes": "wallet.tx.purchase",
+  "Bonus de bienvenue": "wallet.tx.welcome",
+  "Série quotidienne (Streak)": "wallet.tx.streak",
+  "Bonus de parrainage": "wallet.tx.referral",
+  // Actions premium (dépenses)
+  "Super-Like": "wallet.tx.superlike",
+  "Boost de profil": "wallet.tx.boost",
+  "Cadeau envoyé": "wallet.tx.giftSent",
+  "Rewind": "wallet.tx.rewind",
+  "Passport": "wallet.tx.passport",
+  "Icebreaker IA": "wallet.tx.icebreaker",
+  "Voir les likes": "wallet.tx.seeLikes",
+  "Boost de message": "wallet.tx.messageBoost",
+  "Projecteur": "wallet.tx.spotlight",
+  "Super Rewind": "wallet.tx.superRewind",
+  "Vibe Radar": "wallet.tx.vibeRadar",
+  "Crush Alert": "wallet.tx.crushAlert",
+  "Cœur d'Or": "wallet.tx.goldenHeart",
+  "Temps Gelé": "wallet.tx.timeFreeze",
+  "Rapport de Compatibilité": "wallet.tx.compatibilityReport",
+  "Anneau d'Humeur": "wallet.tx.moodRing",
+  "Mode Fantôme": "wallet.tx.ghostMode",
+  "Double Quotidien": "wallet.tx.dailyDouble",
+  // Retraits
+  "Retrait vers banque": "wallet.tx.withdrawal",
+};
+
 export function WalletScreen({ onBack }: { onBack: () => void }) {
   const me = useVibe((s) => s.me);
   const patchMe = useVibe((s) => s.patchMe);
+  const { t, apiErr, lang } = useI18n();
   const { moneyCents, currency } = useCurrency();
   const [tab, setTab] = useState<Tab>("vibes");
   const [buying, setBuying] = useState<string | null>(null);
@@ -62,11 +97,11 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
   // Filtered history according to the active chip.
   const filteredTxs = useMemo(() => {
     switch (filter) {
-      case "purchase": return txs.filter((t) => t.type === "vibe_purchase");
-      case "gift": return txs.filter((t) => t.type === "gift_sent" || t.type === "gift_received");
-      case "spend": return txs.filter((t) => t.type === "vibe_spend");
-      case "reward": return txs.filter((t) => t.type === "vibe_reward");
-      case "withdrawal": return txs.filter((t) => t.type === "withdrawal");
+      case "purchase": return txs.filter((x) => x.type === "vibe_purchase");
+      case "gift": return txs.filter((x) => x.type === "gift_sent" || x.type === "gift_received");
+      case "spend": return txs.filter((x) => x.type === "vibe_spend");
+      case "reward": return txs.filter((x) => x.type === "vibe_reward");
+      case "withdrawal": return txs.filter((x) => x.type === "withdrawal");
       default: return txs;
     }
   }, [txs, filter]);
@@ -75,20 +110,21 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
   // preserving the most-recent-first order from the API.
   const groupedTxs = useMemo(() => {
     const groups: [string, Tx[]][] = [];
-    const todayStr = new Date().toLocaleDateString("fr-FR");
-    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString("fr-FR");
+    const locale = lang === "en" ? "en-US" : "fr-FR";
+    const todayStr = new Date().toLocaleDateString(locale);
+    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString(locale);
     for (const tx of filteredTxs) {
       const d = new Date(tx.createdAt);
-      const dayKey = d.toLocaleDateString("fr-FR");
-      const label = dayKey === todayStr ? "Aujourd'hui"
-        : dayKey === yesterday ? "Hier"
-        : d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" });
+      const dayKey = d.toLocaleDateString(locale);
+      const label = dayKey === todayStr ? t("wallet.today")
+        : dayKey === yesterday ? t("wallet.yesterday")
+        : d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "long" });
       const last = groups[groups.length - 1];
       if (last && last[0] === label) last[1].push(tx);
       else groups.push([label, [tx]]);
     }
     return groups;
-  }, [filteredTxs]);
+  }, [filteredTxs, lang]);
 
   async function buy(packId: string) {
     setBuying(packId);
@@ -100,7 +136,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       patchMe({ gems: data.gems, freeGems: data.freeGems });
-      vibeToast({ emoji: "💎", title: `+${data.added} Vibes`, sub: "Solde rechargé" });
+      vibeToast({ emoji: "💎", title: t("wallet.bonus", { n: data.added }), sub: t("wallet.recharged") });
       // Immersive purchase feedback: coin sound, haptic pulse, confetti shower.
       // Fired inside the success handler — exactly once per purchase.
       celebrate({ sound: "coin", hapticPattern: [15, 40, 15], confettiCount: 120 });
@@ -117,12 +153,12 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
       if (resume) {
         vibeToast({
           emoji: "✨",
-          title: "Ton action reprend…",
-          sub: "Solde rechargé — exécution en cours",
+          title: t("wallet.resumeTitle"),
+          sub: t("wallet.resumeSub"),
         });
         window.setTimeout(resume, 700);
       }
-    } catch (e: any) { toast.error(e.message || "Erreur"); }
+    } catch (e: any) { toast.error(apiErr(e.message) || t("wallet.error")); }
     finally { setBuying(null); }
   }
 
@@ -170,7 +206,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
         <button onClick={onBack} className="h-9 w-9 grid place-items-center rounded-full hover:v-surface-2">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <span className="font-display font-bold text-lg flex-1 v-text-gradient">Portefeuille</span>
+        <span className="font-display font-bold text-lg flex-1 v-text-gradient">{t("wallet.title")}</span>
         <GemIcon className="h-5 w-5 mr-1" />
         <span className="font-display font-bold tabular-nums">{me?.gems ?? 0}</span>
       </div>
@@ -178,20 +214,20 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
       {/* Tabs */}
       <div className="px-3 py-2 flex gap-1.5 v-surface-1">
         {([
-          { id: "vibes", label: "Vibes", icon: <Gem className="h-3.5 w-3.5" /> },
-          { id: "gains", label: "Gains", icon: <TrendingUp className="h-3.5 w-3.5" /> },
-          { id: "history", label: "Historique", icon: <History className="h-3.5 w-3.5" /> },
-        ] as const).map((t) => (
+          { id: "vibes", labelKey: "wallet.tab.vibes", icon: <Gem className="h-3.5 w-3.5" /> },
+          { id: "gains", labelKey: "wallet.tab.gains", icon: <TrendingUp className="h-3.5 w-3.5" /> },
+          { id: "history", labelKey: "wallet.tab.history", icon: <History className="h-3.5 w-3.5" /> },
+        ] as const).map((tb) => (
           <motion.button
-            key={t.id}
-            onClick={() => { sfx.play("pop"); setTab(t.id); }}
+            key={tb.id}
+            onClick={() => { sfx.play("pop"); setTab(tb.id); }}
             whileTap={{ scale: 0.94 }}
             className={`relative isolate flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl text-xs font-semibold transition-colors ${
-              tab === t.id ? "text-white" : "v-fg-muted hover:v-fg v-surface-1"
+              tab === tb.id ? "text-white" : "v-fg-muted hover:v-fg v-surface-1"
             }`}
           >
-            {tab === t.id && <TabIndicator id="wallet-tab-indicator" />}
-            {t.icon} {t.label}
+            {tab === tb.id && <TabIndicator id="wallet-tab-indicator" />}
+            {tb.icon} {t(tb.labelKey)}
           </motion.button>
         ))}
       </div>
@@ -205,7 +241,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
               {/* Balance card — fond de marque : le texte reste blanc dans les deux modes */}
               <div className="rounded-3xl p-5 vibe-gradient vibe-glow relative overflow-hidden text-white">
                 <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full v-surface-3 blur-2xl" />
-                <p className="text-white/80 text-xs font-medium uppercase tracking-wide">Solde Vibes</p>
+                <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{t("wallet.balanceTitle")}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <GemIcon className="h-9 w-9" />
                   <AnimatedNumber value={me?.gems ?? 0} className="font-display text-4xl font-black" />
@@ -214,23 +250,22 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                 <div className="mt-3 flex items-center gap-3 text-[10px]">
                   <span className="flex items-center gap-1 rounded-full v-surface-3 px-2 py-0.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                    <span className="text-white/80">{Math.max(0, (me?.gems ?? 0) - (me?.freeGems ?? 0))} pour cadeaux</span>
+                    <span className="text-white/80">{t("wallet.balanceGifts", { n: Math.max(0, (me?.gems ?? 0) - (me?.freeGems ?? 0)) })}</span>
                   </span>
                   <span className="flex items-center gap-1 rounded-full v-surface-3 px-2 py-0.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                    <span className="text-white/80">{me?.freeGems ?? 0} bonus</span>
+                    <span className="text-white/80">{t("wallet.balanceBonus", { n: me?.freeGems ?? 0 })}</span>
                   </span>
                 </div>
                 <p className="text-white/70 text-[10px] mt-2">
-                  💡 Les Vibes <span className="font-semibold text-emerald-200">vertes</span> peuvent offrir des cadeaux.
-                  Les Vibes <span className="font-semibold text-amber-200">bonus</span> servent pour les actions premium.
+                  {t("wallet.tipA")}<span className="font-semibold text-emerald-200">{t("wallet.tipGreen")}</span>{t("wallet.tipB")}<span className="font-semibold text-amber-200">{t("wallet.tipBonus")}</span>{t("wallet.tipC")}
                 </p>
               </div>
 
               {/* Packs */}
               <div className="space-y-2.5">
                 {GEM_PACKS.map((pack) => {
-                  const tier = pack.tiers.find((t) => t.currency === currency) ?? pack.tiers[0];
+                  const tier = pack.tiers.find((tr) => tr.currency === currency) ?? pack.tiers[0];
                   const total = pack.gems + pack.bonus;
                   return (
                     <motion.button
@@ -259,7 +294,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                     >
                       {(pack.popular || pack.bestValue) && (
                         <span className={`absolute -top-2 left-3 text-[9px] font-bold rounded-full px-1.5 py-0.5 ${pack.popular ? "bg-accent text-black" : "bg-fuchsia-400 text-black"}`}>
-                          {pack.popular ? "🔥 POPULAIRE" : "💎 MEILLEURE VALEUR"}
+                          {pack.popular ? t("wallet.ribbonPopular") : t("wallet.ribbonBest")}
                         </span>
                       )}
                       {/* Success flash — check pops in over the pack for 1.2s */}
@@ -285,7 +320,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                             <span className="text-[10px] bg-emerald-400/20 text-emerald-700 dark:text-emerald-200 rounded-full px-1.5 py-0.5">+{pack.bonus}</span>
                           )}
                         </div>
-                        <p className="text-[10px] v-fg-muted">{total} Vibes au total</p>
+                        <p className="text-[10px] v-fg-muted">{t("wallet.totalVibes", { n: total })}</p>
                       </div>
                       <div className="text-right shrink-0">
                         <div className="font-display font-bold text-sm">{formatIn(tier.amount, tier.currency)}</div>
@@ -298,12 +333,12 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
               {/* What Vibes buy — compact */}
               <div className="rounded-2xl v-surface-1 ring-1 ring-(--v-divider) p-3.5">
                 <p className="text-[11px] font-semibold v-fg-muted mb-2 flex items-center gap-1">
-                  <Gem className="h-3.5 w-3.5 text-accent" /> Tes Vibes te donnent accès à
+                  <Gem className="h-3.5 w-3.5 text-accent" /> {t("wallet.accessTitle")}
                 </p>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] v-fg-muted">
                   <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-amber-600 dark:text-amber-400" /> Super-Like · {GEM_ACTIONS.superlike}</span>
                   <span className="flex items-center gap-1"><TrendingUp className="h-3 w-3 text-fuchsia-600 dark:text-fuchsia-400" /> Boost · {GEM_ACTIONS.boost}</span>
-                  <span className="flex items-center gap-1"><Gift className="h-3 w-3 text-pink-600 dark:text-pink-400" /> Cadeaux · {GEM_ACTIONS.superlike}+</span>
+                  <span className="flex items-center gap-1"><Gift className="h-3 w-3 text-pink-600 dark:text-pink-400" /> {t("wallet.actionGifts")} · {GEM_ACTIONS.superlike}+</span>
                   <span className="flex items-center gap-1"><Wand2 className="h-3 w-3 text-vibe-purple" /> Icebreaker · {GEM_ACTIONS.icebreaker}</span>
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-cyan-600 dark:text-cyan-400" /> Rewind · {GEM_ACTIONS.rewind}</span>
                   <span className="flex items-center gap-1"><Gem className="h-3 w-3 text-orange-600 dark:text-orange-400" /> Passport · {GEM_ACTIONS.passport}</span>
@@ -319,11 +354,11 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
               <div className="rounded-3xl p-5 bg-emerald-500/10 ring-1 ring-emerald-400/30 relative overflow-hidden">
                 <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-emerald-400/20 blur-2xl" />
                 <p className="text-emerald-600 dark:text-emerald-300/80 text-xs font-medium uppercase tracking-wide flex items-center gap-1">
-                  <WalletIcon className="h-3 w-3" /> Gains cadeaux
+                  <WalletIcon className="h-3 w-3" /> {t("wallet.earningsTitle")}
                 </p>
                 <div className="font-display text-4xl font-black mt-1 tabular-nums">{moneyCents(me?.walletEurCents ?? 0)}</div>
                 <p className="text-emerald-700 dark:text-emerald-200/60 text-[11px] mt-1">
-                  Cumulé via cadeaux reçus (70% après commission {PLATFORM_COMMISSION * 100}%)
+                  {t("wallet.earningsNote", { pct: PLATFORM_COMMISSION * 100 })}
                 </p>
               </div>
 
@@ -331,7 +366,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
               <div className="rounded-2xl v-surface-1 ring-1 ring-(--v-divider) p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium v-fg-muted flex items-center gap-1">
-                    <Lock className="h-3.5 w-3.5" /> Seuil de retrait
+                    <Lock className="h-3.5 w-3.5" /> {t("wallet.threshold")}
                   </span>
                   <span className="text-xs tabular-nums v-fg-muted">{moneyCents(me?.walletEurCents ?? 0)} / {moneyCents(WITHDRAWAL_THRESHOLD_EUR * 100)}</span>
                 </div>
@@ -345,8 +380,8 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                 </div>
                 <p className="text-[10px] v-fg-muted text-center mt-1.5">
                   {thresholdReached
-                    ? "✓ Seuil atteint ! Tu peux retirer tes gains."
-                    : `Plus que ${(WITHDRAWAL_THRESHOLD_EUR - walletEur).toFixed(2)}€ avant de pouvoir retirer.`}
+                    ? t("wallet.thresholdReached")
+                    : t("wallet.thresholdRemaining", { amount: (WITHDRAWAL_THRESHOLD_EUR - walletEur).toFixed(2) })}
                 </p>
               </div>
 
@@ -357,25 +392,22 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                   className="w-full h-13 py-3.5 rounded-2xl bg-emerald-500 text-white font-display font-bold flex items-center justify-center gap-2 active:scale-95 transition vibe-glow"
                   style={{ background: "oklch(0.72 0.19 160)" }}
                 >
-                  <Banknote className="h-5 w-5" /> Retirer mes gains
+                  <Banknote className="h-5 w-5" /> {t("wallet.withdrawBtn")}
                 </button>
               ) : (
                 <div className="w-full h-13 py-3.5 rounded-2xl v-surface-1 ring-1 ring-(--v-divider) flex items-center justify-center gap-2 v-fg-muted text-sm">
-                  <Lock className="h-4 w-4" /> Retrait disponible à {moneyCents(WITHDRAWAL_THRESHOLD_EUR * 100)}
+                  <Lock className="h-4 w-4" /> {t("wallet.withdrawLockedAt", { amount: moneyCents(WITHDRAWAL_THRESHOLD_EUR * 100) })}
                 </div>
               )}
 
               {/* Info card */}
               <div className="rounded-2xl v-surface-1 ring-1 ring-(--v-divider) p-3.5">
                 <p className="text-[11px] v-fg-muted leading-relaxed">
-                  💡 Les cadeaux reçus des autres membres sont convertis en euros sur ton portefeuille.
-                  Une fois le seuil de {moneyCents(WITHDRAWAL_THRESHOLD_EUR * 100)} atteint, tu peux retirer
-                  via virement bancaire (Stripe Connect) ou Mobile Money.
+                  {t("wallet.infoCard", { amount: moneyCents(WITHDRAWAL_THRESHOLD_EUR * 100) })}
                 </p>
                 <div className="mt-2.5 rounded-xl bg-amber-400/10 ring-1 ring-amber-300/20 px-3 py-2">
                   <p className="text-[10px] text-amber-700 dark:text-amber-100/80 leading-relaxed">
-                    ⚠️ <span className="font-semibold">Important :</span> Seules les Vibes <span className="font-semibold text-emerald-600 dark:text-emerald-300">achetées</span> peuvent être utilisées pour envoyer des cadeaux.
-                    Les Vibes <span className="font-semibold text-amber-600 dark:text-amber-300">bonus</span> (série quotidienne, bienvenue, parrainage) servent uniquement pour les actions premium (super-like, boost, etc.).
+                    ⚠️ <span className="font-semibold">{t("wallet.importantLabel")}</span>{t("wallet.importantA")}<span className="font-semibold text-emerald-600 dark:text-emerald-300">{t("wallet.importantPurchased")}</span>{t("wallet.importantB")}<span className="font-semibold text-amber-600 dark:text-amber-300">{t("wallet.importantBonus")}</span>{t("wallet.importantC")}
                   </p>
                 </div>
               </div>
@@ -388,13 +420,13 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
               {/* Filter chips + manual refresh */}
               <div className="flex items-center gap-1.5 mb-3 overflow-x-auto no-scrollbar pb-0.5">
                 {([
-                  { id: "all", label: "Tout", count: txs.length },
-                  { id: "purchase", label: "💎 Achats", count: txs.filter((t) => t.type === "vibe_purchase").length },
-                  { id: "gift", label: "🎁 Cadeaux", count: txs.filter((t) => t.type === "gift_sent" || t.type === "gift_received").length },
-                  { id: "spend", label: "⚡ Actions", count: txs.filter((t) => t.type === "vibe_spend").length },
-                  { id: "reward", label: "🔥 Bonus", count: txs.filter((t) => t.type === "vibe_reward").length },
-                  { id: "withdrawal", label: "💸 Retraits", count: txs.filter((t) => t.type === "withdrawal").length },
-                ] as { id: HistoryFilter; label: string; count: number }[]).map((f) => (
+                  { id: "all", labelKey: "wallet.filter.all", count: txs.length },
+                  { id: "purchase", labelKey: "wallet.filter.purchase", count: txs.filter((x) => x.type === "vibe_purchase").length },
+                  { id: "gift", labelKey: "wallet.filter.gift", count: txs.filter((x) => x.type === "gift_sent" || x.type === "gift_received").length },
+                  { id: "spend", labelKey: "wallet.filter.spend", count: txs.filter((x) => x.type === "vibe_spend").length },
+                  { id: "reward", labelKey: "wallet.filter.reward", count: txs.filter((x) => x.type === "vibe_reward").length },
+                  { id: "withdrawal", labelKey: "wallet.filter.withdrawal", count: txs.filter((x) => x.type === "withdrawal").length },
+                ] as { id: HistoryFilter; labelKey: string; count: number }[]).map((f) => (
                   <motion.button
                     key={f.id}
                     onClick={() => { sfx.play("pop"); setFilter(f.id); }}
@@ -405,14 +437,14 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                         : "v-surface-1 v-fg-muted ring-(--v-divider) hover:v-fg"
                     }`}
                   >
-                    {f.label}
+                    {t(f.labelKey)}
                     {f.count > 0 && <span className="text-[9px] opacity-60 tabular-nums">{f.count}</span>}
                   </motion.button>
                 ))}
                 <motion.button
                   onClick={() => loadTxs(true)}
                   whileTap={{ scale: 0.85, rotate: 90 }}
-                  aria-label="Rafraîchir l'historique"
+                  aria-label={t("wallet.refreshAria")}
                   className="shrink-0 ml-auto h-7 w-7 grid place-items-center rounded-full v-surface-1 ring-1 ring-(--v-divider) v-fg-muted hover:v-fg"
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
@@ -428,7 +460,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                     exit={{ opacity: 0, height: 0 }}
                     className="text-[10px] v-fg-muted text-center overflow-hidden"
                   >
-                    Actualisation…
+                    {t("wallet.refreshing")}
                   </motion.p>
                 )}
               </AnimatePresence>
@@ -441,7 +473,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
                 <div className="text-center py-12">
                   <History className="h-8 w-8 mx-auto mb-2 v-fg-muted" />
                   <p className="text-sm v-fg-muted">
-                    {filter === "all" ? "Aucune transaction pour l'instant" : "Aucune transaction de ce type"}
+                    {filter === "all" ? t("wallet.emptyAll") : t("wallet.emptyFiltered")}
                   </p>
                 </div>
               ) : (
@@ -479,6 +511,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
 // ===== TRANSACTION ROW =====
 function TxRow({ tx, index = 0, reloadKey = 0 }: { tx: Tx; index?: number; reloadKey?: number }) {
   const { moneyCents } = useCurrency();
+  const { t } = useI18n();
   const time = new Date(tx.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
   const isIncoming = tx.delta > 0 || tx.type === "gift_received";
@@ -489,11 +522,22 @@ function TxRow({ tx, index = 0, reloadKey = 0 }: { tx: Tx; index?: number; reloa
     rejected: "text-red-500 dark:text-red-400",
   };
   const statusLabels: Record<string, string> = {
-    pending: "En attente",
-    processing: "En cours",
-    completed: "Terminé",
-    rejected: "Refusé",
+    pending: t("wallet.status.pending"),
+    processing: t("wallet.status.processing"),
+    completed: t("wallet.status.completed"),
+    rejected: t("wallet.status.rejected"),
   };
+
+  // Libellé traduit au rendu : cadeaux (suffixe envoyé/reçu du serveur
+  // français) ou map libellé → clé i18n ; raison inconnue → libellé brut.
+  const giftMatch = (tx.type === "gift_sent" || tx.type === "gift_received")
+    ? tx.label.match(/^(.*) (envoyé|reçu)$/)
+    : null;
+  const label = giftMatch
+    ? `${giftMatch[1]} ${t(giftMatch[2] === "envoyé" ? "wallet.tx.sentSuffix" : "wallet.tx.receivedSuffix")}`
+    : TX_LABEL_KEYS[tx.label]
+      ? t(TX_LABEL_KEYS[tx.label])
+      : tx.label;
 
   // Type-aware visual identity — each operation family gets its own colour.
   const iconStyles: Record<Tx["type"], string> = {
@@ -520,7 +564,7 @@ function TxRow({ tx, index = 0, reloadKey = 0 }: { tx: Tx; index?: number; reloa
 
       {/* Label + time */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{tx.label}</p>
+        <p className="text-sm font-medium truncate">{label}</p>
         <p className="text-[10px] v-fg-muted">{time}{tx.status && <span className={`ml-1.5 ${statusColors[tx.status]}`}>· {statusLabels[tx.status]}</span>}</p>
       </div>
 
@@ -533,10 +577,10 @@ function TxRow({ tx, index = 0, reloadKey = 0 }: { tx: Tx; index?: number; reloa
         )}
         {tx.type === "vibe_purchase" && tx.amountEurCents ? (
           // A purchase: the € line is what was PAID (neutral, not a gain).
-          <p className="text-[11px] tabular-nums v-fg-muted">{moneyCents(tx.amountEurCents)} payés</p>
+          <p className="text-[11px] tabular-nums v-fg-muted">{moneyCents(tx.amountEurCents)} {t("wallet.txPaid")}</p>
         ) : tx.type === "gift_received" && tx.amountEurCents ? (
           // A received gift: real money credited to the wallet.
-          <p className="text-[11px] tabular-nums text-emerald-600 dark:text-emerald-400/80">+{moneyCents(tx.amountEurCents)} crédités</p>
+          <p className="text-[11px] tabular-nums text-emerald-600 dark:text-emerald-400/80">+{moneyCents(tx.amountEurCents)} {t("wallet.txCredited")}</p>
         ) : tx.type === "withdrawal" && tx.amountEurCents ? (
           <p className="text-[11px] tabular-nums text-cyan-600 dark:text-cyan-300/80">−{moneyCents(Math.abs(tx.amountEurCents))}</p>
         ) : null}

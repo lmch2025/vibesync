@@ -7,6 +7,8 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Input } from "@/components/ui/input";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
 import { useVibe } from "@/lib/vibe/store";
+import { useI18n } from "@/lib/vibe/i18n";
+import { LangSwitcher } from "@/components/vibe/lang-switcher";
 import { toast } from "sonner";
 import { celebrate, haptic, sfx, useShake } from "./interactive-animations";
 
@@ -14,6 +16,7 @@ type Step = "phone" | "otp" | "pin-create" | "pin-confirm" | "pin-login";
 
 export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
   const setMe = useVibe((s) => s.setMe);
+  const { t, apiErr } = useI18n();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
@@ -47,7 +50,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
 
   async function requestOtp() {
     if (phone.replace(/\s/g, "").length < 8) {
-      authError("Numéro invalide");
+      authError(t("auth.phoneInvalid"));
       return;
     }
     setLoading(true);
@@ -62,9 +65,9 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
       setUserExists(!!data.exists);
       setDevOtp(data.otp);
       setStep("otp");
-      toast.success("Code envoyé par SMS (démo : " + data.otp + ")");
+      toast.success(t("auth.otpSentToast", { code: data.otp }));
     } catch (e: any) {
-      authError(e.message || "Erreur");
+      authError(apiErr(e.message) || t("auth.error"));
     } finally {
       setLoading(false);
     }
@@ -73,7 +76,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
   function verifyOtp(v: string) {
     if (v.length === 4) {
       if (v !== devOtp && v !== "4242") {
-        authError("Code incorrect");
+        authError(t("auth.otpWrong"));
         return;
       }
       setStep(userExists ? "pin-login" : "pin-create");
@@ -97,11 +100,11 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
         setMe(data.user);
         useVibe.getState().setRates(data.rates ?? {});
       }
-      toast.success("Bienvenue sur Vivilov ! +25 Vibes offertes 🎁");
+      toast.success(t("auth.welcomeToast"));
       fireAuthCelebrate();
       onSuccess();
     } catch (e: any) {
-      authError(e.message || "Erreur");
+      authError(apiErr(e.message) || t("auth.error"));
       setStep("pin-create");
       setPin("");
     } finally {
@@ -125,11 +128,11 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
         setMe(data.user);
         useVibe.getState().setRates(data.rates ?? {});
       }
-      toast.success("Content de te revoir 👋");
+      toast.success(t("auth.welcomeBackToast"));
       fireAuthCelebrate();
       onSuccess();
     } catch (e: any) {
-      authError(e.message || "Erreur");
+      authError(apiErr(e.message) || t("auth.error"));
       setPin("");
     } finally {
       setLoading(false);
@@ -146,6 +149,8 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
         <div className="v-ambient-orb absolute -top-20 -left-20 h-64 w-64 rounded-full bg-primary/30 blur-3xl animate-float-slow" />
         <div className="v-ambient-orb absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-accent/30 blur-3xl animate-float-slow" style={{ animationDelay: "2s" }} />
       </div>
+      {/* Sélecteur de langue — le visiteur peut changer avant de se connecter. */}
+      <LangSwitcher tone="onDark" className="absolute top-3 right-3 z-20" />
       <div className="relative z-10 h-full flex flex-col px-6 pt-10 pb-8 overflow-y-auto no-scrollbar">
         <div className="flex justify-center mb-6">
           <VibeLogo className="[&_span:last-child]:text-white" />
@@ -154,16 +159,16 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
         <AnimatePresence mode="wait">
           {step === "phone" && (
             <motion.div key="phone" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="flex-1 flex flex-col">
-              <h2 className="font-display text-2xl font-bold text-center mb-2">Ton numéro, ta vibe.</h2>
+              <h2 className="font-display text-2xl font-bold text-center mb-2">{t("auth.title")}</h2>
               <p className="text-sm text-white/75 text-center mb-8">
-                On t&apos;envoie un code par SMS. Aucune photo de profil à remplir — juste toi, en vidéo.
+                {t("auth.subtitle")}
               </p>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
                 <Input
                   type="tel"
                   inputMode="tel"
-                  placeholder="+33 6 12 34 56 78"
+                  placeholder={t("auth.phonePlaceholder")}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="pl-10 h-12 rounded-2xl bg-white/5 border-white/15 text-white placeholder:text-white/50 text-base"
@@ -176,14 +181,13 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
                 className="mt-4 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-60"
               >
                 {loading ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Envoi du code…</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> {t("auth.sendingCode")}</>
                 ) : (
-                  <>Recevoir le code <ArrowRight className="h-4 w-4" /></>
+                  <>{t("auth.receiveCode")} <ArrowRight className="h-4 w-4" /></>
                 )}
               </button>
               <p className="text-[11px] text-white/70 text-center mt-6 leading-relaxed">
-                En continuant, tu acceptes nos CGU et notre Politique RGPD.
-                Ton numéro n&apos;est jamais affiché publiquement.
+                {t("auth.legal")}
               </p>
             </motion.div>
           )}
@@ -191,11 +195,11 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
           {step === "otp" && (
             <motion.div key="otp" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className="flex-1 flex flex-col">
               <button onClick={() => setStep("phone")} className="self-start mb-4 text-sm text-white/75 hover:text-white flex items-center gap-1">
-                <ArrowLeft className="h-4 w-4" /> Retour
+                <ArrowLeft className="h-4 w-4" /> {t("auth.back")}
               </button>
-              <h2 className="font-display text-2xl font-bold text-center mb-2">Entre le code</h2>
+              <h2 className="font-display text-2xl font-bold text-center mb-2">{t("auth.otpTitle")}</h2>
               <p className="text-sm text-white/75 text-center mb-8">
-                SMS envoyé au {phone}. <span className="text-primary font-medium">(Démo : 4242)</span>
+                {t("auth.otpSentTo", { phone })} <span className="text-primary font-medium">{t("auth.otpDemo")}</span>
               </p>
               <div className="flex justify-center">
                 <InputOTP maxLength={4} value={otp} onChange={(v) => { if (v.length > otp.length) digitTap(); setOtp(v); verifyOtp(v); }}>
@@ -213,9 +217,9 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
           {step === "pin-create" && (
             <motion.div key="pin-create" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="flex-1 flex flex-col">
               <ShieldCheck className="h-10 w-10 text-primary mx-auto mb-3" />
-              <h2 className="font-display text-2xl font-bold text-center mb-2">Crée ton code PIN</h2>
+              <h2 className="font-display text-2xl font-bold text-center mb-2">{t("auth.pinCreateTitle")}</h2>
               <p className="text-sm text-white/75 text-center mb-8">
-                4 chiffres. Sert à te reconnecter vite. Hashé en base, jamais partagé.
+                {t("auth.pinCreateHint")}
               </p>
               <div className="flex justify-center">
                 <InputOTP maxLength={4} value={pin} onChange={(v) => { if (v.length > pin.length) digitTap(); setPin(v); }}>
@@ -235,7 +239,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
                     onClick={() => setStep("pin-confirm")}
                     className="mt-6 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-95 transition"
                   >
-                    Continuer <ArrowRight className="h-4 w-4" />
+                    {t("auth.continue")} <ArrowRight className="h-4 w-4" />
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -245,10 +249,10 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
           {step === "pin-confirm" && (
             <motion.div key="pin-confirm" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className="flex-1 flex flex-col">
               <button onClick={() => setStep("pin-create")} className="self-start mb-4 text-sm text-white/75 hover:text-white flex items-center gap-1">
-                <ArrowLeft className="h-4 w-4" /> Retour
+                <ArrowLeft className="h-4 w-4" /> {t("auth.back")}
               </button>
-              <h2 className="font-display text-2xl font-bold text-center mb-2">Confirme ton PIN</h2>
-              <p className="text-sm text-white/75 text-center mb-8">Retape les 4 chiffres.</p>
+              <h2 className="font-display text-2xl font-bold text-center mb-2">{t("auth.pinConfirmTitle")}</h2>
+              <p className="text-sm text-white/75 text-center mb-8">{t("auth.pinConfirmHint")}</p>
               <div className="flex justify-center">
                 <InputOTP
                   maxLength={4}
@@ -257,7 +261,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
                     if (v.length > confirmPin.length) digitTap();
                     setConfirmPin(v);
                     if (v.length === 4 && v === pin) register();
-                    else if (v.length === 4 && v !== pin) authError("Les codes ne correspondent pas");
+                    else if (v.length === 4 && v !== pin) authError(t("auth.pinMismatch"));
                   }}
                 >
                   <InputOTPGroup>
@@ -270,7 +274,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
               </div>
               {loading && (
                 <p className="text-center text-sm text-white/75 mt-6 flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Création du compte…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("auth.creatingAccount")}
                 </p>
               )}
             </motion.div>
@@ -279,11 +283,11 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
           {step === "pin-login" && (
             <motion.div key="pin-login" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className="flex-1 flex flex-col">
               <button onClick={() => setStep("otp")} className="self-start mb-4 text-sm text-white/75 hover:text-white flex items-center gap-1">
-                <ArrowLeft className="h-4 w-4" /> Retour
+                <ArrowLeft className="h-4 w-4" /> {t("auth.back")}
               </button>
               <KeyRound className="h-10 w-10 text-primary mx-auto mb-3" />
-              <h2 className="font-display text-2xl font-bold text-center mb-2">Ton code PIN</h2>
-              <p className="text-sm text-white/75 text-center mb-8">Heureux de te revoir. Entre ton PIN à 4 chiffres.</p>
+              <h2 className="font-display text-2xl font-bold text-center mb-2">{t("auth.pinLoginTitle")}</h2>
+              <p className="text-sm text-white/75 text-center mb-8">{t("auth.pinLoginHint")}</p>
               <div className="flex justify-center">
                 <InputOTP maxLength={4} value={pin} onChange={(v) => { if (v.length > pin.length) digitTap(); setPin(v); }}>
                   <InputOTPGroup>
@@ -303,9 +307,9 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
                     className="mt-6 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-95 transition"
                   >
                     {loading ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Connexion…</>
+                      <><Loader2 className="h-4 w-4 animate-spin" /> {t("auth.signingIn")}</>
                     ) : (
-                      "Se connecter"
+                      t("auth.signIn")
                     )}
                   </motion.button>
                 )}

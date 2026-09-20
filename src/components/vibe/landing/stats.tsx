@@ -2,17 +2,20 @@
 import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/vibe/i18n";
 
 type Stat = { value: number; suffix?: string; prefix?: string; label: string; format?: "int" | "dec" };
 
+// label = clé i18n (résolue au rendu via t()).
 const STATS: Stat[] = [
-  { value: 12840, label: "utilisateurs actifs", format: "int" },
-  { value: 2.3, suffix: "M", label: "swipes cette semaine", format: "dec" },
-  { value: 87, suffix: "%", label: "de matchs via Vibe Check" },
-  { value: 0, prefix: "0€", label: "/ mois — zéro abonnement" },
+  { value: 12840, label: "landing.stats.activeUsers", format: "int" },
+  { value: 2.3, suffix: "M", label: "landing.stats.swipes", format: "dec" },
+  { value: 87, suffix: "%", label: "landing.stats.matchRate" },
+  { value: 0, prefix: "0€", label: "landing.stats.zero" },
 ];
 
 function useCountUp(target: number, run: boolean, duration = 1200, format?: "int" | "dec") {
+  const { lang } = useI18n();
   const [val, setVal] = useState(0);
   useEffect(() => {
     if (!run) return;
@@ -28,10 +31,12 @@ function useCountUp(target: number, run: boolean, duration = 1200, format?: "int
     return () => cancelAnimationFrame(raf);
   }, [target, run, duration]);
   if (format === "dec") return val.toFixed(1);
-  return Math.round(val).toLocaleString("fr-FR");
+  // Séparateur de milliers selon la langue active (12 840 fr / 12,840 en).
+  return Math.round(val).toLocaleString(lang === "en" ? "en-US" : "fr-FR");
 }
 
 function StatCell({ stat, run, index }: { stat: Stat; run: boolean; index: number }) {
+  const { t } = useI18n();
   const numeric = useCountUp(stat.value, run, 1200, stat.format);
   const isZero = stat.value === 0;
   return (
@@ -50,7 +55,7 @@ function StatCell({ stat, run, index }: { stat: Stat; run: boolean; index: numbe
           {stat.suffix}
         </span>
       </div>
-      <div className="mt-1.5 text-xs sm:text-sm text-muted-foreground max-w-[10rem]">{stat.label}</div>
+      <div className="mt-1.5 text-xs sm:text-sm text-muted-foreground max-w-[10rem]">{t(stat.label)}</div>
     </div>
   );
 }

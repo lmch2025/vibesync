@@ -6,17 +6,19 @@
 import { useState } from "react";
 import { AnimatePresence, motion, useDragControls, type PanInfo } from "framer-motion";
 import { X } from "lucide-react";
+import { useI18n } from "@/lib/vibe/i18n";
 
 type EmojiCategory = {
   id: string;
-  label: string;
+  // Clé i18n du label (dictionnaire chat.*) — le libellé dépend de la langue.
+  labelKey: string;
   emojis: string[];
 };
 
 const CATEGORIES: EmojiCategory[] = [
   {
     id: "love",
-    label: "Coeurs & Love",
+    labelKey: "chat.emoji.cat.love",
     emojis: [
       "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍",
       "🤎", "💖", "💗", "💓", "💞", "💕", "💟", "❣️",
@@ -25,7 +27,7 @@ const CATEGORIES: EmojiCategory[] = [
   },
   {
     id: "expressions",
-    label: "Réactions",
+    labelKey: "chat.emoji.cat.expressions",
     emojis: [
       "😊", "😍", "🥰", "😘", "😏", "😜", "🤭", "😇",
       "🤗", "🙃", "😎", "🤩", "😚", "😋", "🤤", "😳",
@@ -34,7 +36,7 @@ const CATEGORIES: EmojiCategory[] = [
   },
   {
     id: "flirt",
-    label: "Flirt & Fun",
+    labelKey: "chat.emoji.cat.flirt",
     emojis: [
       "😉", "🔥", "✨", "💫", "⚡", "🌟", "💯", "🎉",
       "🥳", "🤪", "😈", "👅", "🤤", "🙈",
@@ -42,7 +44,7 @@ const CATEGORIES: EmojiCategory[] = [
   },
   {
     id: "food",
-    label: "Nourriture",
+    labelKey: "chat.emoji.cat.food",
     emojis: [
       "🍷", "🍸", "🍹", "🍫", "🍓", "🍒", "🍰", "🧁",
       "☕", "🥂", "🍕", "🍔", "🍣", "🍦",
@@ -50,7 +52,7 @@ const CATEGORIES: EmojiCategory[] = [
   },
   {
     id: "travel",
-    label: "Voyage",
+    labelKey: "chat.emoji.cat.travel",
     emojis: [
       "✈️", "🏖️", "🌅", "🌃", "🎬", "🎭", "🎡", "🏔️",
       "🚗", "🌹", "🌸", "🌺", "🚀", "🗺️",
@@ -66,6 +68,7 @@ export interface EmojiPickerProps {
 }
 
 export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
+  const { t } = useI18n();
   const [activeIdx, setActiveIdx] = useState(0);
   const [closing, setClosing] = useState(false);
   const active = CATEGORIES[activeIdx];
@@ -98,7 +101,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
           <motion.button
             key="emoji-backdrop"
             type="button"
-            aria-label="Fermer le sélecteur d'emojis"
+            aria-label={t("chat.emoji.closeAria")}
             onClick={close}
             className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
@@ -138,15 +141,15 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
             {/* Header */}
             <div className="flex items-center justify-between px-4 pb-2">
               <div className="flex items-baseline gap-2">
-                <h2 className="text-base font-semibold v-fg tracking-tight">Emojis</h2>
+                <h2 className="text-base font-semibold v-fg tracking-tight">{t("chat.emoji.title")}</h2>
                 <span className="text-[11px] v-fg-muted font-medium">
-                  Choisis un vibe · {TOTAL_EMOJIS}
+                  {t("chat.emoji.pickVibe")} · {TOTAL_EMOJIS}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={close}
-                aria-label="Fermer"
+                aria-label={t("common.close")}
                 className="h-8 w-8 grid place-items-center rounded-full v-surface-1 v-fg-muted hover:v-surface-2 hover:v-fg active:scale-90 transition"
               >
                 <X className="h-4 w-4" />
@@ -175,7 +178,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
                           transition={{ type: "spring", stiffness: 380, damping: 32 }}
                         />
                       )}
-                      {cat.label}
+                      {t(cat.labelKey)}
                     </button>
                   );
                 })}
@@ -201,7 +204,7 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
                       whileTap={{ scale: 0.85 }}
                       transition={{ type: "spring", stiffness: 600, damping: 22 }}
                       className="h-9 w-9 grid place-items-center rounded-lg text-xl leading-none hover:v-surface-2 active:scale-90 transition-colors"
-                      aria-label={`Insérer ${emoji}`}
+                      aria-label={t("chat.emoji.insert", { emoji })}
                     >
                       <span className="leading-none select-none">{emoji}</span>
                     </motion.button>

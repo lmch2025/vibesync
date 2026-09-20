@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useVibe, View } from "@/lib/vibe/store";
+import { useI18n, useI18nStore } from "@/lib/vibe/i18n";
+import type { Lang } from "@/lib/vibe/i18n/core";
 import { ImmersiveLanding } from "@/components/vibe/landing/immersive-landing";
 import { AppDemo } from "@/components/vibe/app/app-demo";
 import AdminDashboard from "@/components/vibe/admin/admin-dashboard";
@@ -12,6 +14,7 @@ import { toast } from "sonner";
 // Funnel pré-app : ambiance immersif sombre permanente (classe .immersive),
 // quel que soit le thème choisi par l'utilisateur dans l'app.
 function AuthSplash() {
+  const { t } = useI18n();
   return (
     <div className="immersive min-h-dvh flex flex-col items-center justify-center v-bg-page gap-4">
       <div className="relative flex items-center justify-center">
@@ -22,12 +25,12 @@ function AuthSplash() {
           <span className="text-white text-2xl font-bold select-none">VS</span>
         </div>
       </div>
-      <p className="text-white/70 text-sm tracking-widest uppercase animate-pulse">Connexion en cours…</p>
+      <p className="text-white/70 text-sm tracking-widest uppercase animate-pulse">{t("common.signingIn")}</p>
     </div>
   );
 }
 
-export function ClientHome({ initialView, initialUser, initialRates, initialLandingVideo }: { initialView: View, initialUser?: any, initialRates?: any, initialLandingVideo?: string }) {
+export function ClientHome({ initialView, initialUser, initialRates, initialLandingVideo, initialLang }: { initialView: View, initialUser?: any, initialRates?: any, initialLandingVideo?: string, initialLang?: Lang }) {
   const view = useVibe((s) => s.view);
   const setView = useVibe((s) => s.setView);
   const setMe = useVibe((s) => s.setMe);
@@ -44,7 +47,20 @@ export function ClientHome({ initialView, initialUser, initialRates, initialLand
     if (initialRates) {
       useVibe.setState({ rates: initialRates });
     }
+    // Langue résolue côté SERVEUR (choix explicite → compte → cookie →
+    // Accept-Language) : appliquée en phase de rendu, AVANT les enfants →
+    // zéro flash, zéro mismatch d'hydratation.
+    if (initialLang) {
+      useI18nStore.setState({ lang: initialLang });
+    }
   }
+
+  // Synchronise l'attribut <html lang> (SEO/accessibilité) avec la langue
+  // active, à chaque changement.
+  const lang = useI18nStore((s) => s.lang);
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   useEffect(() => {
     fetch("/api/vibe/detect")

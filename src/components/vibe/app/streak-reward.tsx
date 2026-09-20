@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Flame, Gift, Link } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
 import { useVibe } from "@/lib/vibe/store";
+import { useI18n } from "@/lib/vibe/i18n";
 import { ConfettiBurst, haptic, sfx } from "./interactive-animations";
 
 type StreakData = {
@@ -24,6 +25,7 @@ type StreakData = {
 export function StreakReward() {
   const me = useVibe((s) => s.me);
   const patchMe = useVibe((s) => s.patchMe);
+  const { t } = useI18n();
   const [data, setData] = useState<StreakData | null>(null);
   const [open, setOpen] = useState(false);
   const [claiming, setClaiming] = useState(false);
@@ -94,7 +96,7 @@ export function StreakReward() {
         className="inline-flex items-center gap-1.5 rounded-full v-glass px-2.5 py-1 text-xs font-semibold v-fg active:scale-95 transition"
       >
         <Flame className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" fill="currentColor" />
-        <span className="tabular-nums">{data.streak} {data.streak > 1 ? "jours" : "jour"}</span>
+        <span className="tabular-nums">{data.streak} {data.streak > 1 ? t("wallet.streak.dayMany") : t("wallet.streak.dayOne")}</span>
         {data.canClaim && (
           <motion.span
             animate={{ scale: [1, 1.2] }}
@@ -158,8 +160,8 @@ export function StreakReward() {
                     >
                       🔥
                     </motion.div>
-                    <h3 className="font-display text-xl font-bold v-fg">Série de {data.streak} jour{data.streak > 1 ? "s" : ""}</h3>
-                    <p className="text-xs v-fg-muted mt-0.5">Record: {data.streakMax} jours</p>
+                    <h3 className="font-display text-xl font-bold v-fg">{t("wallet.streak.titleA")}{data.streak} {data.streak > 1 ? t("wallet.streak.dayMany") : t("wallet.streak.dayOne")}</h3>
+                    <p className="text-xs v-fg-muted mt-0.5">{t("wallet.streak.record", { n: data.streakMax })}</p>
                   </div>
 
                   {/* 7-day progress bar */}
@@ -192,7 +194,7 @@ export function StreakReward() {
 
                   {/* Today's reward — ×2 badge when Daily Double is active */}
                   <div className="rounded-2xl bg-gradient-to-br from-amber-400/10 to-vibe-orange/10 ring-1 ring-amber-300/20 px-4 py-3 mb-3 text-center">
-                    <p className="text-[10px] uppercase tracking-wide text-amber-600/80 dark:text-amber-300/70">Récompense du jour</p>
+                    <p className="text-[10px] uppercase tracking-wide text-amber-600/80 dark:text-amber-300/70">{t("wallet.streak.todayReward")}</p>
                     <div className="flex items-center justify-center gap-1.5 mt-1">
                       <GemIcon className="h-5 w-5" />
                       <span className="font-display text-2xl font-black text-amber-600 dark:text-amber-300">
@@ -211,7 +213,7 @@ export function StreakReward() {
                     </div>
                     {data.dailyDoubleActive && (
                       <p className="text-[10px] text-amber-700/80 dark:text-amber-200/70 mt-1">
-                        Double Quotidien actif — récompense doublée 🎲
+                        {t("wallet.streak.dailyDoubleActive")}
                       </p>
                     )}
                   </div>
@@ -230,12 +232,12 @@ export function StreakReward() {
                     >
                       <span className="text-xl shrink-0">🎲</span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-xs font-bold">Double ta récompense du jour</span>
+                        <span className="block text-xs font-bold">{t("wallet.streak.doubleTitle")}</span>
                         <span className="block text-[10px] v-fg-muted leading-snug">
-                          +{data.todayReward} Vibes en plus pour 10 💎 — avant de réclamer.
+                          {t("wallet.streak.doubleDesc", { n: data.todayReward })}
                         </span>
                       </span>
-                      <span className="text-[10px] font-bold text-vibe-purple dark:text-vibe-pink shrink-0">Doubler →</span>
+                      <span className="text-[10px] font-bold text-vibe-purple dark:text-vibe-pink shrink-0">{t("wallet.streak.doubleCta")}</span>
                     </motion.button>
                   )}
 
@@ -248,16 +250,16 @@ export function StreakReward() {
                       className="w-full h-12 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-black font-display font-bold text-base active:scale-95 transition disabled:opacity-60 flex items-center justify-center gap-2"
                     >
                       <Gift className="h-5 w-5" />
-                      {claiming ? "…" : "Réclamer"}
+                      {claiming ? "…" : t("wallet.streak.claim")}
                     </motion.button>
                   ) : (
                     <div className="w-full h-12 rounded-2xl v-surface-1 ring-1 ring-[var(--v-divider)] flex items-center justify-center gap-2 text-sm v-fg-muted">
-                      <Check className="h-4 w-4 text-emerald-500 dark:text-emerald-400" /> Réclamé aujourd'hui — reviens demain !
+                      <Check className="h-4 w-4 text-emerald-500 dark:text-emerald-400" /> {t("wallet.streak.claimed")}
                     </div>
                   )}
 
                   <p className="text-[10px] v-fg-muted text-center mt-3">
-                    Reviens chaque jour pour augmenter ta série et gagner plus de Vibes
+                    {t("wallet.streak.footer")}
                   </p>
                 </>
               )}
@@ -280,10 +282,11 @@ export function StreakReward() {
 /// Encourages the user to invite friends for bonus Vibes.
 function ReferralModal({ onClose, reward }: { onClose: () => void; reward: number }) {
   const [copied, setCopied] = useState(false);
+  const { t } = useI18n();
   const referralLink = "https://vivilov.app/r/vibe-friend";
 
   function share(platform: string) {
-    const text = `J'ai gagné ${reward} Vibes sur Vivilov ! Rejoins-moi et découvre la rencontre authentique en vidéo 🎬`;
+    const text = t("wallet.referral.shareText", { n: reward });
     const urls: Record<string, string> = {
       whatsapp: `https://wa.me/?text=${encodeURIComponent(text + " " + referralLink)}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`,
@@ -330,10 +333,10 @@ function ReferralModal({ onClose, reward }: { onClose: () => void; reward: numbe
         </motion.div>
 
         <h3 className="font-display text-xl font-bold text-center v-fg mb-1">
-          Gagne encore plus !
+          {t("wallet.referral.title")}
         </h3>
         <p className="text-sm v-fg-muted text-center mb-4">
-          Invite tes amis sur Vivilov et reçois <span className="font-bold text-amber-600 dark:text-amber-300">+10 Vibes</span> par inscription.
+          {t("wallet.referral.inviteA")}<span className="font-bold text-amber-600 dark:text-amber-300">+10 Vibes</span>{t("wallet.referral.inviteC")}
         </p>
 
         {/* Share buttons */}
@@ -373,9 +376,9 @@ function ReferralModal({ onClose, reward }: { onClose: () => void; reward: numbe
           className="w-full h-10 rounded-2xl v-surface-1 ring-1 ring-[var(--v-divider)] flex items-center justify-center gap-2 text-sm v-fg-muted hover:v-surface-2 transition mb-3"
         >
           {copied ? (
-            <><Check className="h-4 w-4 text-emerald-500 dark:text-emerald-400" /> Lien copié !</>
+            <><Check className="h-4 w-4 text-emerald-500 dark:text-emerald-400" /> {t("wallet.referral.copied")}</>
           ) : (
-            <><Link className="h-4 w-4 text-vibe-purple" /> Copier le lien d'invitation</>
+            <><Link className="h-4 w-4 text-vibe-purple" /> {t("wallet.referral.copyLink")}</>
           )}
         </button>
 
@@ -384,11 +387,11 @@ function ReferralModal({ onClose, reward }: { onClose: () => void; reward: numbe
           onClick={onClose}
           className="w-full h-11 rounded-2xl vibe-gradient text-white font-bold text-sm active:scale-95 transition"
         >
-          Plus tard
+          {t("wallet.later")}
         </button>
 
         <p className="text-[10px] v-fg-muted text-center mt-3">
-          10 Vibes offertes pour chaque ami qui s'inscrit avec ton lien
+          {t("wallet.referral.footer")}
         </p>
       </motion.div>
     </motion.div>

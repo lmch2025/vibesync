@@ -32,6 +32,8 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/vibe/session";
 import { GEM_ACTIONS, GemActionKey } from "@/lib/vibe/constants";
 import { notify, notifyMatch } from "@/lib/vibe/notify";
+import { getUserLang, tFor } from "@/lib/vibe/i18n/server";
+import { isValidLang, type Lang } from "@/lib/vibe/i18n/core";
 
 /// Great-circle distance between two (lat, lng) points, in km.
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -102,7 +104,8 @@ export async function POST(req: Request) {
   }
 
   const now = Date.now();
-  const myName = user.profile?.displayName ?? "Quelqu'un";
+  const lang: Lang = isValidLang(user.lang) ? (user.lang as Lang) : "fr";
+  const myName = user.profile?.displayName ?? tFor(lang, "premiumSrv.someone");
 
   // Execute the action-specific effect inside a transaction.
   const effect: Record<string, any> = {};
@@ -134,14 +137,14 @@ export async function POST(req: Request) {
         const until = new Date(now + 60 * 60 * 1000);
         await tx.user.update({ where: { id: user.id }, data: { spotlightUntil: until } });
         effect.until = until;
-        effect.message = "Ton profil apparaît en tête des decks pendant 1h !";
+        effect.message = tFor(lang, "premiumSrv.spotlight");
         break;
       }
       case "ghostMode": {
         const until = new Date(now + 60 * 60 * 1000);
         await tx.user.update({ where: { id: user.id }, data: { ghostModeUntil: until } });
         effect.until = until;
-        effect.message = "Mode Fantôme actif pendant 1h : tu navigues invisiblement — tes likes restent secrets.";
+        effect.message = tFor(lang, "premiumSrv.ghost");
         break;
       }
       case "dailyDouble": {
@@ -159,8 +162,8 @@ export async function POST(req: Request) {
         });
         effect.until = ddUntil;
         effect.message = alreadyClaimedToday
-          ? "Ta récompense de demain sera doublée ! 🎲"
-          : "Ta récompense de série du jour sera doublée — réclame-la ! 🎲";
+          ? tFor(lang, "premiumSrv.dailyDoubleTomorrow")
+          : tFor(lang, "premiumSrv.dailyDoubleToday");
         effect.doubled = true;
         break;
       }
@@ -306,7 +309,7 @@ export async function POST(req: Request) {
             // PRODUCTION: never fabricate likers. An honest empty answer is
             // the real product truth — no fake "Mystère/Secret" profiles.
             effect.likers = [];
-            effect.message = "Personne ne t'a encore liké — continue à swiper, ça arrivera vite ! 💜";
+            effect.message = tFor(lang, "premiumSrv.seeLikesEmpty");
           }
         }
         break;
@@ -314,7 +317,7 @@ export async function POST(req: Request) {
       case "moodRing": {
         // Deterministic mood of the day for THIS profile — derived from the
         // profile's own data so re-purchases stay coherent.
-        const moods = ["🎉 Fête", "🌅 Calme", "🔥 Aventurier", "☕ Chill", "💫 Romantique", "🎯 Ambitieux"];
+        const moods = ["party", "calm", "adventurous", "chill", "romantic", "ambitious"].map((k) => tFor(lang, `premiumSrv.mood.${k}`));
         if (targetProfile) {
           const daySeed = Math.floor(now / 86_400_000);
           const seed =
@@ -331,19 +334,20 @@ export async function POST(req: Request) {
         if (targetProfile) {
           const caUntil = new Date(now + 60 * 60 * 1000);
           await tx.user.update({ where: { id: user.id }, data: { crushAlertUntil: caUntil } });
+          const tLang: Lang = await getUserLang(targetProfile.userId);
           await tx.notification.create({
             data: {
               userId: targetProfile.userId,
               type: "crush_alert",
-              title: "💘 Quelqu'un a flashé sur toi !",
-              body: `${myName} t'a envoyé une alerte crush. Ouvre VibeSync pour découvrir son profil — ça pourrait matché !`,
+              title: tFor(tLang, "premiumSrv.crushNotifTitle"),
+              body: tFor(tLang, "premiumSrv.crushNotifBody", { name: myName }),
               icon: "💘",
               metadata: JSON.stringify({ fromUserId: user.id, profileId: targetProfile.id }),
             },
           });
           effect.until = caUntil;
           effect.targetName = targetProfile.displayName;
-          effect.message = `Alerte crush envoyée à ${targetProfile.displayName} — il/elle vient de recevoir une notification spéciale 💘`;
+          effect.message = tFor(lang, "premiumSrv.crushSent", { name: targetProfile.displayName });
           effect.sent = true;
         }
         break;
@@ -369,19 +373,20 @@ export async function POST(req: Request) {
           }
           const ghUntil = new Date(now + 60 * 60 * 1000);
           await tx.user.update({ where: { id: user.id }, data: { goldenHeartUntil: ghUntil } });
+          const tLang: Lang = await getUserLang(targetProfile.userId);
           await tx.notification.create({
             data: {
               userId: targetProfile.userId,
               type: "golden_heart",
-              title: "💛 Cœur d'Or reçu !",
-              body: `${myName} t'a envoyé un Cœur d'Or — le super-like ultime. Son profil t'attend en tête de ta file avec un badge doré ✨`,
+              title: tFor(tLang, "premiumSrv.ghNotifTitle"),
+              body: tFor(tLang, "premiumSrv.ghNotifBody", { name: myName }),
               icon: "💛",
               metadata: JSON.stringify({ fromUserId: user.id, profileId: targetProfile.id }),
             },
           });
           effect.until = ghUntil;
           effect.targetName = targetProfile.displayName;
-          effect.message = `💛 Cœur d'Or envoyé à ${targetProfile.displayName} ! Ton profil est en tête de sa file avec un badge doré pendant 1h.`;
+          effect.message = tFor(lang, "premiumSrv.ghSent", { name: targetProfile.displayName });
           effect.golden = true;
         }
         break;
@@ -433,7 +438,7 @@ export async function POST(req: Request) {
         });
         effect.until = ppUntil;
         effect.city = passportCity;
-        effect.message = `✈️ Passport activé pour ${passportCity} ! Découvre les profils de cette ville pendant 24h.`;
+        effect.message = tFor(lang, "premiumSrv.passport", { city: passportCity ?? "" });
         effect.active = true;
         effect.deckRefresh = true;
         break;
@@ -457,11 +462,11 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "system",
-            content: "Tu es un expert en drague naturelle et bienveillante. Génère UNE seule phrase d'accroche courte (max 15 mots), fraîche, légère et personnalisable, en français, sans emojis, sans guillemets. Pas de cliché.",
+            content: tFor(lang, "premiumSrv.icebreakerPrompt"),
           },
           {
             role: "user",
-            content: "Propose une phrase d'accroche originale pour engager une conversation avec quelqu'un dont la vidéo montre un mode de vie actif et créatif.",
+            content: tFor(lang, "premiumSrv.icebreakerUser"),
           },
         ],
         temperature: 0.9,
@@ -469,7 +474,7 @@ export async function POST(req: Request) {
       });
       icebreaker = completion.choices[0]?.message?.content?.trim() ?? null;
     } catch {
-      icebreaker = "Si ta vidéo disait vrai, on devrait déjà se connaître. On corrige ça ?";
+      icebreaker = tFor(lang, "premiumSrv.icebreakerFallback");
     }
   }
 
@@ -496,7 +501,7 @@ export async function POST(req: Request) {
           await notifyMatch(user.id, targetProfile.displayName, match.id);
           await notifyMatch(targetProfile.userId, user.profile.displayName ?? "Quelqu'un", match.id);
           effect.match = { id: match.id, withProfile: { id: targetProfile.id, displayName: targetProfile.displayName } };
-          effect.message = `💛 Cœur d'Or envoyé à ${targetProfile.displayName} — c'est un MATCH ! 💕 Ton profil est en tête de sa file avec un badge doré.`;
+          effect.message = tFor(lang, "premiumSrv.ghMatch", { name: targetProfile.displayName });
         }
       }
     } catch {
@@ -514,7 +519,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "system",
-            content: "Tu es une experte en compatibilité amoureuse. Écris en français, sans emojis, exactement 2 phrases courtes : pourquoi ce score, puis une suggestion de premier message. Ton chaleureux, direct, pas de listes.",
+            content: tFor(lang, "premiumSrv.compatPrompt"),
           },
           {
             role: "user",

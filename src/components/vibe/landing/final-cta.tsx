@@ -2,8 +2,10 @@
 import { motion } from "framer-motion";
 import { ArrowRight, ShieldCheck, Flame } from "lucide-react";
 import { PrimaryCta, GhostCta, Reveal } from "./primitives";
+import { useI18n } from "@/lib/vibe/i18n";
 
 export function FinalCta({ onEnterApp, onEnterAdmin }: { onEnterApp: () => void; onEnterAdmin: () => void }) {
+  const { t } = useI18n();
   return (
     <section className="relative py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -22,15 +24,14 @@ export function FinalCta({ onEnterApp, onEnterAdmin }: { onEnterApp: () => void;
             <div className="relative">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-semibold ring-1 ring-white/30">
                 <Flame className="h-3.5 w-3.5" />
-                Prêt·e à vibrer ?
+                {t("landing.final.badge")}
               </div>
 
               <h2 className="mt-5 font-display text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-balance">
-                Prêt·e à vibrer sur la bonne fréquence ?
+                {t("landing.final.title")}
               </h2>
               <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-white/90 text-pretty">
-                Rejoins 12 840 membres qui ont troqué les photos figées pour des vidéos vivantes.
-                Sans abonnement, sans catfish, sans mauvaise surprise.
+                {t("landing.final.body")}
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
@@ -38,12 +39,12 @@ export function FinalCta({ onEnterApp, onEnterAdmin }: { onEnterApp: () => void;
                   onClick={onEnterApp}
                   className="bg-white !text-vibe-purple shadow-2xl"
                 >
-                  Rejoins l'expérience
+                  {t("landing.nav.cta")}
                   <ArrowRight className="h-4 w-4" />
                 </PrimaryCta>
                 <GhostCta tone="dark" onClick={onEnterAdmin}>
                   <ShieldCheck className="h-4 w-4" />
-                  Voir l'espace admin
+                  {t("landing.final.admin")}
                 </GhostCta>
               </div>
 
@@ -54,7 +55,7 @@ export function FinalCta({ onEnterApp, onEnterAdmin }: { onEnterApp: () => void;
                 transition={{ delay: 0.4 }}
                 className="mt-5 text-xs text-white/70"
               >
-                Inscription gratuite · 25 Vibes offertes · Sans engagement
+                {t("landing.final.meta")}
               </motion.p>
             </div>
           </div>

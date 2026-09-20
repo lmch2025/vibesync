@@ -1,0 +1,560 @@
+// Dictionnaire « profile » — onglet Profil + sheet d'actions premium (Task 2-e).
+// Règles :
+//  - Clés préfixées "profile." (profile-screen, photo-picker, completion-ring)
+//    et "premium." (premium-actions-sheet, active-buffs-section).
+//  - Les objets fr et en ont EXACTEMENT les mêmes clés.
+//  - Interpolation : {{param}} (ex "profile.video.added": "Vidéo {{n}} ajoutée").
+//  - Pluriels : clés distinctes ".one" / ".many".
+//  - fr = copie EXACTE des textes français d'origine ; en = traduction naturelle
+//    (tutoiement FR → "you" EN). Noms de marque canoniques conservés en EN :
+//    Super-Like, Boost, Rewind, Passport, Icebreaker, Ghost Mode, Spotlight,
+//    Golden Heart, Time Freeze, Daily Double, Crush Alert. Vibes/Vivilov/emojis
+//    non traduits.
+import { defineDict } from "./shared";
+
+export const profile = defineDict(
+  {
+    // ── Onglet Profil — en-tête & grand cadre ─────────────────────────────
+    "profile.title": "Profil",
+    "profile.you": "Toi",
+    "profile.frame.photoAlt": "Photo {{n}} de ton profil",
+    "profile.frame.videoBadge": "15s max",
+    "profile.frame.photoBadge": "Photo",
+    "profile.frame.replace": "Remplacer",
+    "profile.frame.delete": "Supprimer",
+
+    // ── Miniatures vidéos ─────────────────────────────────────────────────
+    "profile.videos.title": "Mes vidéos ({{n}}/3)",
+    "profile.videos.add": "Ajouter",
+    "profile.videos.compressing": "⚙️ Compression…",
+    "profile.videos.uploading": "☁️ Envoi…",
+    "profile.videos.slotAlt": "Vidéo {{n}}",
+
+    // ── Upload vidéo (toasts) ─────────────────────────────────────────────
+    "profile.video.formatRequired": "Format vidéo requis",
+    "profile.video.tooHeavy": "Vidéo trop lourde (max 500 Mo)",
+    "profile.video.exoticFormat": "Format MKV/AVI détecté — l'upload peut prendre plus de temps. Préfère MP4 ou MOV pour des uploads rapides 🎬",
+    "profile.video.sandbox": "Mode bac à sable : la vidéo est sauvegardée localement (Cloudinary non configuré).",
+    "profile.video.added": "Vidéo {{n}} ajoutée",
+    "profile.video.deleted": "Vidéo supprimée",
+    "profile.video.deleteError": "Erreur lors de la suppression",
+
+    // ── Erreurs génériques (replis des catch fetch) ───────────────────────
+    "profile.error.upload": "Erreur lors de l'upload",
+    "profile.error.update": "Erreur lors de la mise à jour",
+    "profile.error.generic": "Erreur",
+
+    // ── Photos de profil (rangée du Profil) ───────────────────────────────
+    "profile.photos.title": "Mes photos ({{n}}/5)",
+    "profile.photos.hint": "Touche une photo pour l’afficher",
+    "profile.photos.addedOne": "Photo ajoutée",
+    "profile.photos.addedMany": "{{n}} photos ajoutées",
+    "profile.photos.removed": "Photo retirée",
+    "profile.photos.error": "Impossible de sauvegarder les photos",
+
+    // ── Rangée de stats ───────────────────────────────────────────────────
+    "profile.stats.wallet": "Portefeuille",
+
+    // ── Carte de discrétion (Mode Fantôme) ────────────────────────────────
+    "profile.ghost.title": "Envie de discrétion ?",
+    "profile.ghost.body": "Le Mode Fantôme rend tes likes invisibles pendant 1h — tu explores sans laisser de trace.",
+    "profile.ghost.cta": "Essayer →",
+
+    // ── Section Premium (rangées de l'onglet Profil) ──────────────────────
+    "profile.premium.title": "Premium",
+    "profile.premium.seeLikes.title": "Voir les likes reçus",
+    "profile.premium.seeLikes.desc": "Dévoile un profil qui t'a déjà liké",
+    "profile.premium.passport.title": "Passport",
+    "profile.premium.passport.desc": "Choisis une ville et swipe là-bas 24h",
+    "profile.cost.seeLikes": "Voir les likes reçus ({{cost}} Vibes)",
+    "profile.cost.passport": "Passport ({{cost}} Vibes)",
+    "profile.passport.title": "Passport activé",
+    "profile.passport.sub": "24h pour découvrir une nouvelle ville",
+
+    // ── Réglages ──────────────────────────────────────────────────────────
+    "profile.settings.title": "Réglages",
+    "profile.settings.lang": "Langue",
+    "profile.settings.currency": "Devise",
+    "profile.settings.currencyValue": "{{currency}} · auto",
+    "profile.settings.verified": "Compte vérifié",
+    "profile.settings.yes": "Oui",
+    "profile.settings.pending": "En attente",
+    "profile.settings.sounds": "Sons de l'interface",
+    "profile.settings.soundsAria": "Activer les sons de l'interface",
+    "profile.settings.darkMode": "Mode sombre",
+    "profile.settings.darkModeHint": "Active le fond nuit #09090B. Le thème clair reste le rendu par défaut.",
+    "profile.settings.darkModeAria": "Activer le mode sombre profond",
+
+    // ── Admin / déconnexion / pied de page ────────────────────────────────
+    "profile.adminPanel": "Panneau Administrateur",
+    "profile.logout.cta": "Se déconnecter",
+    "profile.logout.pending": "Déconnexion…",
+    "profile.logout.success": "Déconnecté",
+    "profile.footer": "Vivilov · PWA démo",
+
+    // ── Thème (toasts) ────────────────────────────────────────────────────
+    "profile.theme.dark": "Mode sombre activé",
+    "profile.theme.light": "Mode clair activé",
+
+    // ── Tâches de complétion (clic sur une tuile) ─────────────────────────
+    "profile.tasks.verifiedRequest": "Demande envoyée",
+    "profile.tasks.streakHint": "Reviens tous les jours pour augmenter ta série et gagner des Vibes !",
+    "profile.updated": "Profil mis à jour",
+
+    // ── Modale de confirmation de suppression ─────────────────────────────
+    "profile.deleteConfirm.title": "Supprimer la vidéo {{n}} ?",
+    "profile.deleteConfirm.body": "Cette action est irréversible. La vidéo sera définitivement supprimée de ton profil.",
+    "profile.deleteConfirm.confirm": "Oui, supprimer",
+
+    // ── Modale d'édition ──────────────────────────────────────────────────
+    "profile.edit.bio": "Modifier ta bio",
+    "profile.edit.city": "Modifier ta ville",
+    "profile.edit.age": "Modifier ton âge",
+    "profile.edit.gender": "Modifier ton genre",
+    "profile.edit.lookingFor": "Ce que tu cherches",
+    "profile.edit.vibe": "Ton Vibe Check",
+    "profile.edit.placeholder": "Saisis ton texte...",
+    "profile.gender.f": "Femme",
+    "profile.gender.m": "Homme",
+    "profile.gender.nb": "NB",
+    "profile.lookingFor.f": "Femmes",
+    "profile.lookingFor.m": "Hommes",
+    "profile.lookingFor.nb": "NB",
+    "profile.lookingFor.all": "Tous",
+
+    // ── Résultat « Voir les likes » (modal de succès partagé) ─────────────
+    "profile.seeLikes.title": "Voir les Likes",
+    "profile.seeLikes.message": "Les profils qui t'ont déjà liké",
+
+    // ── CompletionRing — tuiles de tâches ─────────────────────────────────
+    "profile.task.accountCreated": "Compte créé",
+    "profile.task.profileCreated": "Profil créé",
+    "profile.task.videoUploaded": "Vidéo 15s",
+    "profile.task.posterUploaded": "Vignette",
+    "profile.task.bio": "Bio",
+    "profile.task.city": "Ville",
+    "profile.task.age": "Âge",
+    "profile.task.gender": "Sexe",
+    "profile.task.lookingFor": "Tu cherches",
+    "profile.task.vibe": "Vibe Check",
+    "profile.task.verified": "Compte vérifié",
+    "profile.task.streak": "Série lancée",
+    "profile.completion.title": "Complétion du profil",
+    "profile.completion.almost": "Presque parfait ! 🎉",
+    "profile.completion.goodProgress": "Belle avancée — continue !",
+    "profile.completion.start": "Complète ton profil pour plus de matchs.",
+    "profile.completion.complete": "Profil complet ! Tu rayonnes ✨",
+
+    // ── PhotoPicker (composant partagé) ───────────────────────────────────
+    "profile.picker.maxOne": "Maximum {{max}} photos — seule la première sera ajoutée.",
+    "profile.picker.maxMany": "Maximum {{max}} photos — seules les {{n}} premières seront ajoutées.",
+    "profile.picker.sandbox": "Mode bac à sable : photo sauvegardée localement.",
+    "profile.picker.error": "Impossible d'ajouter cette photo.",
+    "profile.picker.groupAria": "Photos de profil ({{n}}/{{max}})",
+    "profile.picker.photoAlt": "Photo {{n}}",
+    "profile.picker.showAria": "Afficher la photo {{n}}",
+    "profile.picker.removeAria": "Retirer la photo {{n}}",
+    "profile.picker.addAria": "Ajouter des photos",
+    "profile.picker.addAriaCount": "Ajouter des photos ({{n}}/{{max}})",
+
+    // ── PremiumActionsSheet — en-tête & groupes ───────────────────────────
+    "premium.sheet.aria": "Actions premium",
+    "premium.sheet.title": "Actions Premium",
+    "premium.sheet.for": "pour",
+    "premium.error": "Erreur",
+    "premium.needsProfile": "Depuis l'onglet Découvrir, ouvre 👑 Premium en haut à droite — les actions cibleront le profil affiché.",
+    "premium.cat.swipe": "🎯 Swipe",
+    "premium.cat.social": "💬 Social",
+    "premium.cat.profile": "👤 Profil",
+    "premium.cat.meta": "⚙️ Méta",
+    "premium.contextual.title": "✨ À utiliser depuis un profil",
+    "premium.contextual.hint": "Astuce : touche ✨ sur une carte dans Découvrir pour cibler un profil.",
+    "premium.flow.title": "🔎 Où les trouver ?",
+    "premium.flow.superlike": "Glisse la carte vers le haut ⬆️ pour Super-Liker",
+    "premium.flow.messageBoost": "Active l'éclair ⚡ dans une conversation",
+    "premium.passport.title": "✈️ Choisis ta destination",
+    "premium.passport.sub": "Tu découvriras les profils de cette ville pendant 24h.",
+    "premium.tile.fromProfileSuffix": " (depuis un profil)",
+
+    // ── Libellés & descriptions des actions premium (traduits au rendu) ───
+    "premium.action.superlike": "Super-Like",
+    "premium.action.superlike.desc": "Apparaît en haut de sa file d'attente",
+    "premium.action.rewind": "Rewind",
+    "premium.action.rewind.desc": "Annule ton dernier swipe et récupère le profil",
+    "premium.action.boost": "Boost",
+    "premium.action.boost.desc": "Sois en haut de la file de 20 profils pendant 30 min",
+    "premium.action.superRewind": "Super Rewind",
+    "premium.action.superRewind.desc": "Annule tes 5 derniers swipes d'un coup",
+    "premium.action.goldenHeart": "Cœur d'Or",
+    "premium.action.goldenHeart.desc": "Super-like doré + tête de sa file avec badge spécial",
+    "premium.action.timeFreeze": "Temps Gelé",
+    "premium.action.timeFreeze.desc": "Voir les 3 prochains profils avant de swiper",
+    "premium.action.vibeRadar": "Vibe Radar",
+    "premium.action.vibeRadar.desc": "Vois qui est en ligne près de toi en ce moment",
+    "premium.action.crushAlert": "Crush Alert",
+    "premium.action.crushAlert.desc": "Envoie une notification spéciale à ton crush",
+    "premium.action.seeLikes": "Voir les Likes",
+    "premium.action.seeLikes.desc": "Dévoile les profils qui t'ont déjà liké",
+    "premium.action.icebreaker": "Icebreaker IA",
+    "premium.action.icebreaker.desc": "Génère une phrase d'accroche personnalisée par IA",
+    "premium.action.messageBoost": "Boost Message",
+    "premium.action.messageBoost.desc": "Ton message remonte en haut de sa boîte de réception",
+    "premium.action.passport": "Passport",
+    "premium.action.passport.desc": "Swipe dans une autre ville pendant 24h",
+    "premium.action.spotlight": "Projecteur",
+    "premium.action.spotlight.desc": "Ton profil apparaît dans 20 decks pendant 1h",
+    "premium.action.compatibilityReport": "Rapport Compatibilité",
+    "premium.action.compatibilityReport.desc": "Analyse IA de ta compatibilité avec un profil",
+    "premium.action.moodRing": "Anneau d'Humeur",
+    "premium.action.moodRing.desc": "Révèle l'humeur actuelle d'un profil",
+    "premium.action.ghostMode": "Mode Fantôme",
+    "premium.action.ghostMode.desc": "Navigue les profils invisiblement pendant 1h",
+    "premium.action.dailyDouble": "Double Quotidien",
+    "premium.action.dailyDouble.desc": "Double ta récompense de série du jour",
+
+    // ── Astuces combo (modal de succès) ───────────────────────────────────
+    "premium.tip.boost": "💡 Astuce : le Projecteur (40 💎) ajoute ton profil à 20 decks — le combo idéal avec ton Boost.",
+    "premium.tip.spotlight": "💡 Astuce : le Boost (50 💎) te place en tête de la file pendant ton Projecteur — visibilité doublée.",
+    "premium.tip.superlike": "💡 Astuce : le Cœur d'Or (60 💎) est un super-like doré avec badge spécial — impossible à manquer.",
+    "premium.tip.passport": "💡 Astuce : le Vibe Radar (25 💎) montre qui est en ligne maintenant, où que tu voyages.",
+    "premium.tip.rewind": "💡 Astuce : le Super Rewind (15 💎) annule tes 5 derniers swipes d'un coup.",
+    "premium.tip.seeLikes": "💡 Astuce : un Super-Like (5 💎) te place en haut de SA file quand tu aimes quelqu'un.",
+
+    // ── EffectResult — contenus de résultat ───────────────────────────────
+    "premium.result.peek": "❄️ Aperçu des 3 prochains",
+    "premium.result.online": "📍 En ligne maintenant",
+    "premium.result.likers": "👁️ Ils t'ont liké",
+    "premium.result.ghostVisitors.one": "+ {{n}} visiteur en Mode Fantôme 👻 (invisible)",
+    "premium.result.ghostVisitors.many": "+ {{n}} visiteurs en Mode Fantôme 👻 (invisibles)",
+    "premium.result.ghostTease.one": "👻 {{n}} personne te parcourt en Mode Fantôme…",
+    "premium.result.ghostTease.many": "👻 {{n}} personnes te parcourent en Mode Fantôme…",
+    "premium.result.ghostTeaseHidden.one": "Invisible jusqu'à la fin de leur buff — reviens plus tard !",
+    "premium.result.ghostTeaseHidden.many": "Invisibles jusqu'à la fin de leur buff — reviens plus tard !",
+    "premium.result.compatWith": "Compatibilité avec {{name}}",
+    "premium.result.thisProfile": "ce profil",
+    "premium.result.aiAnalysis": "🧬 Analyse IA",
+    "premium.result.goldenHeartTip": "💛 Envie de te démarquer ? Le Cœur d'Or place ton profil en tête de sa file avec un badge doré.",
+    "premium.result.moodOf": "Humeur de {{name}}",
+    "premium.result.today": "aujourd'hui",
+    "premium.result.undone.one": "↩️ {{n}} swipe annulé — le profil revient dans ton deck !",
+    "premium.result.undone.many": "↩️ {{n}} swipes annulés — les profils reviennent dans ton deck !",
+    "premium.result.activated": "✅ Action activée avec succès !",
+    "premium.icebreaker.copied": "Copié !",
+    "premium.icebreaker.copy": "Copier",
+
+    // ── ActiveBuffsSection — en-tête & état vide ──────────────────────────
+    "premium.buffs.aria": "Actions premium actives",
+    "premium.buffs.title": "Actions actives",
+    "premium.buffs.liveHint": "en direct · toc pour détails",
+    "premium.buffs.none": "aucune",
+    "premium.buffs.empty.title": "Aucune action active",
+    "premium.buffs.empty.body": "Boost, Projecteur, Passport… tes actions premium actives s'afficheront ici avec leur compte à rebours.",
+    "premium.buffs.empty.cta": "Découvrir →",
+
+    // ── ActiveBuffsSection — cartes & panneau de détail ───────────────────
+    "premium.buffs.urgent": "BIENTÔT FINI",
+    "premium.buffs.cardAria": "{{label}} actif — {{time}} — voir les détails",
+    "premium.buffs.expiresAt": "expire à {{time}}",
+    "premium.buffs.detailAria": "Détails de l'action {{label}}",
+    "premium.buffs.closeDetailAria": "Fermer les détails",
+    "premium.buffs.activated": "Activée",
+    "premium.buffs.ago": "il y a {{time}}",
+    "premium.buffs.elapsedSeconds": "quelques secondes",
+    "premium.buffs.expires": "Expire",
+    "premium.buffs.at": "à {{time}}",
+    "premium.buffs.extend": "Prolonger l'action",
+    "premium.buffs.remaining.min": "reste ~{{n}} min",
+    "premium.buffs.remaining.hours": "reste ~{{n}} h",
+
+    // ── Buffs actifs — libellés par type (labels/descs serveur traduits) ──
+    "premium.buff.boost.label": "Boost",
+    "premium.buff.boost.desc": "Tu es en haut de la file de 20 profils",
+    "premium.buff.spotlight.label": "Projecteur",
+    "premium.buff.spotlight.desc": "Ton profil apparaît dans 20 decks",
+    "premium.buff.ghostMode.label": "Mode Fantôme",
+    "premium.buff.ghostMode.desc": "Tu navigues les profils invisiblement",
+    "premium.buff.passport.label": "Passport",
+    "premium.buff.passport.desc": "Swipe dans une autre ville",
+    "premium.buff.passport.cityDesc": "Tu découvres {{city}}",
+    "premium.buff.timeFreeze.label": "Temps Gelé",
+    "premium.buff.timeFreeze.desc": "Vois les 3 prochains profils",
+    "premium.buff.dailyDouble.label": "Double Quotidien",
+    "premium.buff.dailyDouble.desc": "Ta prochaine récompense streak sera doublée",
+    "premium.buff.crushAlert.label": "Crush Alert",
+    "premium.buff.crushAlert.desc": "Notification spéciale envoyée à ton crush",
+    "premium.buff.goldenHeart.label": "Cœur d'Or",
+    "premium.buff.goldenHeart.desc": "Tu es en tête de sa file avec un badge doré",
+  },
+  {
+    // ── Profile tab — header & main frame ────────────────────────────────
+    "profile.title": "Profile",
+    "profile.you": "You",
+    "profile.frame.photoAlt": "Photo {{n}} of your profile",
+    "profile.frame.videoBadge": "15s max",
+    "profile.frame.photoBadge": "Photo",
+    "profile.frame.replace": "Replace",
+    "profile.frame.delete": "Delete",
+
+    // ── Video thumbnails ──────────────────────────────────────────────────
+    "profile.videos.title": "My videos ({{n}}/3)",
+    "profile.videos.add": "Add",
+    "profile.videos.compressing": "⚙️ Compressing…",
+    "profile.videos.uploading": "☁️ Uploading…",
+    "profile.videos.slotAlt": "Video {{n}}",
+
+    // ── Video upload (toasts) ─────────────────────────────────────────────
+    "profile.video.formatRequired": "Video format required",
+    "profile.video.tooHeavy": "Video too large (max 500 MB)",
+    "profile.video.exoticFormat": "MKV/AVI format detected — uploading may take longer. Prefer MP4 or MOV for fast uploads 🎬",
+    "profile.video.sandbox": "Sandbox mode: the video is saved locally (Cloudinary not configured).",
+    "profile.video.added": "Video {{n}} added",
+    "profile.video.deleted": "Video deleted",
+    "profile.video.deleteError": "Error while deleting",
+
+    // ── Generic errors (fetch catch fallbacks) ────────────────────────────
+    "profile.error.upload": "Error during upload",
+    "profile.error.update": "Error while updating",
+    "profile.error.generic": "Error",
+
+    // ── Profile photos (Profile tab row) ──────────────────────────────────
+    "profile.photos.title": "My photos ({{n}}/5)",
+    "profile.photos.hint": "Tap a photo to view it",
+    "profile.photos.addedOne": "Photo added",
+    "profile.photos.addedMany": "{{n}} photos added",
+    "profile.photos.removed": "Photo removed",
+    "profile.photos.error": "Couldn't save the photos",
+
+    // ── Stats row ─────────────────────────────────────────────────────────
+    "profile.stats.wallet": "Wallet",
+
+    // ── Discretion card (Ghost Mode) ──────────────────────────────────────
+    "profile.ghost.title": "Want some discretion?",
+    "profile.ghost.body": "Ghost Mode makes your likes invisible for 1h — explore without leaving a trace.",
+    "profile.ghost.cta": "Try it →",
+
+    // ── Premium section (Profile tab rows) ────────────────────────────────
+    "profile.premium.title": "Premium",
+    "profile.premium.seeLikes.title": "See your likes",
+    "profile.premium.seeLikes.desc": "Reveal a profile that already liked you",
+    "profile.premium.passport.title": "Passport",
+    "profile.premium.passport.desc": "Pick a city and swipe there for 24h",
+    "profile.cost.seeLikes": "See your likes ({{cost}} Vibes)",
+    "profile.cost.passport": "Passport ({{cost}} Vibes)",
+    "profile.passport.title": "Passport activated",
+    "profile.passport.sub": "24h to discover a new city",
+
+    // ── Settings ──────────────────────────────────────────────────────────
+    "profile.settings.title": "Settings",
+    "profile.settings.lang": "Language",
+    "profile.settings.currency": "Currency",
+    "profile.settings.currencyValue": "{{currency}} · auto",
+    "profile.settings.verified": "Verified account",
+    "profile.settings.yes": "Yes",
+    "profile.settings.pending": "Pending",
+    "profile.settings.sounds": "Interface sounds",
+    "profile.settings.soundsAria": "Turn interface sounds on",
+    "profile.settings.darkMode": "Dark mode",
+    "profile.settings.darkModeHint": "Turns on the #09090B night background. The light theme stays the default.",
+    "profile.settings.darkModeAria": "Turn on deep dark mode",
+
+    // ── Admin / logout / footer ───────────────────────────────────────────
+    "profile.adminPanel": "Admin Panel",
+    "profile.logout.cta": "Log out",
+    "profile.logout.pending": "Signing out…",
+    "profile.logout.success": "Signed out",
+    "profile.footer": "Vivilov · demo PWA",
+
+    // ── Theme (toasts) ────────────────────────────────────────────────────
+    "profile.theme.dark": "Dark mode on",
+    "profile.theme.light": "Light mode on",
+
+    // ── Completion tasks (chip tap) ───────────────────────────────────────
+    "profile.tasks.verifiedRequest": "Request sent",
+    "profile.tasks.streakHint": "Come back every day to grow your streak and earn Vibes!",
+    "profile.updated": "Profile updated",
+
+    // ── Delete confirmation modal ─────────────────────────────────────────
+    "profile.deleteConfirm.title": "Delete video {{n}}?",
+    "profile.deleteConfirm.body": "This action is irreversible. The video will be permanently deleted from your profile.",
+    "profile.deleteConfirm.confirm": "Yes, delete",
+
+    // ── Edit modal ────────────────────────────────────────────────────────
+    "profile.edit.bio": "Edit your bio",
+    "profile.edit.city": "Edit your city",
+    "profile.edit.age": "Edit your age",
+    "profile.edit.gender": "Edit your gender",
+    "profile.edit.lookingFor": "What you're looking for",
+    "profile.edit.vibe": "Your Vibe Check",
+    "profile.edit.placeholder": "Type your text...",
+    "profile.gender.f": "Woman",
+    "profile.gender.m": "Man",
+    "profile.gender.nb": "NB",
+    "profile.lookingFor.f": "Women",
+    "profile.lookingFor.m": "Men",
+    "profile.lookingFor.nb": "NB",
+    "profile.lookingFor.all": "All",
+
+    // ── "See Likes" result (shared success modal) ─────────────────────────
+    "profile.seeLikes.title": "See Likes",
+    "profile.seeLikes.message": "Profiles that already liked you",
+
+    // ── CompletionRing — task chips ───────────────────────────────────────
+    "profile.task.accountCreated": "Account created",
+    "profile.task.profileCreated": "Profile created",
+    "profile.task.videoUploaded": "15s video",
+    "profile.task.posterUploaded": "Thumbnail",
+    "profile.task.bio": "Bio",
+    "profile.task.city": "City",
+    "profile.task.age": "Age",
+    "profile.task.gender": "Gender",
+    "profile.task.lookingFor": "Looking for",
+    "profile.task.vibe": "Vibe Check",
+    "profile.task.verified": "Verified account",
+    "profile.task.streak": "Streak started",
+    "profile.completion.title": "Profile completion",
+    "profile.completion.almost": "Almost perfect! 🎉",
+    "profile.completion.goodProgress": "Great progress — keep going!",
+    "profile.completion.start": "Complete your profile for more matches.",
+    "profile.completion.complete": "Profile complete! You're glowing ✨",
+
+    // ── PhotoPicker (shared component) ────────────────────────────────────
+    "profile.picker.maxOne": "Maximum {{max}} photos — only the first one will be added.",
+    "profile.picker.maxMany": "Maximum {{max}} photos — only the first {{n}} will be added.",
+    "profile.picker.sandbox": "Sandbox mode: photo saved locally.",
+    "profile.picker.error": "Couldn't add this photo.",
+    "profile.picker.groupAria": "Profile photos ({{n}}/{{max}})",
+    "profile.picker.photoAlt": "Photo {{n}}",
+    "profile.picker.showAria": "Show photo {{n}}",
+    "profile.picker.removeAria": "Remove photo {{n}}",
+    "profile.picker.addAria": "Add photos",
+    "profile.picker.addAriaCount": "Add photos ({{n}}/{{max}})",
+
+    // ── PremiumActionsSheet — header & groups ─────────────────────────────
+    "premium.sheet.aria": "Premium actions",
+    "premium.sheet.title": "Premium Actions",
+    "premium.sheet.for": "for",
+    "premium.error": "Error",
+    "premium.needsProfile": "From the Discover tab, open 👑 Premium at the top right — actions will target the profile shown.",
+    "premium.cat.swipe": "🎯 Swipe",
+    "premium.cat.social": "💬 Social",
+    "premium.cat.profile": "👤 Profile",
+    "premium.cat.meta": "⚙️ Meta",
+    "premium.contextual.title": "✨ Use from a profile",
+    "premium.contextual.hint": "Tip: tap ✨ on a card in Discover to target a profile.",
+    "premium.flow.title": "🔎 Where to find them?",
+    "premium.flow.superlike": "Swipe the card up ⬆️ to Super-Like",
+    "premium.flow.messageBoost": "Turn on the ⚡ bolt in a conversation",
+    "premium.passport.title": "✈️ Choose your destination",
+    "premium.passport.sub": "You'll discover this city's profiles for 24h.",
+    "premium.tile.fromProfileSuffix": " (from a profile)",
+
+    // ── Premium action labels & descriptions (translated at render) ───────
+    "premium.action.superlike": "Super-Like",
+    "premium.action.superlike.desc": "Appear at the top of their queue",
+    "premium.action.rewind": "Rewind",
+    "premium.action.rewind.desc": "Undo your last swipe and get the profile back",
+    "premium.action.boost": "Boost",
+    "premium.action.boost.desc": "Be at the top of 20 profiles' queue for 30 min",
+    "premium.action.superRewind": "Super Rewind",
+    "premium.action.superRewind.desc": "Undo your last 5 swipes at once",
+    "premium.action.goldenHeart": "Golden Heart",
+    "premium.action.goldenHeart.desc": "Golden super-like + top of their queue with a special badge",
+    "premium.action.timeFreeze": "Time Freeze",
+    "premium.action.timeFreeze.desc": "See the next 3 profiles before swiping",
+    "premium.action.vibeRadar": "Vibe Radar",
+    "premium.action.vibeRadar.desc": "See who's online near you right now",
+    "premium.action.crushAlert": "Crush Alert",
+    "premium.action.crushAlert.desc": "Send a special notification to your crush",
+    "premium.action.seeLikes": "See Likes",
+    "premium.action.seeLikes.desc": "Reveal the profiles that already liked you",
+    "premium.action.icebreaker": "AI Icebreaker",
+    "premium.action.icebreaker.desc": "AI-generated personalized opening line",
+    "premium.action.messageBoost": "Message Boost",
+    "premium.action.messageBoost.desc": "Your message jumps to the top of their inbox",
+    "premium.action.passport": "Passport",
+    "premium.action.passport.desc": "Swipe in another city for 24h",
+    "premium.action.spotlight": "Spotlight",
+    "premium.action.spotlight.desc": "Your profile appears in 20 decks for 1h",
+    "premium.action.compatibilityReport": "Compatibility Report",
+    "premium.action.compatibilityReport.desc": "AI analysis of your compatibility with a profile",
+    "premium.action.moodRing": "Mood Ring",
+    "premium.action.moodRing.desc": "Reveal a profile's current mood",
+    "premium.action.ghostMode": "Ghost Mode",
+    "premium.action.ghostMode.desc": "Browse profiles invisibly for 1h",
+    "premium.action.dailyDouble": "Daily Double",
+    "premium.action.dailyDouble.desc": "Double today's streak reward",
+
+    // ── Combo tips (success modal) ────────────────────────────────────────
+    "premium.tip.boost": "💡 Tip: Spotlight (40 💎) adds your profile to 20 decks — the perfect combo with your Boost.",
+    "premium.tip.spotlight": "💡 Tip: Boost (50 💎) puts you at the top of the queue during your Spotlight — double the visibility.",
+    "premium.tip.superlike": "💡 Tip: Golden Heart (60 💎) is a golden super-like with a special badge — impossible to miss.",
+    "premium.tip.passport": "💡 Tip: Vibe Radar (25 💎) shows who's online right now, wherever you travel.",
+    "premium.tip.rewind": "💡 Tip: Super Rewind (15 💎) undoes your last 5 swipes at once.",
+    "premium.tip.seeLikes": "💡 Tip: a Super-Like (5 💎) puts you at the top of THEIR queue when you like someone.",
+
+    // ── EffectResult — result contents ────────────────────────────────────
+    "premium.result.peek": "❄️ Peek at the next 3",
+    "premium.result.online": "📍 Online now",
+    "premium.result.likers": "👁️ They liked you",
+    "premium.result.ghostVisitors.one": "+ {{n}} ghost visitor in Ghost Mode 👻 (invisible)",
+    "premium.result.ghostVisitors.many": "+ {{n}} ghost visitors in Ghost Mode 👻 (invisible)",
+    "premium.result.ghostTease.one": "👻 {{n}} person is browsing you in Ghost Mode…",
+    "premium.result.ghostTease.many": "👻 {{n}} people are browsing you in Ghost Mode…",
+    "premium.result.ghostTeaseHidden.one": "Invisible until their buff ends — check back later!",
+    "premium.result.ghostTeaseHidden.many": "Invisible until their buff ends — check back later!",
+    "premium.result.compatWith": "Compatibility with {{name}}",
+    "premium.result.thisProfile": "this profile",
+    "premium.result.aiAnalysis": "🧬 AI Analysis",
+    "premium.result.goldenHeartTip": "💛 Want to stand out? Golden Heart puts your profile at the top of their queue with a golden badge.",
+    "premium.result.moodOf": "{{name}}'s mood",
+    "premium.result.today": "today",
+    "premium.result.undone.one": "↩️ {{n}} swipe undone — the profile is back in your deck!",
+    "premium.result.undone.many": "↩️ {{n}} swipes undone — the profiles are back in your deck!",
+    "premium.result.activated": "✅ Action activated successfully!",
+    "premium.icebreaker.copied": "Copied!",
+    "premium.icebreaker.copy": "Copy",
+
+    // ── ActiveBuffsSection — header & empty state ─────────────────────────
+    "premium.buffs.aria": "Active premium actions",
+    "premium.buffs.title": "Active actions",
+    "premium.buffs.liveHint": "live · tap for details",
+    "premium.buffs.none": "none",
+    "premium.buffs.empty.title": "No active actions",
+    "premium.buffs.empty.body": "Boost, Spotlight, Passport… your active premium actions will show up here with their countdown.",
+    "premium.buffs.empty.cta": "Discover →",
+
+    // ── ActiveBuffsSection — cards & detail sheet ─────────────────────────
+    "premium.buffs.urgent": "ENDING SOON",
+    "premium.buffs.cardAria": "{{label}} active — {{time}} — view details",
+    "premium.buffs.expiresAt": "expires at {{time}}",
+    "premium.buffs.detailAria": "{{label}} action details",
+    "premium.buffs.closeDetailAria": "Close details",
+    "premium.buffs.activated": "Activated",
+    "premium.buffs.ago": "{{time}} ago",
+    "premium.buffs.elapsedSeconds": "a few seconds",
+    "premium.buffs.expires": "Expires",
+    "premium.buffs.at": "at {{time}}",
+    "premium.buffs.extend": "Extend action",
+    "premium.buffs.remaining.min": "~{{n}} min left",
+    "premium.buffs.remaining.hours": "~{{n}} h left",
+
+    // ── Active buffs — labels per type (server labels/descs translated) ───
+    "premium.buff.boost.label": "Boost",
+    "premium.buff.boost.desc": "You're at the top of 20 profiles' queue",
+    "premium.buff.spotlight.label": "Spotlight",
+    "premium.buff.spotlight.desc": "Your profile appears in 20 decks",
+    "premium.buff.ghostMode.label": "Ghost Mode",
+    "premium.buff.ghostMode.desc": "You're browsing profiles invisibly",
+    "premium.buff.passport.label": "Passport",
+    "premium.buff.passport.desc": "Swipe in another city",
+    "premium.buff.passport.cityDesc": "You're discovering {{city}}",
+    "premium.buff.timeFreeze.label": "Time Freeze",
+    "premium.buff.timeFreeze.desc": "See the next 3 profiles",
+    "premium.buff.dailyDouble.label": "Daily Double",
+    "premium.buff.dailyDouble.desc": "Your next streak reward will be doubled",
+    "premium.buff.crushAlert.label": "Crush Alert",
+    "premium.buff.crushAlert.desc": "Special notification sent to your crush",
+    "premium.buff.goldenHeart.label": "Golden Heart",
+    "premium.buff.goldenHeart.desc": "You're at the top of their queue with a golden badge",
+  },
+);

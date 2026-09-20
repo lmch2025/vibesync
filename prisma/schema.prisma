@@ -19,6 +19,7 @@ model User {
   name          String?
   role          String   @default("user") // "user" | "admin"
   currency      String   @default("EUR") // ISO 4217
+  lang          String   @default("fr") // langue UI du compte : "fr" | "en"
   country       String? // ISO 3166-1 alpha-2 (from x-vercel-ip-country)
   gems          Int      @default(25) // total Vibes (purchased + free)
   freeGems      Int      @default(25) // Vibes given for free (streak, welcome, referrals) — NOT usable for gifts
