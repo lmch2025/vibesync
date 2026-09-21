@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs></defs>
+<rect x="16" y="16" width="480" height="480" rx="110" fill="#3A1D50"/>
+<circle cx="359.9" cy="168.5" r="30" fill="#FFB98A" opacity="0.16"/><circle cx="152.1" cy="168.5" r="30" fill="#FFB98A" opacity="0.16"/><circle cx="256" cy="453.5" r="26" fill="#FFB98A" opacity="0.16"/><circle cx="256" cy="233.5" r="14" fill="#FFD3E1"/><circle cx="276" cy="190.9" r="16" fill="#D9B8FF"/><circle cx="236" cy="190.9" r="16" fill="#D9B8FF"/><circle cx="359.9" cy="168.5" r="18" fill="#FFB98A"/><circle cx="152.1" cy="168.5" r="18" fill="#FFB98A"/><circle cx="416" cy="243.5" r="14" fill="#FF9DB8"/><circle cx="96" cy="243.5" r="14" fill="#FF9DB8"/><circle cx="359.9" cy="338.5" r="16" fill="#F0A8FF"/><circle cx="152.1" cy="338.5" r="16" fill="#F0A8FF"/><circle cx="276" cy="416.1" r="14" fill="#FFD3E1"/><circle cx="236" cy="416.1" r="14" fill="#FFD3E1"/><circle cx="256" cy="453.5" r="12" fill="#FFB98A"/>
+</svg>
