@@ -1,19 +1,15 @@
 "use client";
 // AuthModal — elegant, modern authentication dialog.
-// Flow: country-code selector + phone → OTP → (new) PIN create+confirm / (existing) PIN login.
+// Flow: PhoneField (indicatif pays intégré + numéro local) → check-phone →
+// (new) PIN create+confirm / (existing) PIN login.
 // All inside a shadcn Dialog with smooth Framer Motion step transitions.
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
-  Check,
-  ChevronDown,
-  Phone,
-  Search,
   ShieldCheck,
   KeyRound,
-  Star,
 } from "lucide-react";
 import {
   Dialog,
@@ -21,16 +17,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
+import { PhoneField } from "@/components/vibe/phone-field";
 import { useVibe } from "@/lib/vibe/store";
-import { COUNTRY_CODES, countryName, type Country } from "@/lib/vibe/country-codes";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { GEO_COUNTRIES, getCountry, type GeoCountry } from "@/lib/vibe/geo/countries";
 import { useI18n } from "@/lib/vibe/i18n";
+import { toast } from "sonner";
 
 type Step = "phone" | "pin-create" | "pin-confirm" | "pin-login";
 
@@ -38,13 +31,14 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
   const { t, apiErr } = useI18n();
   const setMe = useVibe((s) => s.setMe);
   const [step, setStep] = useState<Step>("phone");
-  const [country, setCountry] = useState<Country>(
-    () => COUNTRY_CODES.find((c) => c.iso === "FR") ?? COUNTRY_CODES[0]
+  // FR par défaut — PhoneField affine au montage (localStorage du visiteur,
+  // puis détection géo /api/vibe/detect).
+  const [country, setCountry] = useState<GeoCountry>(
+    () => getCountry("FR") ?? GEO_COUNTRIES[0]
   );
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
-  const [userExists, setUserExists] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Reset state on close so the modal is fresh for the next open.
@@ -56,7 +50,6 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
       setPhone("");
       setPin("");
       setConfirmPin("");
-      setUserExists(false);
       setLoading(false);
     }
     onOpenChange(o);
@@ -78,7 +71,6 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setUserExists(!!data.exists);
       setStep(data.exists ? "pin-login" : "pin-create");
     } catch (e: any) {
       toast.error(apiErr(e.message) || t("landing.auth.error"));
@@ -174,18 +166,16 @@ export function AuthModal({ open, onOpenChange, onSuccess }: { open: boolean; on
             {step === "phone" && (
               <motion.div key="phone" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col">
                 <label className="text-xs font-semibold text-white/75 mb-2">{t("landing.auth.phone")}</label>
-                <div className="flex gap-2">
-                  <CountryCodeSelect value={country} onChange={setCountry} />
-                  <Input
-                    type="tel"
-                    inputMode="tel"
-                    placeholder={t("landing.auth.phonePlaceholder")}
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="flex-1 h-12 rounded-2xl text-base bg-white/5 border-white/15 text-white placeholder:text-white/50"
-                    onKeyDown={(e) => e.key === "Enter" && checkPhone()}
-                  />
-                </div>
+                <PhoneField
+                  value={{ country, local: phone }}
+                  onChange={(v) => {
+                    setCountry(v.country);
+                    setPhone(v.local);
+                  }}
+                  onEnter={checkPhone}
+                  placeholder={t("landing.auth.phonePlaceholder")}
+                  ariaLabel={t("landing.auth.phone")}
+                />
                 <button
                   onClick={checkPhone}
                   disabled={loading}
@@ -289,54 +279,5 @@ function BackBtn({ onClick }: { onClick: () => void }) {
     <button onClick={onClick} className="self-start mb-4 text-sm text-white/75 hover:text-white flex items-center gap-1 transition">
       <ArrowLeft className="h-4 w-4" /> {t("common.back")}
     </button>
-  );
-}
-
-function CountryCodeSelect({ value, onChange }: { value: Country; onChange: (c: Country) => void }) {
-  const { t, lang } = useI18n();
-  const [open, setOpen] = useState(false);
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 h-12 rounded-2xl border border-white/15 v-surface-1 px-3 text-sm font-medium text-white hover:v-surface-2 transition shrink-0"
-          aria-label={t("landing.auth.chooseCountry")}
-        >
-          <span className="text-xl leading-none">{value.flag}</span>
-          <span className="tabular-nums">{value.dial}</span>
-          <ChevronDown className="h-3.5 w-3.5 text-white/70" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="immersive w-[280px] p-0 v-bg-app! text-white border-white/10" align="start">
-        <Command className="[&_input]:bg-transparent [&_input]:text-white [&_input]:placeholder:text-white/50">
-          <div className="flex items-center border-b border-white/10 px-3">
-            <Search className="mr-2 h-4 w-4 shrink-0 text-white/50" />
-            <CommandInput placeholder={t("landing.auth.searchCountry")} className="h-9" />
-          </div>
-          <CommandList className="max-h-[280px]">
-            <CommandEmpty>{t("landing.auth.noCountry")}</CommandEmpty>
-            <CommandGroup>
-              {COUNTRY_CODES.map((c) => (
-                <CommandItem
-                  key={c.iso}
-                  value={`${countryName(c, lang)} ${c.iso} ${c.dial}`}
-                  onSelect={() => {
-                    onChange(c);
-                    setOpen(false);
-                  }}
-                  className="gap-2.5 data-[selected=true]:bg-white/10 data-[selected=true]:text-white"
-                >
-                  <span className="text-xl leading-none">{c.flag}</span>
-                  <span className="flex-1 truncate">{countryName(c, lang)}</span>
-                  <span className="text-white/70 tabular-nums text-sm">{c.dial}</span>
-                  {c.iso === value.iso && <Check className="h-4 w-4 text-primary" />}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
   );
 }

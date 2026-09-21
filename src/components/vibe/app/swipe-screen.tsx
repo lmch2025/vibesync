@@ -2,12 +2,15 @@
 // Swipe deck: Tinder-like drag with spring physics, Ken Burns video posters,
 // clean full-bleed video (the interests/Vibe Check overlay was removed — the
 // compatibility data now feeds the contextual nudges only), action bar
-// (rewind/pass/gift/like — the Super-Like stays available via the swipe-up
-// gesture and the contextual nudges, the premium actions via the 👑 Premium
-// button in the header, contextual to the top card), match overlay. Includes
-// the non-intrusive discovery FILTERS (distance, age range, gender) — a
-// discreet button in the top bar opens a bottom sheet; filters are saved to
-// the profile and enforced server-side by the recommendation algorithm.
+// (rewind/pass/gift/like — the Super-Like stays available via the contextual
+// nudges and the profile detail modal, the premium actions via the 👑 Premium
+// button in the header, contextual to the top card), match overlay. The
+// SWIPE-UP gesture opens the GIFT TRAY targeting the top card (the card
+// springs back — it is not consumed from the deck); the 🎁 button does the
+// same. Includes the non-intrusive discovery FILTERS (distance, age range,
+// gender) — a discreet button in the top bar opens a bottom sheet; filters
+// are saved to the profile and enforced server-side by the recommendation
+// algorithm.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import { RotateCcw, X, Star, Heart, BadgeCheck, MapPin, SlidersHorizontal, Check, Loader2, Plane, Gift, Maximize2 } from "lucide-react";
@@ -411,10 +414,13 @@ export function SwipeScreen({
     });
   }
 
-  /// Send a gift DIRECTLY from the deck to the targeted profile (no match
-  /// required — the receiver is notified + credited their share). Uses the
-  /// shared requireVibes gate: insufficient balance redirects to the Vibes
-  /// purchase page and the gift resumes automatically after purchase.
+  /// Send a gift DIRECTLY from the deck to the targeted profile — the
+  /// server opens (or reuses) a private conversation: the gift lands as the
+  /// FIRST bubble of the match timeline (no Message created → it never
+  /// counts toward the anti-spam limit, and the match stays locked until
+  /// the receiver replies). The receiver is notified + credited their share.
+  /// Uses the shared requireVibes gate: insufficient balance redirects to the
+  /// Vibes purchase page and the gift resumes automatically after purchase.
   function sendDeckGift(giftKey: string) {
     const target = giftTarget;
     const gift = GIFTS.find((g) => g.key === giftKey);
@@ -445,10 +451,13 @@ export function SwipeScreen({
         patchMe({ gems: data.gems, freeGems: data.freeGems });
         celebrate({ sound: "chime", confettiCount: 90, hapticPattern: [12, 30, 12] });
         setGiftBurst((k) => k + 1);
+        const targetName = data.targetName ?? target.displayName;
         vibeToast({
           emoji: gift.emoji,
-          title: t("swipe.giftSent.title", { gift: gift.name, name: data.targetName ?? target.displayName }),
-          sub: t("swipe.giftSent.sub"),
+          title: t("swipe.giftSent.title", { gift: gift.name, name: targetName }),
+          // The server attached the gift to a private conversation (matchId)
+          // — announce it (no automatic navigation, the user keeps swiping).
+          sub: t("swipe.giftSent.sub", { name: targetName }),
         });
         setGiftTarget(null);
         setGiftNote("");
@@ -596,6 +605,9 @@ export function SwipeScreen({
                           }
                         : undefined
                     }
+                    // Swipe-up = open the gift tray for THIS profile — same
+                    // behavior as the 🎁 action button (top card only).
+                    onGift={isTop ? () => setGiftTarget(p) : undefined}
                   />
                 );
               })}
@@ -659,12 +671,16 @@ function SwipeCard({
   isTop,
   onSwipe,
   onOpenDetail,
+  onGift,
 }: {
   profile: Profile;
   isTop: boolean;
   onSwipe: (dir: "pass" | "like" | "superlike") => void;
   /// Opens the detailed profile view — only ever provided for the top card.
   onOpenDetail?: () => void;
+  /// Opens the gift tray targeting this profile (swipe-up gesture) — only
+  /// ever provided for the top card. When absent the swipe-up is ignored.
+  onGift?: () => void;
 }) {
   const { t } = useI18n();
   const x = useMotionValue(0);
@@ -672,7 +688,7 @@ function SwipeCard({
   const rotate = useTransform(x, [-200, 200], [-18, 18]);
   const likeOpacity = useTransform(x, [40, 140], [0, 1]);
   const nopeOpacity = useTransform(x, [-140, -40], [1, 0]);
-  const superOpacity = useTransform(y, [-140, -40], [1, 0]);
+  const giftOpacity = useTransform(y, [-140, -40], [1, 0]);
 
   // Tap → vue détaillée. Détection MANUELLE (framer-motion onTap
   // interférerait avec le drag) : pointerdown mémorise le point de départ,
@@ -710,10 +726,17 @@ function SwipeCard({
   const onDragEnd = (_e: any, info: PanInfo) => {
     const { offset, velocity } = info;
     const threshold = 90;
-    // Haptic léger au moment où la carte franchit le seuil de décision.
+    // Swipe-up = GIFT TRAY for this profile (not a Super-Like anymore —
+    // that stays available via the contextual nudges and the detail modal).
+    // The card springs back to its place (dragSnapToOrigin) — we just open
+    // the tray; the profile is NOT consumed from the deck. Without onGift
+    // (non-top cards, not draggable anyway) the gesture is ignored.
     if (offset.y < -threshold || velocity.y < -500) {
-      haptic(10);
-      onSwipe("superlike");
+      if (onGift) {
+        haptic(10);
+        sfx.play("chime");
+        onGift();
+      }
     } else if (offset.x > threshold || velocity.x > 500) {
       haptic(10);
       onSwipe("like");
@@ -779,8 +802,8 @@ function SwipeCard({
       <motion.div style={{ opacity: nopeOpacity }} className="absolute top-8 right-6 rotate-12">
         <span className="text-4xl font-black text-red-400 ring-4 ring-red-400 rounded-xl px-3 py-1">{t("swipe.stamp.nope")}</span>
       </motion.div>
-      <motion.div style={{ opacity: superOpacity }} className="absolute top-10 left-1/2 -translate-x-1/2">
-        <span className="text-3xl font-black text-cyan-300 ring-4 ring-cyan-300 rounded-xl px-3 py-1">{t("swipe.stamp.super")}</span>
+      <motion.div style={{ opacity: giftOpacity }} className="absolute top-10 left-1/2 -translate-x-1/2">
+        <span className="text-3xl font-black text-rose-300 ring-4 ring-rose-300 rounded-xl px-3 py-1">{t("swipe.stamp.gift")}</span>
       </motion.div>
 
       {/* verified badge — the only chip over the video, kept minimal so the

@@ -2,12 +2,15 @@
 // 3-step onboarding data collection. Creates or updates the user's Profile
 // and marks onboardingComplete = true. Video is optional.
 // Fields: pseudo, gender (f|m|nb), lookingFor (f|m|nb|all), age (16-100),
-// city (must be a valid selection from /api/vibe/cities), videoUrl?, posterUrl?,
+// city (chaîne d'affichage « Nom, Pays »), cityCountryCode?/cityLat?/cityLng?
+// (sélection structurée — voie PRIVILÉGIÉE : validation mondiale nom+pays via
+// le dataset géo 148k villes, coords du dataset), videoUrl?, posterUrl?,
 // photos? (string[], max 5 — data URL image sandbox ou URL http(s) CDN)
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/vibe/session";
 import { CITIES } from "@/lib/vibe/cities";
+import { findGeoCity } from "@/lib/vibe/geo/city-search";
 import { FALLBACK_RATES } from "@/lib/vibe/constants";
 
 const MAX_PHOTOS = 5;
@@ -63,7 +66,20 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const body = await req.json().catch(() => ({} as any));
-  const { pseudo, gender, lookingFor, relationshipType, age, city, videoUrl, posterUrl, videoDuration } = body;
+  const {
+    pseudo,
+    gender,
+    lookingFor,
+    relationshipType,
+    age,
+    city,
+    cityCountryCode,
+    cityLat,
+    cityLng,
+    videoUrl,
+    posterUrl,
+    videoDuration,
+  } = body;
 
   // Photos optionnelles (max 5) — même validation que /api/vibe/profile/photos.
   const photosResult = parsePhotos(body.photos);
@@ -86,8 +102,39 @@ export async function POST(req: Request) {
   if (!Number.isInteger(ageNum) || ageNum < 16 || ageNum > 100) {
     return NextResponse.json({ error: "Âge invalide (16-100)" }, { status: 400 });
   }
-  // City must be an EXACT selection (validate against the dataset).
-  const cityMatch = CITIES.find((c) => `${c.name}, ${c.country}` === city || c.name === city);
+  // City — validation stricte (sélection dans la liste, jamais une saisie
+  // libre). Deux chemins :
+  //  • NOUVEAU (privilégié) : cityCountryCode fourni → lookup exact
+  //    nom+pays dans le dataset mondial (findGeoCity, insensible aux
+  //    accents). Les lat/lng du DATASET font foi (jamais ceux du client) ;
+  //    les coordonnées client ne servent qu'au départage des homonymes.
+  //    profile.city stocke le NOM SEUL — format historique crucial : le
+  //    deck et le Passport matchent les profils par égalité de chaîne sur
+  //    profile.city.
+  //  • HÉRITAGE : vieux clients sans cityCountryCode → ancienne liste locale
+  //    CITIES (le client y envoie « Nom, Pays » ou « Nom »).
+  const cityRaw = typeof city === "string" ? city.trim() : "";
+  // Le client envoie « Nom, Pays » — le serveur valide le NOM SEUL.
+  const cityName = cityRaw.includes(",") ? cityRaw.slice(0, cityRaw.indexOf(",")).trim() : cityRaw;
+  let cityMatch: { name: string; lat: number; lng: number } | null = null;
+
+  if (typeof cityCountryCode === "string" && /^[a-zA-Z]{2}$/.test(cityCountryCode)) {
+    const latNum = Number(cityLat);
+    const lngNum = Number(cityLng);
+    const found = findGeoCity(
+      cityName,
+      cityCountryCode,
+      Number.isFinite(latNum) ? latNum : undefined,
+      Number.isFinite(lngNum) ? lngNum : undefined,
+    );
+    if (found) cityMatch = { name: found.name, lat: found.lat, lng: found.lng };
+  }
+  if (!cityMatch) {
+    // Repli héritage — vieux clients encore déployés (pas de champs
+    // structurés). Correspondance exacte sur l'ancienne liste locale.
+    const legacy = CITIES.find((c) => `${c.name}, ${c.country}` === cityRaw || c.name === cityRaw);
+    if (legacy) cityMatch = { name: legacy.name, lat: legacy.lat, lng: legacy.lng };
+  }
   if (!cityMatch) {
     return NextResponse.json({ error: "Ville invalide — sélectionne dans la liste" }, { status: 400 });
   }

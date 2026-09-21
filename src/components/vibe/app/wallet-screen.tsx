@@ -1,6 +1,6 @@
 "use client";
 // WalletScreen — elegant, non-cluttered wallet with tabs.
-// Tab 1 "Vibes": balance + packs to recharge + what Vibes buy
+// Tab 1 "Vibes": balance by nature (purchased vs platform-gifted) + packs to recharge + what Vibes buy
 // Tab 2 "Gains": gift wallet (€) + withdrawal + progress to threshold
 // Tab 3 "Historique": COMPLETE merged history (purchases, spends, gifts,
 //        rewards, withdrawals) grouped by day with filter chips.
@@ -93,6 +93,20 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
   const walletEur = (me?.walletEurCents ?? 0) / 100;
   const thresholdReached = walletEur >= WITHDRAWAL_THRESHOLD_EUR;
   const progressPct = Math.min(100, (walletEur / WITHDRAWAL_THRESHOLD_EUR) * 100);
+
+  // Soldes par nature (économie VibeSync — voir vibes-accounting.ts) :
+  //  • achetées = gems - freeGems → SEULES utilisables pour les cadeaux (émeraude)
+  //  • offertes  = freeGems       → bonus plateforme, actions premium (ambre)
+  const totalGems = Math.max(0, me?.gems ?? 0);
+  const freeGemsBalance = Math.max(0, me?.freeGems ?? 0);
+  const purchasedGems = Math.max(0, totalGems - freeGemsBalance);
+  // Pourcentages arrondis (somme toujours = 100 ; total = 0 → 0 partout).
+  const purchasedPct = totalGems > 0 ? Math.round((purchasedGems / totalGems) * 100) : 0;
+  const freePct = totalGems > 0 ? 100 - purchasedPct : 0;
+  // Largeurs des segments de la barre — bornées 0–100, somme ≤ 100 même si
+  // les données contenaient une anomalie (freeGems > gems).
+  const purchasedWidth = totalGems > 0 ? Math.min(100, (purchasedGems / totalGems) * 100) : 0;
+  const freeWidth = totalGems > 0 ? Math.min(100 - purchasedWidth, (freeGemsBalance / totalGems) * 100) : 0;
 
   // Filtered history according to the active chip.
   const filteredTxs = useMemo(() => {
@@ -238,27 +252,85 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
           {/* ===== TAB: VIBES ===== */}
           {tab === "vibes" && (
             <motion.div key="vibes" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4 pt-2">
-              {/* Balance card — fond de marque : le texte reste blanc dans les deux modes */}
+              {/* Balance card — fond de marque : le texte reste blanc dans les deux modes.
+                  Soldes par nature : émeraude = achetées (cadeaux), ambre = offertes plateforme. */}
               <div className="rounded-3xl p-5 vibe-gradient vibe-glow relative overflow-hidden text-white">
                 <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full v-surface-3 blur-2xl" />
-                <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{t("wallet.balanceTitle")}</p>
-                <div className="flex items-center gap-2 mt-1">
+                <p className="relative text-white/80 text-xs font-medium uppercase tracking-wide">{t("wallet.balanceTitle")}</p>
+                <div className="relative flex items-center gap-2 mt-1">
                   <GemIcon className="h-9 w-9" />
-                  <AnimatedNumber value={me?.gems ?? 0} className="font-display text-4xl font-black" />
+                  <AnimatedNumber value={totalGems} className="font-display text-4xl font-black" />
                 </div>
-                {/* Breakdown: purchased vs free — clear for non-digital users */}
-                <div className="mt-3 flex items-center gap-3 text-[10px]">
-                  <span className="flex items-center gap-1 rounded-full v-surface-3 px-2 py-0.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                    <span className="text-white/80">{t("wallet.balanceGifts", { n: Math.max(0, (me?.gems ?? 0) - (me?.freeGems ?? 0)) })}</span>
-                  </span>
-                  <span className="flex items-center gap-1 rounded-full v-surface-3 px-2 py-0.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                    <span className="text-white/80">{t("wallet.balanceBonus", { n: me?.freeGems ?? 0 })}</span>
-                  </span>
+
+                {/* Barre segmentée proportionnelle : achetées (émeraude) / offertes (ambre).
+                    Total = 0 → piste vide discrète (v-surface-3) ; une nature = 0 → l'autre
+                    remplit toute la largeur. */}
+                <div
+                  role="img"
+                  aria-label={t("wallet.natures.barAria", { purchased: purchasedGems, free: freeGemsBalance })}
+                  className="relative mt-4 h-2.5 w-full rounded-full overflow-hidden v-surface-3"
+                >
+                  {totalGems > 0 && (
+                    <div className="flex h-full w-full">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${purchasedWidth}%` }}
+                        transition={{ duration: 0.7, ease: "easeOut" }}
+                        className="h-full bg-emerald-400/90"
+                      />
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${freeWidth}%` }}
+                        transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
+                        className="h-full bg-amber-400/90"
+                      />
+                    </div>
+                  )}
                 </div>
-                <p className="text-white/70 text-[10px] mt-2">
-                  {t("wallet.tipA")}<span className="font-semibold text-emerald-200">{t("wallet.tipGreen")}</span>{t("wallet.tipB")}<span className="font-semibold text-amber-200">{t("wallet.tipBonus")}</span>{t("wallet.tipC")}
+
+                {/* Détail par nature : deux lignes-cartes sur fond translucide */}
+                <div className="relative mt-3 space-y-2">
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.05 }}
+                    className="flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-2.5"
+                  >
+                    <span className="grid place-items-center h-8 w-8 rounded-full bg-emerald-400/20 ring-1 ring-emerald-300/30 shrink-0">
+                      <Gem className="h-4 w-4 text-emerald-300" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold leading-tight">{t("wallet.natures.purchasedTitle")}</p>
+                      <p className="text-[10px] text-white/80 leading-tight mt-0.5">{t("wallet.natures.purchasedSub")}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <AnimatedNumber value={purchasedGems} className="font-display text-xl font-black tabular-nums" />
+                      <p className="text-[10px] text-white/80 tabular-nums">{t("wallet.natures.pct", { p: purchasedPct })}</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.12 }}
+                    className="flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-2.5"
+                  >
+                    <span className="grid place-items-center h-8 w-8 rounded-full bg-amber-400/20 ring-1 ring-amber-300/30 shrink-0">
+                      <Gem className="h-4 w-4 text-amber-300" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold leading-tight">{t("wallet.natures.freeTitle")}</p>
+                      <p className="text-[10px] text-white/80 leading-tight mt-0.5">{t("wallet.natures.freeSub")}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <AnimatedNumber value={freeGemsBalance} className="font-display text-xl font-black tabular-nums" />
+                      <p className="text-[10px] text-white/80 tabular-nums">{t("wallet.natures.pct", { p: freePct })}</p>
+                    </div>
+                  </motion.div>
+                </div>
+
+                <p className="relative text-white/80 text-[10px] mt-3 leading-relaxed">
+                  {t("wallet.natures.explain")}
                 </p>
               </div>
 

@@ -39,6 +39,7 @@ export const onboarding = defineDict(
     "onb.cityPlaceholder": "Tape ta ville…",
     "onb.keepTyping": "Continue à taper…",
     "onb.noCity": "Aucune ville trouvée",
+    "onb.citySearching": "Recherche des villes…",
     "onb.cityHint": "Sélectionne ta ville dans la liste — la saisie libre n'est pas acceptée.",
 
     // ── Étape 3 : type de relation ────────────────────────────────────────
@@ -117,6 +118,7 @@ export const onboarding = defineDict(
     "onb.cityPlaceholder": "Type your city…",
     "onb.keepTyping": "Keep typing…",
     "onb.noCity": "No city found",
+    "onb.citySearching": "Searching cities…",
     "onb.cityHint": "Pick your city from the list — free-typed entries aren't accepted.",
 
     // ── Step 3: relationship type ─────────────────────────────────────────

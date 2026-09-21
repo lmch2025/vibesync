@@ -30,14 +30,14 @@ export const swipe = defineDict(
     // ── Carte du deck ────────────────────────────────────────────────────
     "swipe.stamp.like": "LIKE",
     "swipe.stamp.nope": "NOPE",
-    "swipe.stamp.super": "SUPER",
+    "swipe.stamp.gift": "🎁 CADEAUX",
     "swipe.chip.goldenHeart": "Cœur d'Or",
     "swipe.chip.spotlight": "Projecteur",
     "swipe.chip.boost": "Boost",
     "swipe.chip.passport": "Passport",
     "swipe.card.photoAlt": "Photo de {{name}}",
     "swipe.card.openDetailAria": "Voir le profil détaillé",
-    "swipe.card.gestureHint": "Glisse ← pass · → like · ↑ super-like",
+    "swipe.card.gestureHint": "Glisse ← pass · → like · ↑ cadeaux",
 
     // ── File vide ────────────────────────────────────────────────────────
     "swipe.empty.title": "C'est tout pour aujourd'hui !",
@@ -54,7 +54,7 @@ export const swipe = defineDict(
     "swipe.rewind.title": "Swipe annulé",
     "swipe.rewind.sub": "{{name}} est de retour dans ton deck",
     "swipe.giftSent.title": "{{gift}} pour {{name}}",
-    "swipe.giftSent.sub": "Notification envoyée 🎁",
+    "swipe.giftSent.sub": "Conversation privée ouverte avec {{name}} — à lui/elle de répondre 💬",
 
     // ── Suggestions contextuelles (SmartNudge) ───────────────────────────
     "swipe.nudge.lowBalance.text":
@@ -176,14 +176,14 @@ export const swipe = defineDict(
     // ── Deck card ────────────────────────────────────────────────────────
     "swipe.stamp.like": "LIKE",
     "swipe.stamp.nope": "NOPE",
-    "swipe.stamp.super": "SUPER",
+    "swipe.stamp.gift": "🎁 GIFTS",
     "swipe.chip.goldenHeart": "Golden Heart",
     "swipe.chip.spotlight": "Spotlight",
     "swipe.chip.boost": "Boost",
     "swipe.chip.passport": "Passport",
     "swipe.card.photoAlt": "Photo of {{name}}",
     "swipe.card.openDetailAria": "View full profile",
-    "swipe.card.gestureHint": "Swipe ← pass · → like · ↑ super-like",
+    "swipe.card.gestureHint": "Swipe ← pass · → like · ↑ gifts",
 
     // ── Empty deck ───────────────────────────────────────────────────────
     "swipe.empty.title": "That's all for today!",
@@ -200,7 +200,7 @@ export const swipe = defineDict(
     "swipe.rewind.title": "Swipe undone",
     "swipe.rewind.sub": "{{name}} is back in your deck",
     "swipe.giftSent.title": "{{gift}} for {{name}}",
-    "swipe.giftSent.sub": "Notification sent 🎁",
+    "swipe.giftSent.sub": "Private conversation opened with {{name}} — the ball is in their court 💬",
 
     // ── Contextual nudges (SmartNudge) ───────────────────────────────────
     "swipe.nudge.lowBalance.text":

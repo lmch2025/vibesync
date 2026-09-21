@@ -1,7 +1,7 @@
 "use client";
 // OnboardingFlow — immersive, intuitive, elegant 3-step onboarding.
 // Step 1: Pseudo + gender + lookingFor
-// Step 2: Age (dropdown 16-100) + city (predictive search, selection-only)
+// Step 2: Age (dropdown 16-100) + city (predictive worldwide search, selection-only)
 // Step 3: Video (optional — unlocks match visibility, superlikes, gifts)
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -23,7 +23,7 @@ import { VibeLogo } from "@/components/vibe/vibe-logo";
 import { useVibe } from "@/lib/vibe/store";
 import { useI18n } from "@/lib/vibe/i18n";
 import { LangSwitcher } from "@/components/vibe/lang-switcher";
-import { searchCities, type City } from "@/lib/vibe/cities";
+import { countryNameLocalized, flagEmoji } from "@/lib/vibe/geo/countries";
 import { compressVideo, fetchVideoConfig, formatDuration } from "@/lib/vibe/video-compress";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -36,9 +36,23 @@ type RelationshipType = "serious" | "casual" | "friendship";
 
 const AGES = Array.from({ length: 85 }, (_, i) => i + 16); // 16..100
 
+/// Ville sélectionnable — entrée du dataset mondial servi par /api/vibe/cities
+/// (148 038 villes/districts). `country` est le nom anglais du dataset : il
+/// sert à la chaîne envoyée au serveur, l'affichage passe par
+/// countryNameLocalized(countryCode, lang).
+type CitySel = {
+  name: string;
+  region: string;
+  countryCode: string;
+  country: string;
+  lat: number;
+  lng: number;
+};
+
 export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   const setMe = useVibe((s) => s.setMe);
-  const { t, apiErr } = useI18n();
+  const me = useVibe((s) => s.me);
+  const { t, apiErr, lang } = useI18n();
   const [step, setStep] = useState(0);
 
   // Step 1 data
@@ -50,9 +64,11 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   const [age, setAge] = useState<number | null>(null);
   const [ageOpen, setAgeOpen] = useState(false);
   const [cityQuery, setCityQuery] = useState("");
-  const [cityResults, setCityResults] = useState<City[]>([]);
-  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [cityResults, setCityResults] = useState<CitySel[]>([]);
+  const [selectedCity, setSelectedCity] = useState<CitySel | null>(null);
   const [cityFocused, setCityFocused] = useState(false);
+  // Requête /api/vibe/cities en cours → squelettes dans le dropdown.
+  const [citySearching, setCitySearching] = useState(false);
 
   // Step 3 data (new — relationship type)
   const [relationshipType, setRelationshipType] = useState<RelationshipType | null>(null);
@@ -75,15 +91,49 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   // Garde anti double-fire (StrictMode) — la célébration ne part qu'une fois.
   const celebratedRef = useRef(false);
 
-  // City predictive search
+  // City predictive search — MONDIALE via /api/vibe/cities (dataset de
+  // 148 038 villes/districts). Debounce ~180 ms + AbortController : chaque
+  // frappe annule la requête précédente devenue périmée. Le pays
+  // d'inscription (me.country, défini à l'authentification juste avant
+  // l'onboarding) booste les villes du pays dans le classement.
   useEffect(() => {
     if (!cityFocused) return;
-    setCityResults(searchCities(cityQuery, 8));
-  }, [cityQuery, cityFocused]);
+    const q = cityQuery.trim();
+    if (q.length < 2) {
+      setCityResults([]);
+      setCitySearching(false);
+      return;
+    }
+    const ctrl = new AbortController();
+    setCitySearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ q, limit: "8" });
+        if (me?.country) params.set("cc", me.country);
+        const res = await fetch(`/api/vibe/cities?${params.toString()}`, {
+          signal: ctrl.signal,
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setCityResults(Array.isArray(data?.cities) ? data.cities : []);
+      } catch {
+        /* requête annulée ou réseau indisponible — on garde les résultats précédents */
+      } finally {
+        if (!ctrl.signal.aborted) setCitySearching(false);
+      }
+    }, 180);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [cityQuery, cityFocused, me?.country]);
 
-  function selectCity(c: City) {
+  function selectCity(c: CitySel) {
     setSelectedCity(c);
-    setCityQuery(`${c.name}, ${c.country}`);
+    // Affichage localisé « Nom, Pays » (ex. « Yaoundé, Cameroun » en FR,
+    // « Yaoundé, Cameroon » en EN). Le submit envoie la chaîne anglaise du
+    // dataset + les champs structurés (cityCountryCode/cityLat/cityLng).
+    setCityQuery(`${c.name}, ${countryNameLocalized(c.countryCode, lang)}`);
     setCityFocused(false);
   }
 
@@ -143,6 +193,11 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
           relationshipType,
           age,
           city: `${selectedCity!.name}, ${selectedCity!.country}`,
+          // Champs structurés (voie privilégiée côté serveur : validation
+          // mondiale nom+pays, coordonnées du dataset — jamais du client).
+          cityCountryCode: selectedCity!.countryCode,
+          cityLat: selectedCity!.lat,
+          cityLng: selectedCity!.lng,
           videoUrl: videoUrl || undefined,
           posterUrl: posterUrl || undefined,
           videoDuration: videoDuration || undefined,
@@ -379,29 +434,47 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
                     )}
                     {/* Predictive dropdown */}
                     <AnimatePresence>
-                      {cityFocused && cityQuery.length > 0 && (
+                      {cityFocused && cityQuery.trim().length > 0 && (
                         <motion.div
                           initial={{ opacity: 0, y: -8 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
                           className="absolute z-30 mt-1.5 inset-x-0 max-h-56 overflow-y-auto scrollbar-vibe rounded-2xl v-surface-solid ring-1 ring-white/10 shadow-2xl p-1.5"
                         >
-                          {cityResults.length === 0 ? (
+                          {citySearching ? (
+                            /* Recherche en cours — rangées de squelettes */
+                            <div aria-live="polite">
+                              <span className="sr-only">{t("onb.citySearching")}</span>
+                              {[0, 1, 2].map((i) => (
+                                <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl animate-pulse">
+                                  <div className="h-4 w-5 rounded-md bg-white/10 shrink-0" />
+                                  <div className="h-3.5 w-2/3 rounded-md bg-white/10" />
+                                </div>
+                              ))}
+                            </div>
+                          ) : cityResults.length === 0 ? (
                             <div className="px-3 py-3 text-sm text-white/70 flex items-center gap-2">
                               <Search className="h-3.5 w-3.5" />
-                              {cityQuery.length < 2 ? t("onb.keepTyping") : t("onb.noCity")}
+                              {cityQuery.trim().length < 2 ? t("onb.keepTyping") : t("onb.noCity")}
                             </div>
                           ) : (
                             cityResults.map((c) => (
                               <button
-                                key={`${c.name}-${c.country}`}
+                                key={`${c.countryCode}-${c.name}`}
                                 onMouseDown={(e) => { e.preventDefault(); selectCity(c); }}
                                 onClick={() => selectCity(c)}
-                                className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:v-surface-2 transition flex items-center gap-2"
+                                className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:v-surface-2 transition flex items-center gap-2.5"
                               >
-                                <MapPin className="h-3.5 w-3.5 text-vibe-purple shrink-0" />
-                                <span className="font-medium text-white">{c.name}</span>
-                                <span className="text-white/70 text-xs">{c.country}</span>
+                                <span className="text-base leading-none shrink-0" aria-hidden>
+                                  {flagEmoji(c.countryCode)}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate">
+                                  <span className="font-semibold text-white">{c.name}</span>{" "}
+                                  <span className="text-white/70 text-xs">
+                                    {c.region ? `${c.region} · ` : ""}
+                                    {countryNameLocalized(c.countryCode, lang)}
+                                  </span>
+                                </span>
                               </button>
                             ))
                           )}

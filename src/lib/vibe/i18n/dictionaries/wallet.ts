@@ -30,15 +30,15 @@ export const wallet = defineDict(
     "wallet.tab.gains": "Gains",
     "wallet.tab.history": "Historique",
 
-    // ── Onglet Vibes : carte de solde ─────────────────────────────────────
+    // ── Onglet Vibes : carte de solde (répartition par nature) ────────────
     "wallet.balanceTitle": "Solde Vibes",
-    "wallet.balanceGifts": "{{n}} pour cadeaux",
-    "wallet.balanceBonus": "{{n}} bonus",
-    "wallet.tipA": "💡 Les Vibes ",
-    "wallet.tipGreen": "vertes",
-    "wallet.tipB": " peuvent offrir des cadeaux. Les Vibes ",
-    "wallet.tipBonus": "bonus",
-    "wallet.tipC": " servent pour les actions premium.",
+    "wallet.natures.purchasedTitle": "Vibes achetées",
+    "wallet.natures.purchasedSub": "Utilisables pour les cadeaux 💝",
+    "wallet.natures.freeTitle": "Vibes offertes par la plateforme",
+    "wallet.natures.freeSub": "Bienvenue, série quotidienne, parrainage — actions premium",
+    "wallet.natures.explain": "Seules les Vibes achetées peuvent offrir des cadeaux ; les Vibes offertes par la plateforme débloquent les actions premium.",
+    "wallet.natures.pct": "{{p}} %",
+    "wallet.natures.barAria": "Répartition du solde : {{purchased}} Vibes achetées, {{free}} Vibes offertes par la plateforme",
 
     // ── Onglet Vibes : packs ──────────────────────────────────────────────
     "wallet.ribbonPopular": "🔥 POPULAIRE",
@@ -214,15 +214,15 @@ export const wallet = defineDict(
     "wallet.tab.gains": "Earnings",
     "wallet.tab.history": "History",
 
-    // ── Vibes tab: balance card ───────────────────────────────────────────
+    // ── Vibes tab: balance card (breakdown by nature) ─────────────────────
     "wallet.balanceTitle": "Vibes balance",
-    "wallet.balanceGifts": "{{n}} for gifts",
-    "wallet.balanceBonus": "{{n}} bonus",
-    "wallet.tipA": "💡 ",
-    "wallet.tipGreen": "Green",
-    "wallet.tipB": " Vibes can be used for gifts. ",
-    "wallet.tipBonus": "Bonus",
-    "wallet.tipC": " Vibes are for premium actions.",
+    "wallet.natures.purchasedTitle": "Purchased Vibes",
+    "wallet.natures.purchasedSub": "Can be used for gifts 💝",
+    "wallet.natures.freeTitle": "Platform-gifted Vibes",
+    "wallet.natures.freeSub": "Welcome, daily streak, referral — premium actions",
+    "wallet.natures.explain": "Only purchased Vibes can be sent as gifts; platform-gifted Vibes unlock premium actions.",
+    "wallet.natures.pct": "{{p}}%",
+    "wallet.natures.barAria": "Balance breakdown: {{purchased}} purchased Vibes, {{free}} platform-gifted Vibes",
 
     // ── Vibes tab: packs ──────────────────────────────────────────────────
     "wallet.ribbonPopular": "🔥 POPULAR",

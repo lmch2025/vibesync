@@ -174,6 +174,10 @@ export const profile = defineDict(
     "premium.flow.messageBoost": "Active l'éclair ⚡ dans une conversation",
     "premium.passport.title": "✈️ Choisis ta destination",
     "premium.passport.sub": "Tu découvriras les profils de cette ville pendant 24h.",
+    "premium.passport.searchPlaceholder": "Explore une ville…",
+    "premium.passport.searching": "Recherche des villes…",
+    "premium.passport.noCity": "Aucune ville trouvée",
+    "premium.passport.worldwide": "Toutes les villes du monde sont disponibles — tape le début du nom puis sélectionne.",
     "premium.tile.fromProfileSuffix": " (depuis un profil)",
 
     // ── Libellés & descriptions des actions premium (traduits au rendu) ───
@@ -446,6 +450,10 @@ export const profile = defineDict(
     "premium.flow.messageBoost": "Turn on the ⚡ bolt in a conversation",
     "premium.passport.title": "✈️ Choose your destination",
     "premium.passport.sub": "You'll discover this city's profiles for 24h.",
+    "premium.passport.searchPlaceholder": "Explore a city…",
+    "premium.passport.searching": "Searching cities…",
+    "premium.passport.noCity": "No city found",
+    "premium.passport.worldwide": "Every city in the world is available — type the start of a name, then pick it.",
     "premium.tile.fromProfileSuffix": " (from a profile)",
 
     // ── Premium action labels & descriptions (translated at render) ───────

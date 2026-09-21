@@ -1,34 +1,46 @@
 "use client";
-// Auth flow: phone → OTP → (new user) PIN create+confirm / (existing user) PIN login.
-import { useRef, useState } from "react";
+// Auth flow: phone (PhoneField — indicatif pays intégré + numéro local) →
+// check-phone → (new user) PIN create+confirm / (existing user) PIN login.
+// Même flux que la modale d'auth du landing (auth-modal.tsx) — l'ancien flux
+// OTP appelait /api/vibe/auth/request-otp qui n'existait pas (404 systématique).
+import { useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Loader2, Phone, ShieldCheck, KeyRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, ShieldCheck, KeyRound } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Input } from "@/components/ui/input";
 import { VibeLogo } from "@/components/vibe/vibe-logo";
+import { PhoneField } from "@/components/vibe/phone-field";
 import { useVibe } from "@/lib/vibe/store";
 import { useI18n } from "@/lib/vibe/i18n";
 import { LangSwitcher } from "@/components/vibe/lang-switcher";
+import { GEO_COUNTRIES, getCountry, type GeoCountry } from "@/lib/vibe/geo/countries";
 import { toast } from "sonner";
 import { celebrate, haptic, sfx, useShake } from "./interactive-animations";
 
-type Step = "phone" | "otp" | "pin-create" | "pin-confirm" | "pin-login";
+type Step = "phone" | "pin-create" | "pin-confirm" | "pin-login";
 
 export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
   const setMe = useVibe((s) => s.setMe);
   const { t, apiErr } = useI18n();
   const [step, setStep] = useState<Step>("phone");
+  // FR par défaut — PhoneField affine au montage (localStorage du visiteur,
+  // puis détection géo /api/vibe/detect).
+  const [country, setCountry] = useState<GeoCountry>(
+    () => getCountry("FR") ?? GEO_COUNTRIES[0]
+  );
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
-  const [userExists, setUserExists] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [devOtp, setDevOtp] = useState("");
 
   // Feedback immersif : shake de la carte sur erreur, célébration unique au succès.
   const { controls: shakeControls, trigger: triggerShake } = useShake();
   const celebratedRef = useRef(false);
+
+  // Le numéro complet (indicatif + numéro local sans espaces) envoyé aux API.
+  const fullPhone = useMemo(
+    () => `${country.dial}${phone.replace(/\s/g, "")}`,
+    [country, phone]
+  );
 
   function fireAuthCelebrate() {
     if (celebratedRef.current) return; // garde anti double-fire (StrictMode)
@@ -48,38 +60,26 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
     haptic(6);
   }
 
-  async function requestOtp() {
-    if (phone.replace(/\s/g, "").length < 8) {
+  // Étape 1 → le numéro existe-t-il déjà ? (PIN login) sinon création de compte.
+  async function checkPhone() {
+    if (phone.replace(/\s/g, "").length < 6) {
       authError(t("auth.phoneInvalid"));
       return;
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/vibe/auth/request-otp", {
+      const res = await fetch("/api/vibe/auth/check-phone", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone: fullPhone }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setUserExists(!!data.exists);
-      setDevOtp(data.otp);
-      setStep("otp");
-      toast.success(t("auth.otpSentToast", { code: data.otp }));
+      setStep(data.exists ? "pin-login" : "pin-create");
     } catch (e: any) {
       authError(apiErr(e.message) || t("auth.error"));
     } finally {
       setLoading(false);
-    }
-  }
-
-  function verifyOtp(v: string) {
-    if (v.length === 4) {
-      if (v !== devOtp && v !== "4242") {
-        authError(t("auth.otpWrong"));
-        return;
-      }
-      setStep(userExists ? "pin-login" : "pin-create");
     }
   }
 
@@ -89,7 +89,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
       const res = await fetch("/api/vibe/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, pin }),
+        body: JSON.stringify({ phone: fullPhone, pin }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -118,7 +118,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
       const res = await fetch("/api/vibe/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, pin }),
+        body: JSON.stringify({ phone: fullPhone, pin }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -163,54 +163,30 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
               <p className="text-sm text-white/75 text-center mb-8">
                 {t("auth.subtitle")}
               </p>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  placeholder={t("auth.phonePlaceholder")}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="pl-10 h-12 rounded-2xl bg-white/5 border-white/15 text-white placeholder:text-white/50 text-base"
-                  onKeyDown={(e) => e.key === "Enter" && requestOtp()}
-                />
-              </div>
+              <PhoneField
+                value={{ country, local: phone }}
+                onChange={(v) => {
+                  setCountry(v.country);
+                  setPhone(v.local);
+                }}
+                onEnter={checkPhone}
+                placeholder={t("auth.phonePlaceholder")}
+                ariaLabel={t("auth.phone")}
+              />
               <button
-                onClick={requestOtp}
+                onClick={checkPhone}
                 disabled={loading}
                 className="mt-4 h-12 rounded-2xl vibe-gradient text-white font-semibold vibe-glow flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-60"
               >
                 {loading ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> {t("auth.sendingCode")}</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> {t("auth.checking")}</>
                 ) : (
-                  <>{t("auth.receiveCode")} <ArrowRight className="h-4 w-4" /></>
+                  <>{t("auth.continue")} <ArrowRight className="h-4 w-4" /></>
                 )}
               </button>
               <p className="text-[11px] text-white/70 text-center mt-6 leading-relaxed">
                 {t("auth.legal")}
               </p>
-            </motion.div>
-          )}
-
-          {step === "otp" && (
-            <motion.div key="otp" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className="flex-1 flex flex-col">
-              <button onClick={() => setStep("phone")} className="self-start mb-4 text-sm text-white/75 hover:text-white flex items-center gap-1">
-                <ArrowLeft className="h-4 w-4" /> {t("auth.back")}
-              </button>
-              <h2 className="font-display text-2xl font-bold text-center mb-2">{t("auth.otpTitle")}</h2>
-              <p className="text-sm text-white/75 text-center mb-8">
-                {t("auth.otpSentTo", { phone })} <span className="text-primary font-medium">{t("auth.otpDemo")}</span>
-              </p>
-              <div className="flex justify-center">
-                <InputOTP maxLength={4} value={otp} onChange={(v) => { if (v.length > otp.length) digitTap(); setOtp(v); verifyOtp(v); }}>
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} className="h-14 w-12 text-xl border-white/15 bg-white/5 text-white rounded-xl" />
-                    <InputOTPSlot index={1} className="h-14 w-12 text-xl border-white/15 bg-white/5 text-white rounded-xl" />
-                    <InputOTPSlot index={2} className="h-14 w-12 text-xl border-white/15 bg-white/5 text-white rounded-xl" />
-                    <InputOTPSlot index={3} className="h-14 w-12 text-xl border-white/15 bg-white/5 text-white rounded-xl" />
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
             </motion.div>
           )}
 
@@ -282,7 +258,7 @@ export function AuthScreen({ onSuccess }: { onSuccess: () => void }) {
 
           {step === "pin-login" && (
             <motion.div key="pin-login" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className="flex-1 flex flex-col">
-              <button onClick={() => setStep("otp")} className="self-start mb-4 text-sm text-white/75 hover:text-white flex items-center gap-1">
+              <button onClick={() => setStep("phone")} className="self-start mb-4 text-sm text-white/75 hover:text-white flex items-center gap-1">
                 <ArrowLeft className="h-4 w-4" /> {t("auth.back")}
               </button>
               <KeyRound className="h-10 w-10 text-primary mx-auto mb-3" />

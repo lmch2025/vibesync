@@ -10,15 +10,17 @@
 //     they show a "depuis un profil" hint instead of charging for a no-op.
 //   • Super-Like + Boost Message are flow-specific (swipe-up gesture / chat ⚡)
 //     and never charge from this sheet.
-//   • Passport opens an inline city picker before activation.
+//   • Passport opens an inline WORLDWIDE city picker (predictive search on
+//     /api/vibe/cities — same service as onboarding) before activation.
 //   • Actions that change the deck (rewind, superRewind, passport, boost)
 //     dispatch `vivilov:deck-refresh` so the Découvrir tab reloads instantly.
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Crown, X, Zap, MapPin, Copy, Check } from "lucide-react";
+import { Crown, X, Zap, MapPin, Copy, Check, Search } from "lucide-react";
 import { GemIcon } from "@/components/vibe/gem-badge";
+import { Input } from "@/components/ui/input";
 import { PREMIUM_ACTIONS, type PremiumAction } from "@/lib/vibe/constants";
-import { CITIES } from "@/lib/vibe/cities";
+import { countryNameLocalized, flagEmoji } from "@/lib/vibe/geo/countries";
 import { useVibe } from "@/lib/vibe/store";
 import { toast } from "sonner";
 import { ActionSuccessModal } from "./action-success-modal";
@@ -56,6 +58,17 @@ type ActiveEffect = {
   action: PremiumAction;
   result: ActionResult;
 } | null;
+
+/// Ville du dataset mondial servie par /api/vibe/cities (même forme que le
+/// champ prédictif de l'onboarding — sélection stricte dans la liste).
+type CitySel = {
+  name: string;
+  region: string;
+  countryCode: string;
+  country: string; // nom anglais du dataset (parité avec la réponse API)
+  lat: number;
+  lng: number;
+};
 
 /// Subtle combo tips (« 💡 Astuce ») shown inside the success modal at the
 /// moment of highest delight — one muted line suggesting the complementary
@@ -175,11 +188,16 @@ export function PremiumActionsSheet({
   const me = useVibe((s) => s.me);
   const patchMe = useVibe((s) => s.patchMe);
   const requireVibes = useVibe((s) => s.requireVibes);
-  const { t, apiErr } = useI18n();
+  const { t, apiErr, lang } = useI18n();
   const [activeEffect, setActiveEffect] = useState<ActiveEffect>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  // Inline passport city picker (replaces the grid until a city is chosen).
+  // Inline passport city picker (replaces the action grid until a city is chosen).
   const [passportPick, setPassportPick] = useState(false);
+  // Passport — recherche prédictive mondiale (même service que l'onboarding).
+  const [passportQuery, setPassportQuery] = useState("");
+  const [passportResults, setPassportResults] = useState<CitySel[]>([]);
+  const [passportSearching, setPassportSearching] = useState(false);
+  const [passportFocused, setPassportFocused] = useState(false);
   // Stable closer — keeps ActionSuccessModal's auto-dismiss timer untouched
   // across parent re-renders.
   const closeSuccess = useCallback(() => setActiveEffect(null), []);
@@ -189,6 +207,50 @@ export function PremiumActionsSheet({
     if (open && startInPassportPick) setPassportPick(true);
     if (!open) setPassportPick(false);
   }, [open, startInPassportPick]);
+
+  // Champ de recherche vierge à chaque (ré)ouverture du picker Passport.
+  useEffect(() => {
+    if (passportPick) {
+      setPassportQuery("");
+      setPassportResults([]);
+      setPassportSearching(false);
+      setPassportFocused(false);
+    }
+  }, [passportPick]);
+
+  // Recherche prédictive MONDIALE via /api/vibe/cities — debounce 180 ms +
+  // AbortController (chaque frappe annule la requête périmée). Pas de boost
+  // pays explicite : le Passport sert à explorer le monde entier (le serveur
+  // applique déjà son boost IP par défaut).
+  useEffect(() => {
+    if (!passportPick) return;
+    const q = passportQuery.trim();
+    if (q.length < 2) {
+      setPassportResults([]);
+      setPassportSearching(false);
+      return;
+    }
+    const ctrl = new AbortController();
+    setPassportSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/vibe/cities?q=${encodeURIComponent(q)}&limit=8`, {
+          signal: ctrl.signal,
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setPassportResults(Array.isArray(data?.cities) ? data.cities : []);
+      } catch {
+        /* requête annulée ou réseau indisponible — on garde les résultats précédents */
+      } finally {
+        if (!ctrl.signal.aborted) setPassportSearching(false);
+      }
+    }, 180);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [passportQuery, passportPick]);
 
   const actions = category
     ? category === "all"
@@ -211,16 +273,6 @@ export function PremiumActionsSheet({
     profile: executable.filter((a) => a.category === "profile"),
     meta: executable.filter((a) => a.category === "meta"),
   };
-
-  const cityOptions = (() => {
-    const myCity = me?.profile?.city;
-    const seen = new Set<string>();
-    return CITIES.filter((c) => {
-      if (c.name === myCity || seen.has(c.name)) return false;
-      seen.add(c.name);
-      return true;
-    }).slice(0, 18);
-  })();
 
   async function execute(action: PremiumAction, extra?: Record<string, unknown>) {
     setBusy(action.key);
@@ -289,6 +341,13 @@ export function PremiumActionsSheet({
     execute(action);
   }
 
+  /// Sélection d'une destination Passport → exécution immédiate. On envoie
+  /// le NOM SEUL de la ville : le deck serveur matche user.passportCity par
+  /// égalité de chaîne avec profile.city (format historique = nom seul).
+  function pickPassportCity(c: CitySel) {
+    execute(PREMIUM_ACTIONS.find((a) => a.key === "passport")!, { city: c.name });
+  }
+
   return (
     <>
       <AnimatePresence>
@@ -338,7 +397,7 @@ export function PremiumActionsSheet({
               </div>
 
               {passportPick ? (
-                /* ── Passport city picker ─────────────────────────────── */
+                /* ── Passport city picker — recherche prédictive mondiale ── */
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <button
@@ -352,23 +411,75 @@ export function PremiumActionsSheet({
                   <p className="text-[11px] v-fg-muted mb-3">
                     {t("premium.passport.sub")}
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {cityOptions.map((c) => (
-                      <motion.button
-                        key={c.name}
-                        whileTap={{ scale: 0.95 }}
-                        disabled={busy === "passport"}
-                        onClick={() => execute(PREMIUM_ACTIONS.find((a) => a.key === "passport")!, { city: c.name })}
-                        className="flex items-center gap-2 rounded-2xl v-surface-1 ring-1 ring-(--v-divider) px-3 py-2.5 hover:v-surface-2 transition text-left disabled:opacity-50"
-                      >
-                        <MapPin className="h-3.5 w-3.5 text-accent shrink-0" />
-                        <span className="min-w-0">
-                          <span className="block text-xs font-bold truncate">{c.name}</span>
-                          <span className="block text-[10px] v-fg-muted truncate">{c.country}</span>
-                        </span>
-                      </motion.button>
-                    ))}
+
+                  {/* Champ prédictif — même service que l'onboarding
+                      (/api/vibe/cities), sélection stricte dans la liste. */}
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 v-fg-muted pointer-events-none z-10" />
+                    <Input
+                      value={passportQuery}
+                      onChange={(e) => setPassportQuery(e.target.value)}
+                      onFocus={() => setPassportFocused(true)}
+                      onBlur={() => setTimeout(() => setPassportFocused(false), 200)}
+                      placeholder={t("premium.passport.searchPlaceholder")}
+                      inputMode="search"
+                      aria-label={t("premium.passport.searchPlaceholder")}
+                      className="pl-10 h-12 rounded-2xl v-surface-1 border-transparent ring-1 ring-(--v-divider) v-fg placeholder:v-fg-faint focus-visible:border-transparent focus-visible:ring-vibe-purple/40"
+                    />
+                    <AnimatePresence>
+                      {passportFocused && passportQuery.trim().length >= 2 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          className="absolute z-30 mt-1.5 inset-x-0 max-h-56 overflow-y-auto scrollbar-vibe rounded-2xl v-surface-solid ring-1 ring-(--v-divider) shadow-2xl p-1.5"
+                        >
+                          {passportSearching ? (
+                            /* Recherche en cours — rangées de squelettes */
+                            <div aria-live="polite">
+                              <span className="sr-only">{t("premium.passport.searching")}</span>
+                              {[0, 1, 2].map((i) => (
+                                <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl animate-pulse">
+                                  <div className="h-4 w-5 rounded-md v-surface-2 shrink-0" />
+                                  <div className="h-3.5 w-2/3 rounded-md v-surface-2" />
+                                </div>
+                              ))}
+                            </div>
+                          ) : passportResults.length === 0 ? (
+                            <div className="px-3 py-3 text-sm v-fg-muted flex items-center gap-2">
+                              <Search className="h-3.5 w-3.5" />
+                              {t("premium.passport.noCity")}
+                            </div>
+                          ) : (
+                            passportResults.map((c) => (
+                              <motion.button
+                                key={`${c.countryCode}-${c.name}`}
+                                whileTap={{ scale: 0.98 }}
+                                disabled={busy === "passport"}
+                                onMouseDown={(e) => { e.preventDefault(); pickPassportCity(c); }}
+                                onClick={() => pickPassportCity(c)}
+                                className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:v-surface-2 transition flex items-center gap-2.5 disabled:opacity-50"
+                              >
+                                <span className="text-base leading-none shrink-0" aria-hidden>
+                                  {flagEmoji(c.countryCode)}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate">
+                                  <span className="font-bold v-fg">{c.name}</span>{" "}
+                                  <span className="text-xs v-fg-muted">
+                                    {c.region ? `${c.region} · ` : ""}
+                                    {countryNameLocalized(c.countryCode, lang)}
+                                  </span>
+                                </span>
+                              </motion.button>
+                            ))
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
+                  <p className="text-[10px] v-fg-faint mt-2 px-0.5">
+                    🌍 {t("premium.passport.worldwide")}
+                  </p>
                 </div>
               ) : (
                 <>

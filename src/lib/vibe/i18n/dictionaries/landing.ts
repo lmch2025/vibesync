@@ -241,9 +241,6 @@ export const landing = defineDict(
     "landing.auth.error": "Erreur",
     "landing.auth.welcome": "Bienvenue sur Vivilov ! +25 Vibes offertes 🎁",
     "landing.auth.welcomeBack": "Content de te revoir 👋",
-    "landing.auth.chooseCountry": "Choisir le code pays",
-    "landing.auth.searchCountry": "Rechercher un pays…",
-    "landing.auth.noCountry": "Aucun pays trouvé.",
   },
   {
     // ── Navigation (keys required by nav.tsx) ───────────────────────────────
@@ -479,8 +476,5 @@ export const landing = defineDict(
     "landing.auth.error": "Error",
     "landing.auth.welcome": "Welcome to Vivilov! +25 free Vibes 🎁",
     "landing.auth.welcomeBack": "Great to have you back 👋",
-    "landing.auth.chooseCountry": "Choose country code",
-    "landing.auth.searchCountry": "Search for a country…",
-    "landing.auth.noCountry": "No country found.",
   },
 );
