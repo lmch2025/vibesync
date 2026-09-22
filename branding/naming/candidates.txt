@@ -1,0 +1,301 @@
+# VibeSync — candidats noms d'application (5 lettres exactement, ASCII a-z)
+# Format : mot  # famille / intention
+# Vérification de disponibilité .com via RDAP Verisign (registre officiel).
+
+# ── FAMILLE VIBE ──
+vibin   # "vibing" — être sur la même longueur d'onde
+vibeo   # vibe + -o moderne
+vibea   # vibe + -a
+vibey   # vibe + -y
+vibly   # vibe + -ly
+vibal   # vibe + -al (festivalier)
+vibon   # vibe + -on
+vibis   # vibe + -is
+viben   # vibe + -en
+vibee   # vibe + -ee
+vibez   # vibe + -z
+vibex   # vibe + -x
+vibba   # vibe redoublé
+vibbo   # vibe redoublé
+ovibe   # o- préfixe + vibe
+ivibe   # i- préfixe + vibe
+evibe   # e- préfixe + vibe
+
+# ── FAMILLE SYNC ──
+synco   # sync + -o
+synca   # sync + -a
+syncy   # sync + -y
+syncs   # sync pluriel
+zyncs   # sync en z
+
+# ── FAMILLE DUET (à deux) ──
+duett   # duet double-t (très brandable)
+dueto   # duet + -o
+dueta   # duet + -a
+duety   # duet + -y
+dueti   # duet + -i
+
+# ── FAMILLE MÉLODIE ──
+melio   # melodia + -io
+melli   # melody doux
+mella   # melody doux -a
+melly   # melody doux -y
+melle   # melody doux -e
+mello   # mellow
+meldo   # meld + -o
+meldy   # meld + -y
+
+# ── FAMILLE CORDE / ACCORD ──
+corda   # corde (FR) / chord — corde du cœur
+cordy   # chord + -y
+korda   # chord en k
+
+# ── FAMILLE AMOUR LATIN ──
+amoro   # amor + -o
+amory   # amor + -y
+amare   # latin/italien "aimer"
+amari   # amare pluriel
+adoro   # italien/espagnol "j'adore"
+bacio   # italien "bisou"
+aimer   # français "aimer"
+aimai   # français "j'ai aimé"
+amure   # amour stylisé
+dupla   # portugais "paire/duo"
+
+# ── FAMILLE LUV (love moderne) ──
+luvio   # luv + -io (luv = love)
+luvia   # luv + -ia
+luvea   # luv + -ea
+luvya   # "love ya"
+luvit   # "luv it"
+lovio   # love + -io
+lovia   # love + -ia
+lovel   # love + -l (Lovell)
+lovey   # love + -y (terme tendre)
+lavly   # lovely contracté
+lyvia   # love + -ia variante
+
+# ── FAMILLE ÂME ──
+soula   # soul + -a
+soulo   # soul + -o
+souly   # soul + -y
+soulu   # soul + -u
+
+# ── FAMILLE VAGUE ──
+wavio   # wave + -io
+wavia   # wave + -ia
+waveo   # wave + -o
+waven   # wave + -en
+wavon   # wave + -on
+
+# ── FAMILLE PULSE ──
+pulsa   # pulse + -a
+pulso   # pulse + -o
+
+# ── FAMILLE LUMIÈRE ──
+lumio   # lumière + -io
+lumeo   # lume (roumain lumière) + -o
+lumya   # lumière + -ya
+lumea   # roumain "le monde"
+glowi   # glow + -i
+glowa   # glow + -a
+glowe   # glow + -e
+luxea   # lux (lumière) + -ea
+luxio   # lux + -io
+clari   # clarus (clair) + -i
+klera   # clair en k
+
+# ── FAMILLE ÉCHO / VOIX ──
+echio   # écho + -io
+echia   # écho + -ia
+voxeo   # vox (voix) + -eo
+voxia   # vox + -ia
+
+# ── FAMILLE HUMEUR / RESSENTI ──
+moodi   # mood + -i
+moodo   # mood + -o
+mooda   # mood + -a
+feelo   # feel + -o
+feeli   # feel + -i
+feely   # touchy-feely
+sensa   # sensuel/sense + -a
+
+# ── FAMILLE RENCONTRE ──
+meeto   # meet + -o
+meety   # meet + -y
+meeti   # meet + -i
+dateo   # date + -o
+datea   # date + -a
+
+# ── FAMILLE SWIPE / SWAY ──
+swipa   # swipe + -a
+swipo   # swipe + -o
+swipy   # swipe + -y
+swaya   # sway + -a
+swayo   # sway + -o
+
+# ── FAMILLE ÉTOILE / CIEL ──
+steli   # stella (étoile) + -i
+stely   # stella + -y
+stelo   # stella + -o
+caelo   # latin "ciel"
+caeli   # latin "des cieux"
+caela   # ciel + -a
+aureo   # doré (italien)
+aurea   # dorée (latin)
+lunia   # luna + -ia
+lunio   # luna + -io
+novae   # novas (étoiles)
+astre   # français "astre"
+eclat   # français "éclat"
+estel   # catalan "étoile"
+irida   # déesse grecque de l'iris
+
+# ── FAMILLE AIR / BRISE ──
+zephy   # zéphyr (brise douce)
+breza   # brise + -a
+briza   # brisa en z
+brisa   # espagnol/portugais "brise"
+
+# ── FAMILLE NUAGE ──
+nimbo   # nimbus + -o
+nimbi   # nimbus pluriel
+
+# ── FAMILLE BONHEUR ──
+blisa   # bliss + -a
+bliso   # bliss + -o
+joyly   # joy + -ly
+
+# ── FAMILLE DOUCEUR ──
+velio   # velours + -io
+velia   # velours + -ia
+velou   # velours contracté
+velvy   # velvet + -y
+veloe   # velours + -e
+calmo   # calme + -o
+calmy   # calm + -y
+miela   # miel + -a
+mielo   # miel + -o
+dulci   # dulcet/dolce doux
+
+# ── FAMILLE FLUX ──
+flowa   # flow + -a
+flowe   # flow + -e
+flowo   # flow + -o
+fluxa   # flux + -a
+fluxo   # flux + -o
+
+# ── FAMILLE LIEN / PAIRE ──
+weavy   # weave + -y (tisser le lien)
+weava   # weave + -a
+weavo   # weave + -o
+paira   # pair + -a
+paire   # français "paire"
+twina   # twin + -a
+twiny   # twin + -y
+linka   # link + -a
+linko   # link + -o
+linke   # link + -e
+nexio   # nexus + -io
+yunta   # espagnol "paire attelée" (lien indéfectible)
+allia   # alliance + -a
+allie   # français "allié"
+liens   # français "liens"
+relia   # relier + -a
+relio   # relier + -io
+
+# ── FAMILLE FRANÇAIS (mots réels, loterie) ──
+sympa   # "sympa" — convivial
+bisou   # bisou
+cheri   # chéri
+ondes   # ondes (mêmes ondes)
+desir   # désir
+vivre   # vivre
+serai   # "je serai"
+lueur   # lueur
+rayon   # rayon (de soleil)
+harpe   # harpe
+louve   # louve (terme tendre FR)
+idyll   # idylle (anglais)
+seren   # serein/sérénade
+calin   # câlin (sans accent)
+douce   # douce
+
+# ── FAMILLE AFRIQUE / CAMEROUN / SWAHILI ──
+ndolo   # terme d'affection camerounais (Manu Dibango)
+ndole   # plat national camerounais (icône culturelle)
+nzela   # lingala "le chemin"
+kossa   # makossa (genre musical camerounais)
+wazaa   # "wazaa" (salutation jeune)
+penda   # swahili "il/elle aime"
+wimbo   # swahili "chanson"
+zuria   # swahili "belle"
+tembo   # swahili "éléphant"
+zouka   # zouk (musique) + -a
+zouko   # zouk + -o
+zouky   # zouk + -y
+zimba   # écho de simba (lion)
+zamba   # danse folklorique
+mbira   # instrument africain
+oshun   # orisha yoruba de l'amour
+
+# ── FAMILLE MODERNES ABSTRAITS ──
+vynca   # sync en v-y
+vynko   # idem -o
+kanvo   # coined doux
+kovia   # coined via
+mivia   # coined via
+mivio   # coined vio
+muvio   # move + -io
+miova   # coined ova
+viona   # coined -ona
+viano   # piano sans p
+covia   # co + via
+movia   # move + -ia
+rivia   # riviera écourté
+savia   # sapience/lucide
+livia   # nom doux
+idyla   # idylle -a
+idyle   # idylle -e
+lalia   # nom chantant
+malva   # fleur mauve
+mirta   # myrte
+mirto   # myrte (italien)
+zinia   # zinnia
+zinna   # zinnia -a
+flori   # flora + -i
+floro   # flora + -o
+rosea   # rose (latin)
+solia   # soleil + -ia
+solio   # soleil + -io
+solea   # soleá (flamenco)
+solen   # scandinave "le soleil"
+sunne   # soleil (norvégien)
+rytmo   # ritmo (rythme)
+magio   # magie + -io
+wonda   # wonder + -a
+marvo   # marvel + -o
+vivio   # vivre + -io
+vivia   # vivre + -ia
+aphro   # aphrodisiaque
+orfeo   # Orphée (italien)
+orfeu   # Orphée (portugais)
+lyrae   # lyre (latin)
+nebul   # nébuleuse écourté
+auria   # aura + -ia
+vivat   # latin "qu'il vive"
+vivra   # français "vivra"
+vivon   # vivre + -on
+sopra   # italien "au-dessus"
+lulla   # berceuse
+lulli   # berceuse -i
+embra   # ember + -a (braise)
+ambra   # ambre (italien)
+ambar   # ambre (hindi/espagnol)
+ambre   # ambre (français)
+dovia   # dove (colombe) + -ia
+kupid   # Cupidon en k
+krush   # crush en k
+flyrt   # flirt stylisé
+winky   # clin d'œil
+shyne   # shine + -y

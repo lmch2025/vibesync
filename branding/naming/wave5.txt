@@ -1,0 +1,89 @@
+# Vague 5 — micro-vague ciblée : formes ADJACENTES aux pépites disponibles
+# (uwelu, uleso, ezawi, osewi, ewumi, ijolu, irimu confirmés libres →
+#  même squelette, terminaisons jolies)
+
+# ── famille -WEL- (uwelu/uwelo dispo) ──
+iwela
+awela
+ewela
+owela
+uwelo
+owelo
+iwelo
+awelo
+
+# ── famille -VEL- (vel ≈ velours/love) ──
+ovelu
+uvelo
+ivelo
+evelo
+ovelo
+oveli
+ivela
+uvela
+evela
+eveli
+uveli
+
+# ── famille -LES- (uleso dispo) ──
+aleso
+oleso
+ileso
+ulesi
+ulesa
+oleza
+aleza
+
+# ── famille -ZAW- (ezawi dispo) ──
+azawi
+izawe
+ozawi
+ezawa
+ezawo
+uzawe
+
+# ── famille -SEW- (osewi dispo) ──
+asewo
+esewi
+osewa
+usewi
+
+# ── famille -WUM- (ewumi dispo) ──
+ewuma
+iwuma
+owuma
+awumi
+
+# ── famille -JOL- (ijolu dispo) ──
+ajoli
+ojola
+ujole
+ojole
+ajola
+ujola
+
+# ── famille -RIM- (irimu dispo) ──
+arimo
+orimo
+arima
+irima
+
+# ── formes douces voyelle-initiale ──
+eweto
+erawo
+iravo
+ovevo
+oveva
+ovezo
+oveza
+ozela
+ezola
+ozelo
+iwolo
+owolo
+iwule
+owule
+ulima
+imela
+ovame
+ewiva

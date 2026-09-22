@@ -1,0 +1,99 @@
+# Vague 2 — candidats de niche (double voyelles, attaques consonantiques, lettres rares)
+# Moins squattés par les domainers que les motifs CVCVC classiques.
+
+# ── Double voyelle (style Zuumo / Naavi) ──
+zuuma
+zuumo
+naavi
+kaavi
+loovi
+roovi
+juula
+juulo
+moovi
+saavi
+taavi
+zuraa
+lavii
+ravii
+mavii
+savii
+vooma
+vuumo
+
+# ── Attaques consonantiques (slave/nordique, style Krilo / Svila) ──
+pluvo
+plava
+plavo
+krilo
+krila
+svila
+sveto
+zvono
+zvona
+pravi
+flavi
+flava
+flavo
+klavi
+klavo
+druva
+
+# ── Famille J/Y ──
+jovia
+jovio
+jovin
+juvia
+yuvia
+yovia
+
+# ── Famille Z/K ──
+zylia
+zylio
+zelia
+zelio
+zelva
+kelva
+kelvo
+kvina
+zolva
+zavia
+zavio
+zovia
+zuvia
+zuvio
+
+# ── Q/X distinctifs ──
+qelio
+xelia
+xelio
+
+# ── VIA/IO ──
+kuvia
+kuvio
+ruvio
+mavio
+mavia
+naveo
+nuvio
+navio
+uvida
+vixia
+
+# ── Divers haute valeur ──
+vinca
+vinka
+trova
+trovo
+plume
+pluie
+lucea
+luceo
+luzia
+luzio
+lucio
+novia
+novio
+vibel
+wolke
+vivel
