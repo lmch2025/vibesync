@@ -44,11 +44,12 @@ const HEART_S =
   "C234 130 246 150 256 166 C266 150 278 130 292 118 C300 111 310 108 326 108 " +
   "C374 108 416 146 416 214 C416 292 342 346 256 404 Z";
 
-// Nº7 Infini — deux cœurs couchés (pointes vers l'extérieur, creux au centre)
-// formant le signe ∞, entrelacés dessus-dessous aux deux croisements
-const HS_L = 172.5, HS_R = 339.5, HS_S = 0.62;
+// Nº7 Infini — deux cœurs debout (pointes vers le bas, double sillon en haut),
+// inclinés en miroir, entrelacés dessus-dessous aux deux croisements pour
+// tracer le signe ∞ (paramètres élus round 2 : θ16° · s .74 · d 57.3 · vy 4)
+const HS_ROT = 16, HS_S = 0.74, HS_D = 57.3, HS_VY = 4;
 const heartS7 = (side, attrs) =>
-  `<path d="${HEART_S}" transform="translate(${side === "L" ? HS_L : HS_R} 256) rotate(${side === "L" ? 90 : -90}) scale(${HS_S}) translate(-256 -256)" ${attrs}/>`;
+  `<path d="${HEART_S}" transform="translate(${side === "L" ? 256 - HS_D : 256 + HS_D} ${256 + HS_VY}) rotate(${side === "L" ? -HS_ROT : HS_ROT}) scale(${HS_S}) translate(-256 -256)" ${attrs}/>`;
 const weave7 = (sL, sR) =>
   `<g clip-path="url(#c7t)">` +
   heartS7("L", `fill="none" stroke="${sL}" stroke-width="24" stroke-linejoin="round" mask="url(#m7l)"`) +
@@ -168,8 +169,8 @@ const LOGOS = [
     bg: "url(#g7a)",
     defs:
       lg("g7a", 256, 16, 256, 496, [[0, "#FF8A5D"], [1, "#E0449C"]]) +
-      lg("g7l", 72, 256, 273, 256, [[0, "#FF5E93"], [1, "#E0449C"]]) +
-      lg("g7r", 239, 256, 440, 256, [[0, "#E0449C"], [1, "#A558E0"]]) +
+      lg("g7l", 78.7, 256, 318.7, 256, [[0, "#FF5E93"], [1, "#E0449C"]]) +
+      lg("g7r", 193.3, 256, 433.3, 256, [[0, "#E0449C"], [1, "#A558E0"]]) +
       `<clipPath id="c7t"><rect x="0" y="0" width="512" height="256"/></clipPath>` +
       `<clipPath id="c7b"><rect x="0" y="256" width="512" height="256"/></clipPath>` +
       `<mask id="m7l" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">` +
