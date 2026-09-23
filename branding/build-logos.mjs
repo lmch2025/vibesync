@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * VibeSync — Générateur d'identité visuelle (source unique de vérité)
+ * Tiluu — Générateur d'identité visuelle (source unique de vérité)
  * ------------------------------------------------------------------
  * Produit :
  *   1. public/logos.html                       → galerie de choix (autonome, inline)
@@ -79,18 +79,18 @@ const LOGOS = [
   },
   {
     num: 3, id: "monogramme", name: "Monogramme", tag: "Lettrine",
-    desc: "Le V de VibeSync gravé comme un sceau, avec un cœur en creux — la marque réduite à l'essentiel.",
+    desc: "Le T de Tiluu gravé comme un sceau, avec un cœur en creux — la marque réduite à l'essentiel.",
     chips: ["#A558E0", "#E0449C", IVORY],
     bg: "url(#g3a)",
     defs: lg("g3a", 140, 120, 380, 410, [[0, "#A558E0"], [1, "#E0449C"]]),
     icon:
-      `<path fill-rule="evenodd" fill="${IVORY}" d="M124 130 L210 130 L256 258 L302 130 L388 130 L300 380 C287 412 225 412 212 380 Z ` +
-      `M256 382.1 C230.1 364.8 212.8 349.7 212.8 327.5 C212.8 310.2 225.2 300 239.8 300 C248.5 300 253.2 304.8 256 310.8 ` +
-      `C258.7 304.8 263.4 300 272.2 300 C286.8 300 299.2 310.2 299.2 327.5 C299.2 349.7 282 364.8 256 382.1 Z"/>`,
+      `<path fill-rule="evenodd" fill="${IVORY}" d="M124 130 L388 130 L388 216 L299 216 L299 380 C299 400 280 412 256 412 C232 412 213 400 213 380 L213 216 L124 216 Z ` +
+      `M256 350.4 C236.8 337.6 224 326.4 224 310 C224 297.2 233.2 289.6 244 289.6 C250.4 289.6 254 293.2 256 297.6 ` +
+      `C258 293.2 261.6 289.6 268 289.6 C278.8 289.6 288 297.2 288 310 C288 326.4 275.2 337.6 256 350.4 Z"/>`,
     glyph:
-      `<path fill-rule="evenodd" fill="url(#g3a)" d="M124 130 L210 130 L256 258 L302 130 L388 130 L300 380 C287 412 225 412 212 380 Z ` +
-      `M256 382.1 C230.1 364.8 212.8 349.7 212.8 327.5 C212.8 310.2 225.2 300 239.8 300 C248.5 300 253.2 304.8 256 310.8 ` +
-      `C258.7 304.8 263.4 300 272.2 300 C286.8 300 299.2 310.2 299.2 327.5 C299.2 349.7 282 364.8 256 382.1 Z"/>`,
+      `<path fill-rule="evenodd" fill="url(#g3a)" d="M124 130 L388 130 L388 216 L299 216 L299 380 C299 400 280 412 256 412 C232 412 213 400 213 380 L213 216 L124 216 Z ` +
+      `M256 350.4 C236.8 337.6 224 326.4 224 310 C224 297.2 233.2 289.6 244 289.6 C250.4 289.6 254 293.2 256 297.6 ` +
+      `C258 293.2 261.6 289.6 268 289.6 C278.8 289.6 288 297.2 288 310 C288 326.4 275.2 337.6 256 350.4 Z"/>`,
   },
   {
     num: 4, id: "orbite", name: "Orbite", tag: "Cosmique",
@@ -243,7 +243,7 @@ const LOGOS = [
   },
   {
     num: 13, id: "sync", name: "Sync", tag: "Rotation",
-    desc: "Deux flux qui s'alignent autour d'un même cœur — le sync de VibeSync, littéralement.",
+    desc: "Deux flux qui s'alignent autour d'un même cœur — deux personnes qui se synchronisent, littéralement.",
     chips: ["#FF5E93", "#A558E0", "#FFB88A"],
     bg: "url(#g13a)",
     defs: lg("g13a", 112, 112, 400, 400, [[0, "#FF5E93"], [1, "#A558E0"]]),
@@ -258,7 +258,7 @@ const LOGOS = [
   },
   {
     num: 14, id: "lu-aime", name: "Lu & Aimé", tag: "Messagerie",
-    desc: "Le double check des messages aimés : « lu » et « aimé » en un seul geste.",
+    desc: "Le double check des messages aimés : « lu » et « aimé » en un seul geste — un clin d'œil au « luu » de Tiluu.",
     chips: ["#A558E0", "#FF5E93", "#FF8A5D"],
     bg: IVORY,
     defs: lg("g14a", 168, 220, 388, 156, [[0, "#FF5E93"], [1, "#E0449C"]]),
@@ -308,8 +308,8 @@ for (const L of LOGOS) {
   const glyphSvg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">\n` +
     `<defs>${L.defs}</defs>\n${L.glyph}\n</svg>\n`;
-  writeFileSync(join(OUT_DIR, `vibesync-${nn}-${L.id}-icon.svg`), iconSvg);
-  writeFileSync(join(OUT_DIR, `vibesync-${nn}-${L.id}-glyph.svg`), glyphSvg);
+  writeFileSync(join(OUT_DIR, `tiluu-${nn}-${L.id}-icon.svg`), iconSvg);
+  writeFileSync(join(OUT_DIR, `tiluu-${nn}-${L.id}-glyph.svg`), glyphSvg);
 }
 
 /* ------------------------------------------------------------------ */
@@ -330,7 +330,7 @@ const card = (L) => `
     <div class="appicon"><svg viewBox="0 0 512 512" role="img" aria-label="Logo ${L.name} — icône application"><use href="#i${L.num}"/></svg></div>
     <div class="lockup">
       <svg viewBox="0 0 512 512" aria-hidden="true"><use href="#l${L.num}"/></svg>
-      <span class="wordmark">VibeSync</span>
+      <span class="wordmark">Tiluu</span>
     </div>
   </div>
   <div class="ladder" aria-label="Lisibilité aux petites tailles">
@@ -350,7 +350,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VibeSync · 15 pistes de logo</title>
+<title>Tiluu · 15 pistes de logo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -543,9 +543,9 @@ footer b{color:var(--ink);font-weight:700}
 
 <header class="topbar">
   <div class="wrap">
-    <span class="brandmark" aria-hidden="true">V</span>
+    <span class="brandmark" aria-hidden="true">T</span>
     <div>
-      <h1>VibeSync · Identité visuelle</h1>
+      <h1>Tiluu · Identité visuelle</h1>
       <p class="sub">15 pistes de logo — élégantes, épurées, douces, modernes</p>
     </div>
     <div class="spacer"></div>
@@ -557,7 +557,7 @@ footer b{color:var(--ink);font-weight:700}
 <main>
   <section class="intro wrap">
     <p class="kicker">Exploration de marque</p>
-    <h2>Quinze cœurs pour <em>VibeSync</em></h2>
+    <h2>Quinze cœurs pour <em>Tiluu</em></h2>
     <p class="lead">Chaque piste est dessinée en code (SVG vectoriel, donc infiniment nette). Comparez l'icône
       d'application, le logo complet et la lisibilité aux petites tailles — puis retenez votre préférée.</p>
     <div class="steps">
@@ -574,7 +574,7 @@ footer b{color:var(--ink);font-weight:700}
 
 <footer>
   <div class="wrap">
-    <span><b>VibeSync</b> · Exploration d'identité visuelle</span>
+    <span><b>Tiluu</b> · Exploration d'identité visuelle</span>
     <span>15 logos 100&nbsp;% vectoriels, générés par code — prêts pour PNG, icônes d'app, favicon et déclinaisons</span>
   </div>
 </footer>
@@ -605,7 +605,7 @@ footer b{color:var(--ink);font-weight:700}
         <p class="desc" id="m-desc"></p>
         <div>
           <p class="m-row-title">Logo complet</p>
-          <div class="m-lockup"><svg viewBox="0 0 512 512" aria-hidden="true"><use href="#l1" id="m-lock"/></svg><span class="wordmark">VibeSync</span></div>
+          <div class="m-lockup"><svg viewBox="0 0 512 512" aria-hidden="true"><use href="#l1" id="m-lock"/></svg><span class="wordmark">Tiluu</span></div>
         </div>
         <div>
           <p class="m-row-title">Aux petites tailles</p>
@@ -623,7 +623,7 @@ footer b{color:var(--ink);font-weight:700}
 
 <script>
 var DATA = ${JSON.stringify(LOGOS.map((L) => ({ num: L.num, name: L.name })))};
-var KEY = "vibesync.logoChoice";
+var KEY = "tiluu.logoChoice";
 var selNum = null;
 
 function $(id){ return document.getElementById(id); }
@@ -708,16 +708,16 @@ var tgl = $("tgl");
 function setTheme(dark){
   document.body.classList.toggle("dark", dark);
   tgl.textContent = dark ? "◑ Fond clair" : "◐ Fond sombre";
-  try { localStorage.setItem("vibesync.logoTheme", dark ? "dark" : "light"); } catch(e){}
+  try { localStorage.setItem("tiluu.logoTheme", dark ? "dark" : "light"); } catch(e){}
 }
 tgl.addEventListener("click", function(){ setTheme(!document.body.classList.contains("dark")); });
 try {
-  var t = localStorage.getItem("vibesync.logoTheme");
+  var t = localStorage.getItem("tiluu.logoTheme");
   if (t === "dark" || (!t && window.matchMedia && window.matchMedia("(prefers-color-scheme:dark)").matches)) setTheme(true);
 } catch(e){}
 
 /* choix persistant */
-try { var v = localStorage.getItem(KEY); if (v) { selNum = parseInt(v, 10) || null; } } catch(e){}
+try { var v = localStorage.getItem(KEY) || localStorage.getItem("vibesync.logoChoice"); if (v) { selNum = parseInt(v, 10) || null; if (selNum !== null) { try { localStorage.setItem(KEY, String(selNum)); } catch(e2){} } } } catch(e){}
 renderSel();
 
 /* copier */
@@ -725,7 +725,7 @@ $("sel-copy").addEventListener("click", function(){
   if (!selNum) return;
   var d = null;
   for (var i = 0; i < DATA.length; i++) if (DATA[i].num === selNum) d = DATA[i];
-  var txt = "Logo Nº " + selNum + " — " + d.name + " (VibeSync)";
+  var txt = "Logo Nº " + selNum + " — " + d.name + " (Tiluu)";
   var done = function(){ toast("Choix copié — collez-le dans la discussion ✓"); };
   if (navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(done, function(){ fallbackCopy(txt, done); });
@@ -749,5 +749,5 @@ writeFileSync(OUT_HTML, html);
 console.log("✓ Galerie générée :", OUT_HTML);
 console.log("✓ SVG individuels :", OUT_DIR, "(" + LOGOS.length * 2 + " fichiers)");
 LOGOS.forEach((L) =>
-  console.log("  Nº" + pad(L.num), L.name.padEnd(14, " "), "→", "vibesync-" + pad(L.num) + "-" + L.id + "-icon.svg")
+  console.log("  Nº" + pad(L.num), L.name.padEnd(14, " "), "→", "tiluu-" + pad(L.num) + "-" + L.id + "-icon.svg")
 );

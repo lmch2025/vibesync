@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-<defs><linearGradient id="g3a" x1="140" y1="120" x2="380" y2="410" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#A558E0"/><stop offset="1" stop-color="#E0449C"/></linearGradient></defs>
-<path fill-rule="evenodd" fill="url(#g3a)" d="M124 130 L210 130 L256 258 L302 130 L388 130 L300 380 C287 412 225 412 212 380 Z M256 382.1 C230.1 364.8 212.8 349.7 212.8 327.5 C212.8 310.2 225.2 300 239.8 300 C248.5 300 253.2 304.8 256 310.8 C258.7 304.8 263.4 300 272.2 300 C286.8 300 299.2 310.2 299.2 327.5 C299.2 349.7 282 364.8 256 382.1 Z"/>
-</svg>
