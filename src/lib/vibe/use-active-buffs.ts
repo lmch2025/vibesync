@@ -2,7 +2,7 @@
 // useActiveBuffs — polls `/api/vibe/active-buffs` every 15 seconds and
 // returns the current active premium action buffs (boost, spotlight,
 // ghost mode, passport, etc.). The hook also listens for the custom
-// `vivilov:buff-activated` event so the UI can refresh INSTANTLY when
+// `tiluu:buff-activated` event so the UI can refresh INSTANTLY when
 // a new buff is purchased (no need to wait for the next 15s tick).
 //
 // Returns:
@@ -35,7 +35,7 @@ export type ActiveBuff = {
 };
 
 const POLL_INTERVAL_MS = 15_000;
-const BUFF_ACTIVATED_EVENT = "vivilov:buff-activated";
+const BUFF_ACTIVATED_EVENT = "tiluu:buff-activated";
 
 export function useActiveBuffs() {
   const [buffs, setBuffs] = useState<ActiveBuff[]>([]);
@@ -62,7 +62,7 @@ export function useActiveBuffs() {
     reload();
     const interval = setInterval(reload, POLL_INTERVAL_MS);
 
-    // Instant refresh on `vivilov:buff-activated` (e.g. user just
+    // Instant refresh on `tiluu:buff-activated` (e.g. user just
     // bought a Boost — no need to wait 15s for the next poll tick).
     const onActivated = () => {
       reload();

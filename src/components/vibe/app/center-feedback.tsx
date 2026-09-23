@@ -16,7 +16,7 @@ export type CenterFeedbackInput = {
   duration?: number;
 };
 
-const EVENT = "vivilov:center-feedback";
+const EVENT = "tiluu:center-feedback";
 
 /**
  * Déclenche un retour centré élégant depuis n'importe quel écran de l'app.

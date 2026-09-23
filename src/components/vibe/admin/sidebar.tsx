@@ -101,7 +101,7 @@ export function Sidebar({
       <div className="mt-auto pt-4">
         <div className="rounded-xl bg-muted/60 p-3 ring-1 ring-border">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Vivilov v1.0 — Console de modération et pilotage de l'économie Vibes.
+            Tiluu v1.0 — Console de modération et pilotage de l'économie Vibes.
           </p>
         </div>
         <button

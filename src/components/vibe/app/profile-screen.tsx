@@ -323,8 +323,8 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
           // Rafraîchit instantanément la section « Actions actives »
           // (le Passport vient d'y apparaître avec son compte à rebours)
           // ET la file Découvrir (profils de la ville choisie).
-          window.dispatchEvent(new CustomEvent("vivilov:buff-activated"));
-          window.dispatchEvent(new Event("vivilov:deck-refresh"));
+          window.dispatchEvent(new CustomEvent("tiluu:buff-activated"));
+          window.dispatchEvent(new Event("tiluu:deck-refresh"));
         }
       } catch (e: any) { toast.error(apiErr(e.message) || t("profile.error.generic")); }
       finally { setBusy(null); }

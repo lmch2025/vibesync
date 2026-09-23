@@ -36,7 +36,7 @@ export default function SocialShare({
   const [copied, setCopied] = useState(false);
   const { t } = useI18n();
 
-  const shareUrl = "https://vivilov.app";
+  const shareUrl = "https://tiluu.com";
   const shareText = t("wallet.share.text", { name: fromName, gift: giftName });
 
   function handleWhatsApp() {
@@ -195,7 +195,7 @@ export default function SocialShare({
               {/* Fake URL bar */}
               <div className="mt-2.5 flex items-center gap-1.5 text-[11px] v-fg-muted">
                 <Link2 className="h-3 w-3 shrink-0" />
-                <span className="truncate">vivilov.app</span>
+                <span className="truncate">tiluu.com</span>
               </div>
             </div>
           </motion.div>

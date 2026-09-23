@@ -1,5 +1,5 @@
 "use client";
-// EmojiPicker — bottom sheet emoji picker for the Vivilov chat screen.
+// EmojiPicker — bottom sheet emoji picker for the Tiluu chat screen.
 // 84 themed emojis across 5 categories (love / expressions / flirt / food / travel).
 // Mobile-first, dark glassy sheet, spring slide-up, drag-handle to dismiss,
 // gradient active-tab pill, tap-to-insert with haptic active:scale-90.

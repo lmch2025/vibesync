@@ -48,7 +48,7 @@ const jobs: Job[] = [
   },
   {
     prompt:
-      'Modern minimalist app icon for a video dating app called Vivilov, rounded square, vibrant gradient from deep purple to magenta to warm orange, abstract overlapping play button and heart symbol fused together, glossy glass finish, centered, clean, premium, no text',
+      'Modern minimalist app icon for a video dating app called Tiluu, rounded square, vibrant gradient from deep purple to magenta to warm orange, abstract overlapping play button and heart symbol fused together, glossy glass finish, centered, clean, premium, no text',
     size: '1024x1024',
     out: path.join(ICONS, 'icon-512.png'),
   },

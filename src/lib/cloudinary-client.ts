@@ -8,10 +8,15 @@
 // their side, so the browser can upload safely without secrets.
 //
 // Two presets:
-//   • `vivilov_unsigned`     → video files (returns secure_url + we
+//   • `vibesync_unsigned`     → video files (returns secure_url + we
 //                                derive a poster frame with the
 //                                `so_1,vsingle,f_jpg` eager transform)
-//   • `vivilov_unsigned_img` → image files (poster / avatar)
+//   • `vibesync_unsigned_img` → image files (poster / avatar)
+//
+//   NOTE : ces noms de presets sont configurés CÔTÉ CLOUDINARY (compte
+//   nj0oev4p). Ils conservent leur identifiant d'origine « vibesync_* » :
+//   ne pas les renommer ici sans renommer aussi les presets dans le
+//   dashboard Cloudinary, sous peine de casser tous les uploads.
 //
 // Cloud name is exposed via NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME so it
 // can be configured per-environment without rebuilding the client.

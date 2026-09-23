@@ -70,7 +70,7 @@ type State = {
     pendingProceed: (() => void) | null;
   } | null;
   /// Store the pending action and ask the app shell to navigate to the
-  /// purchase page (dispatches `vivilov:go-buy-vibes` with the deficit info).
+  /// purchase page (dispatches `tiluu:go-buy-vibes` with the deficit info).
   redirectForVibes: (needed: number, have: number, actionLabel: string, proceed: () => void) => void;
   /// Consume + clear the pending action (called by the wallet after a
   /// successful purchase) — returns the callback to re-run, or null.
@@ -108,7 +108,7 @@ export const useVibe = create<State>((set, get) => ({
     // The app shell (AppDemo) listens and navigates to the purchase page.
     if (typeof window !== "undefined") {
       window.dispatchEvent(
-        new CustomEvent("vivilov:go-buy-vibes", { detail: { needed, have, actionLabel } }),
+        new CustomEvent("tiluu:go-buy-vibes", { detail: { needed, have, actionLabel } }),
       );
     }
   },

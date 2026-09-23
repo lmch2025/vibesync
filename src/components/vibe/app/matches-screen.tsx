@@ -59,10 +59,10 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
   // regains focus (user back from another app/tab).
   useEffect(() => {
     const refresh = () => load();
-    window.addEventListener("vivilov:refresh-matches", refresh);
+    window.addEventListener("tiluu:refresh-matches", refresh);
     window.addEventListener("focus", refresh);
     return () => {
-      window.removeEventListener("vivilov:refresh-matches", refresh);
+      window.removeEventListener("tiluu:refresh-matches", refresh);
       window.removeEventListener("focus", refresh);
     };
   }, []);
@@ -108,8 +108,8 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
       });
     };
     // Fired by the app shell every time the Matches tab is selected.
-    window.addEventListener("vivilov:refresh-matches", offerOnTabOpen);
-    return () => window.removeEventListener("vivilov:refresh-matches", offerOnTabOpen);
+    window.addEventListener("tiluu:refresh-matches", offerOnTabOpen);
+    return () => window.removeEventListener("tiluu:refresh-matches", offerOnTabOpen);
   }, [lockedMatches.length]);
 
   // Cold match (matched but nobody wrote yet) → gift suggestion, once/day.
@@ -143,8 +143,8 @@ export function MatchesScreen({ onOpenChat }: { onOpenChat: (target: { id: strin
         tone: "gold",
       });
     };
-    window.addEventListener("vivilov:refresh-matches", offerOnTabOpen);
-    return () => window.removeEventListener("vivilov:refresh-matches", offerOnTabOpen);
+    window.addEventListener("tiluu:refresh-matches", offerOnTabOpen);
+    return () => window.removeEventListener("tiluu:refresh-matches", offerOnTabOpen);
   }, [active, boostNudge, lockedMatches.length]);
 
   return (

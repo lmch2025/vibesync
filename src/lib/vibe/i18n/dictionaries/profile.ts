@@ -8,7 +8,7 @@
 //  - fr = copie EXACTE des textes français d'origine ; en = traduction naturelle
 //    (tutoiement FR → "you" EN). Noms de marque canoniques conservés en EN :
 //    Super-Like, Boost, Rewind, Passport, Icebreaker, Ghost Mode, Spotlight,
-//    Golden Heart, Time Freeze, Daily Double, Crush Alert. Vibes/Vivilov/emojis
+//    Golden Heart, Time Freeze, Daily Double, Crush Alert. Vibes/Tiluu/emojis
 //    non traduits.
 import { defineDict } from "./shared";
 
@@ -90,7 +90,7 @@ export const profile = defineDict(
     "profile.logout.cta": "Se déconnecter",
     "profile.logout.pending": "Déconnexion…",
     "profile.logout.success": "Déconnecté",
-    "profile.footer": "Vivilov · PWA démo",
+    "profile.footer": "Tiluu · PWA démo",
 
     // ── Thème (toasts) ────────────────────────────────────────────────────
     "profile.theme.dark": "Mode sombre activé",
@@ -366,7 +366,7 @@ export const profile = defineDict(
     "profile.logout.cta": "Log out",
     "profile.logout.pending": "Signing out…",
     "profile.logout.success": "Signed out",
-    "profile.footer": "Vivilov · demo PWA",
+    "profile.footer": "Tiluu · demo PWA",
 
     // ── Theme (toasts) ────────────────────────────────────────────────────
     "profile.theme.dark": "Dark mode on",

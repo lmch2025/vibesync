@@ -6,7 +6,7 @@
 //  - Pluriels : clés distinctes ".one" / ".many".
 //  - fr = copie EXACTE du texte français d'origine ; en = traduction naturelle
 //    (ton app de rencontre chaleureuse, tutoiement FR → "you" EN).
-//  - Non traduit (marque) : Vivilov, Vibes, Super-Like, Passport, Boost,
+//  - Non traduit (marque) : Tiluu, Vibes, Super-Like, Passport, Boost,
 //    Rewind, Icebreaker, Golden Heart, emojis, villes, contenus utilisateur.
 import { defineDict } from "./shared";
 

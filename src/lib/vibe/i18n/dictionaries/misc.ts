@@ -65,7 +65,7 @@ export const misc = defineDict(
     "misc.later": "Plus tard",
 
     // ── Prompt d'installation PWA ──────────────────────────────────────────
-    "misc.pwaTitle": "Installe Vivilov",
+    "misc.pwaTitle": "Installe Tiluu",
     "misc.pwaBody":
       "Lance-toi en 1 tap — pas de store, pas d'attente. Ton app plein écran, notifications incluses.",
     "misc.pwaIosShare": "Tape le bouton Partager",
@@ -132,7 +132,7 @@ export const misc = defineDict(
     "misc.later": "Later",
 
     // ── PWA install prompt ─────────────────────────────────────────────────
-    "misc.pwaTitle": "Install Vivilov",
+    "misc.pwaTitle": "Install Tiluu",
     "misc.pwaBody":
       "Get started in one tap — no app store, no waiting. Your full-screen app, notifications included.",
     "misc.pwaIosShare": "Tap the Share button",

@@ -13,7 +13,7 @@
 //     immersif (grand anneau, heure d'expiration, CTA « Prolonger »).
 //
 // Données : hook `useActiveBuffs` — rafraîchi instantanément via
-// l'événement `vivilov:buff-activated` (émis par ActionSuccessModal
+// l'événement `tiluu:buff-activated` (émis par ActionSuccessModal
 // dès qu'une action premium est activée) + poll de sécurité 15 s.
 //
 // Thème : tokens v-surface / v-fg — impeccable en clair comme en nuit.

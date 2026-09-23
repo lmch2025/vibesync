@@ -1,10 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* dark: répond à .dark (shadcn) ET à .sombre (mode nuit opt-in de Vivilov) */
+/* dark: répond à .dark (shadcn) ET à .sombre (mode nuit opt-in de Tiluu) */
 @custom-variant dark (&:is(.dark *, .sombre *));
 
-/* ===== Utilitaires du thème Vivilov (directive @utility : les variantes
+/* ===== Utilitaires du thème Tiluu (directive @utility : les variantes
    Tailwind — hover:, active:, … — sont générées automatiquement) ===== */
 
 /* Dégradé signature récupéré de la page d'accueil :
@@ -133,14 +133,14 @@
 
 :root {
   --radius: 0.875rem;
-  /* Vivilov brand */
+  /* Tiluu brand */
   --vibe-purple: oklch(0.55 0.24 295);
   --vibe-purple-soft: oklch(0.62 0.2 295);
   --vibe-orange: oklch(0.72 0.19 55);
   --vibe-orange-soft: oklch(0.8 0.16 55);
   --vibe-pink: oklch(0.65 0.24 350);
 
-  /* ===== Thème Vivilov CLAIR (défaut dans toute l'app) =====
+  /* ===== Thème Tiluu CLAIR (défaut dans toute l'app) =====
      Fond doux lavande, encre violette profonde, surfaces blanches — le
      dégradé signature #FF7E67 → #9B51E0 est conservé (il reste lisible sur
      fond clair). Le mode sombre est un OPT-IN utilisateur (.sombre) et le
@@ -202,7 +202,7 @@
 /* ===== MODE NUIT (opt-in utilisateur) =====
    Le thème par défaut est le clair ci-dessus (:root). L'utilisateur peut
    activer le mode nuit depuis son profil : la classe .sombre est posée sur
-   <html> par next-themes — elle bascule les tokens Vivilov ET les tokens
+   <html> par next-themes — elle bascule les tokens Tiluu ET les tokens
    shadcn (les composants ui/* suivent le mode nuit automatiquement). */
 :is(.dark, .sombre) {
   --background: oklch(0.13 0.02 295);
@@ -238,7 +238,7 @@
   --sidebar-ring: oklch(0.62 0.2 295);
 }
 
-/* ===== MODE NUIT (opt-in utilisateur) — tokens Vivilov =====
+/* ===== MODE NUIT (opt-in utilisateur) — tokens Tiluu =====
    Retrouve l'ambiance sombre historique de l'app : fond #09090B, textes
    blancs /95→/70, surfaces zinc translucides. */
 .sombre {

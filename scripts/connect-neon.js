@@ -1,4 +1,4 @@
-// VibeSync — Connecteur Neon PostgreSQL (Unification Web & Mobile)
+// Tiluu — Connecteur Neon PostgreSQL (Unification Web & Mobile)
 // Usage: node scripts/connect-neon.js [optional_neon_database_url]
 const fs = require('fs');
 const path = require('path');
@@ -9,7 +9,7 @@ const prismaSchemaPath = path.join(rootDir, 'prisma', 'schema.prisma');
 const envPath = path.join(rootDir, '.env');
 const mobileEnvPath = path.join(rootDir, 'mobile', '.env');
 
-console.log('⚡ VibeSync — Configuration de la base de données Neon PostgreSQL...\n');
+console.log('⚡ Tiluu — Configuration de la base de données Neon PostgreSQL...\n');
 
 // 1. Détection de l'URL Neon
 let neonUrl = process.argv[2];

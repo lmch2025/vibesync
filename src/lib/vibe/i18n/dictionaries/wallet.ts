@@ -5,7 +5,7 @@
 //  - Interpolation : {{param}} (ex "wallet.bonus": "+{{n}} Vibes").
 //  - Pluriels : clés distinctes ".one" / ".many".
 //  - fr = copie EXACTE du texte d'origine ; en = traduction naturelle
-//    (tutoiement FR → "you" EN). Vivilov, Vibes, noms de cadeaux (DB),
+//    (tutoiement FR → "you" EN). Tiluu, Vibes, noms de cadeaux (DB),
 //    emojis et symboles monétaires ne sont PAS traduits.
 //  - Libellés de transactions : l'API renvoie des libellés français
 //    (raison → libellé) ; le client les convertit en clés "wallet.tx.*"
@@ -148,7 +148,7 @@ export const wallet = defineDict(
     "wallet.gift.shareJoy": "Partager ma joie",
 
     // ── Partage social ────────────────────────────────────────────────────
-    "wallet.share.text": "{{name}} m'a offert un {{gift}} sur Vivilov 🎁 Rejoins l'aventure !",
+    "wallet.share.text": "{{name}} m'a offert un {{gift}} sur Tiluu 🎁 Rejoins l'aventure !",
     "wallet.share.sharedOn": "Partagé sur {{platform}} (démo)",
     "wallet.share.linkCopied": "Lien copié",
     "wallet.share.copyError": "Impossible de copier le lien",
@@ -157,9 +157,9 @@ export const wallet = defineDict(
     "wallet.share.receivedTitle": "Tu as reçu {{gift}} !",
     "wallet.share.fromLine": "de la part de {{name}} · {{value}}",
     "wallet.share.previewLabel": "Aperçu du partage",
-    "wallet.share.previewBadge": "Vivilov · Cadeau reçu",
-    "wallet.share.previewTitle": "{{name}} t'a offert un cadeau sur Vivilov 🎁",
-    "wallet.share.previewDesc": "Découvre Vivilov — la rencontre authentique en vidéo. Rejoins l'aventure !",
+    "wallet.share.previewBadge": "Tiluu · Cadeau reçu",
+    "wallet.share.previewTitle": "{{name}} t'a offert un cadeau sur Tiluu 🎁",
+    "wallet.share.previewDesc": "Découvre Tiluu — la rencontre authentique en vidéo. Rejoins l'aventure !",
     "wallet.share.cta": "Plus tu partages, plus tu rencontres des personnes authentiques. 💜",
 
     // ── Modale de succès d'action premium ─────────────────────────────────
@@ -189,9 +189,9 @@ export const wallet = defineDict(
     "wallet.streak.footer": "Reviens chaque jour pour augmenter ta série et gagner plus de Vibes",
 
     // ── Parrainage (après réclamation du streak) ──────────────────────────
-    "wallet.referral.shareText": "J'ai gagné {{n}} Vibes sur Vivilov ! Rejoins-moi et découvre la rencontre authentique en vidéo 🎬",
+    "wallet.referral.shareText": "J'ai gagné {{n}} Vibes sur Tiluu ! Rejoins-moi et découvre la rencontre authentique en vidéo 🎬",
     "wallet.referral.title": "Gagne encore plus !",
-    "wallet.referral.inviteA": "Invite tes amis sur Vivilov et reçois ",
+    "wallet.referral.inviteA": "Invite tes amis sur Tiluu et reçois ",
     "wallet.referral.inviteC": " par inscription.",
     "wallet.referral.copied": "Lien copié !",
     "wallet.referral.copyLink": "Copier le lien d'invitation",
@@ -332,7 +332,7 @@ export const wallet = defineDict(
     "wallet.gift.shareJoy": "Share my joy",
 
     // ── Social share ──────────────────────────────────────────────────────
-    "wallet.share.text": "{{name}} gave me a {{gift}} on Vivilov 🎁 Join the adventure!",
+    "wallet.share.text": "{{name}} gave me a {{gift}} on Tiluu 🎁 Join the adventure!",
     "wallet.share.sharedOn": "Shared on {{platform}} (demo)",
     "wallet.share.linkCopied": "Link copied",
     "wallet.share.copyError": "Couldn't copy the link",
@@ -341,9 +341,9 @@ export const wallet = defineDict(
     "wallet.share.receivedTitle": "You received {{gift}}!",
     "wallet.share.fromLine": "from {{name}} · {{value}}",
     "wallet.share.previewLabel": "Share preview",
-    "wallet.share.previewBadge": "Vivilov · Gift received",
-    "wallet.share.previewTitle": "{{name}} gave you a gift on Vivilov 🎁",
-    "wallet.share.previewDesc": "Discover Vivilov — authentic video dating. Join the adventure!",
+    "wallet.share.previewBadge": "Tiluu · Gift received",
+    "wallet.share.previewTitle": "{{name}} gave you a gift on Tiluu 🎁",
+    "wallet.share.previewDesc": "Discover Tiluu — authentic video dating. Join the adventure!",
     "wallet.share.cta": "The more you share, the more authentic people you'll meet. 💜",
 
     // ── Premium action success modal ──────────────────────────────────────
@@ -373,9 +373,9 @@ export const wallet = defineDict(
     "wallet.streak.footer": "Come back every day to grow your streak and earn more Vibes",
 
     // ── Referral (after streak claim) ─────────────────────────────────────
-    "wallet.referral.shareText": "I won {{n}} Vibes on Vivilov! Join me and discover authentic video dating 🎬",
+    "wallet.referral.shareText": "I won {{n}} Vibes on Tiluu! Join me and discover authentic video dating 🎬",
     "wallet.referral.title": "Earn even more!",
-    "wallet.referral.inviteA": "Invite your friends to Vivilov and get ",
+    "wallet.referral.inviteA": "Invite your friends to Tiluu and get ",
     "wallet.referral.inviteC": " per signup.",
     "wallet.referral.copied": "Link copied!",
     "wallet.referral.copyLink": "Copy invite link",

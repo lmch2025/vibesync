@@ -1,6 +1,6 @@
 "use client";
 // interactive-animations — reusable animation presets, motion variants,
-// and tiny components used across the Vivilov app demo. Centralizing
+// and tiny components used across the Tiluu app demo. Centralizing
 // them here keeps timing/physics consistent everywhere.
 //
 // Exports:
@@ -376,8 +376,8 @@ const SFX_PRESETS: Record<SfxName, Tone[]> = {
   ],
 };
 
-const SFX_STORAGE_KEY = "vivilov:sfx";
-const SFX_TOGGLE_EVENT = "vivilov:sfx-toggle";
+const SFX_STORAGE_KEY = "tiluu:sfx";
+const SFX_TOGGLE_EVENT = "tiluu:sfx-toggle";
 
 type AudioContextCtor = new (options?: AudioContextOptions) => AudioContext;
 

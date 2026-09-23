@@ -226,7 +226,7 @@ export function StreakReward() {
                       animate={{ opacity: 1, y: 0 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => {
-                        window.dispatchEvent(new Event("vivilov:open-premium"));
+                        window.dispatchEvent(new Event("tiluu:open-premium"));
                       }}
                       className="w-full rounded-2xl v-surface-1 ring-1 ring-(--v-divider) px-4 py-2.5 mb-4 flex items-center gap-2.5 text-left hover:v-surface-2 transition"
                     >
@@ -283,7 +283,7 @@ export function StreakReward() {
 function ReferralModal({ onClose, reward }: { onClose: () => void; reward: number }) {
   const [copied, setCopied] = useState(false);
   const { t } = useI18n();
-  const referralLink = "https://vivilov.app/r/vibe-friend";
+  const referralLink = "https://tiluu.com/r/vibe-friend";
 
   function share(platform: string) {
     const text = t("wallet.referral.shareText", { n: reward });

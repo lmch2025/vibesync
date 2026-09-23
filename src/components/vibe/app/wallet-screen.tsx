@@ -94,7 +94,7 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
   const thresholdReached = walletEur >= WITHDRAWAL_THRESHOLD_EUR;
   const progressPct = Math.min(100, (walletEur / WITHDRAWAL_THRESHOLD_EUR) * 100);
 
-  // Soldes par nature (économie VibeSync — voir vibes-accounting.ts) :
+  // Soldes par nature (économie Tiluu — voir vibes-accounting.ts) :
   //  • achetées = gems - freeGems → SEULES utilisables pour les cadeaux (émeraude)
   //  • offertes  = freeGems       → bonus plateforme, actions premium (ambre)
   const totalGems = Math.max(0, me?.gems ?? 0);

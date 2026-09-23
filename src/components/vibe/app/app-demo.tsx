@@ -77,11 +77,11 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
   }, []);
 
   // Any screen can open the premium sheet circumstantially (contextual
-  // recommendations dispatch `vivilov:open-premium`).
+  // recommendations dispatch `tiluu:open-premium`).
   useEffect(() => {
     const open = () => setPremiumOpen(true);
-    window.addEventListener("vivilov:open-premium", open);
-    return () => window.removeEventListener("vivilov:open-premium", open);
+    window.addEventListener("tiluu:open-premium", open);
+    return () => window.removeEventListener("tiluu:open-premium", open);
   }, []);
 
   // Tab selector — fires the matches-refresh event so the (always-mounted)
@@ -89,7 +89,7 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
   const selectTab = useCallback((t: Tab) => {
     setTab(t);
     if (t === "matches") {
-      window.dispatchEvent(new Event("vivilov:refresh-matches"));
+      window.dispatchEvent(new Event("tiluu:refresh-matches"));
     }
   }, []);
 
@@ -223,14 +223,14 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
             {/* 👑 Premium — single, explicit, enticing entry point. On the
                 Découvrir tab it opens the CONTEXTUAL sheet (targets the top
                 card → Super-Like ciblé, compatibilité, Cœur d'Or…) via the
-                vivilov:open-premium-contextual event; elsewhere it opens the
+                tiluu:open-premium-contextual event; elsewhere it opens the
                 generic sheet. */}
             <motion.button
               onClick={() => {
                 sfx.play("pop");
                 haptic(8);
                 if (tab === "swipe") {
-                  window.dispatchEvent(new Event("vivilov:open-premium-contextual"));
+                  window.dispatchEvent(new Event("tiluu:open-premium-contextual"));
                 } else {
                   setPremiumOpen(true);
                 }
@@ -270,7 +270,7 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
 
 /// Redirect-to-purchase handler — when a premium action or a gift can't run
 /// because the balance is insufficient, the store dispatches
-/// `vivilov:go-buy-vibes`; we navigate straight to the Boutique (Vibes purchase
+/// `tiluu:go-buy-vibes`; we navigate straight to the Boutique (Vibes purchase
 /// page) with a contextual toast. The pending action is kept in the store and
 /// resumes automatically after a successful pack purchase (wallet-screen).
 function GoBuyVibesRedirect({ onGoWallet }: { onGoWallet: () => void }) {
@@ -295,8 +295,8 @@ function GoBuyVibesRedirect({ onGoWallet }: { onGoWallet: () => void }) {
         }),
       });
     };
-    window.addEventListener("vivilov:go-buy-vibes", handler);
-    return () => window.removeEventListener("vivilov:go-buy-vibes", handler);
+    window.addEventListener("tiluu:go-buy-vibes", handler);
+    return () => window.removeEventListener("tiluu:go-buy-vibes", handler);
   }, []);
 
   return null;

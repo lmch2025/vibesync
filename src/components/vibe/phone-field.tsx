@@ -43,7 +43,7 @@ export type PhoneFieldValue = { country: GeoCountry; local: string };
 
 /// localStorage — dernier pays explicitement choisi par ce visiteur
 /// (prime sur toute détection géo à la visite suivante).
-const STORAGE_KEY = "vibesync_phone_country";
+const STORAGE_KEY = "tiluu_phone_country";
 
 /// Détection géo mémoïsée au niveau module : UN SEUL appel à
 /// /api/vibe/detect par chargement de page, même si le champ est

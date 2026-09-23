@@ -1,6 +1,6 @@
 {
-  "name": "Vivilov — Rencontre Vidéo Authentique",
-  "short_name": "Vivilov",
+  "name": "Tiluu — Rencontre Vidéo Authentique",
+  "short_name": "Tiluu",
   "description": "La PWA de rencontre par vidéo de 15s. Authentique, fluide, sans abonnement.",
   "start_url": "/",
   "display": "standalone",

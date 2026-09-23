@@ -13,7 +13,7 @@
 //   • Passport opens an inline WORLDWIDE city picker (predictive search on
 //     /api/vibe/cities — same service as onboarding) before activation.
 //   • Actions that change the deck (rewind, superRewind, passport, boost)
-//     dispatch `vivilov:deck-refresh` so the Découvrir tab reloads instantly.
+//     dispatch `tiluu:deck-refresh` so the Découvrir tab reloads instantly.
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Crown, X, Zap, MapPin, Copy, Check, Search } from "lucide-react";
@@ -303,7 +303,7 @@ export function PremiumActionsSheet({
         // toast would only duplicate the message over the header.
         // The deck changed (rewind, passport, boost…) — reload it instantly.
         if (data.deckRefresh && typeof window !== "undefined") {
-          window.dispatchEvent(new Event("vivilov:deck-refresh"));
+          window.dispatchEvent(new Event("tiluu:deck-refresh"));
         }
         // Celebrate through the shared success modal (emoji, label, buff countdown).
         setActiveEffect({ action, result: data });

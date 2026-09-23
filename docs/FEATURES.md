@@ -1,4 +1,4 @@
-# 📋 REGISTRE DES FONCTIONNALITÉS VIBESYNC
+# 📋 REGISTRE DES FONCTIONNALITÉS TILUU
 
 > **Source de vérité** de l'inventaire fonctionnel de l'application, établi par
 > analyse exhaustive du code au moment du blindage (voir `PROTECTION.md`).
@@ -119,7 +119,7 @@ Quotidien 10. Bottom-sheet par catégorie + modale de résultat.
 ### 14. Buffs actifs (`buffs-actifs`)
 Route listant les buffs actifs avec temps restant/progression (boost via table
 `Boost`, ghostMode/spotlight via colonnes User). Hook polling 15 s + event
-`vivilov:buff-activated`. Anneaux SVG avec gradient, rouge pulsant sous 60 s.
+`tiluu:buff-activated`. Anneaux SVG avec gradient, rouge pulsant sous 60 s.
 - ⚠️ La section UI `active-buffs-section.tsx` n'est pas branchée (orpheline).
 
 ### 15. Wallet & retraits (`wallet-retraits`)
@@ -156,7 +156,7 @@ enregistrement `/sw.js`, souscription VAPID, upsert dans `Setting`.
 - ⚠️ Aucun envoi serveur ; `sw.js` absent de `public/` (trou connu).
 
 ### 20. PWA (`pwa`)
-Manifest « Vivilov » (standalone, portrait, icônes maskable, thème #6b32c4).
+Manifest « Tiluu » (standalone, portrait, icônes maskable, thème #6b32c4).
 Prompt d'installation (Chromium + instructions iOS/Android, max 3 rejets).
 Layout avec OpenGraph, Twitter card, JSON-LD (SoftwareApplication, Organization,
 FAQPage).
@@ -192,7 +192,7 @@ seuil de retrait, Vibes de bienvenue, config vidéo — avec cache invalidé.
 
 ### 24. Landing immersive (`landing-immersive`)
 Plein écran non scrollable : vidéo de fond (respect data-saver), Ken Burns,
-vignette, titre « Vivilov » avec glow, pills de features, preuve sociale, CTA
+vignette, titre « Tiluu » avec glow, pills de features, preuve sociale, CTA
 shimmer, bouton Admin discret. Ouvre la modale d'auth.
 
 ### 25. Landing marketing — héritée (`landing-marketing-legacy`)

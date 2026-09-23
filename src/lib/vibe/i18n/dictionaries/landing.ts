@@ -59,7 +59,7 @@ export const landing = defineDict(
     "landing.demo.superlike": "Super-like",
 
     // ── Fonctionnalités ─────────────────────────────────────────────────────
-    "landing.features.eyebrow": "Pourquoi Vivilov",
+    "landing.features.eyebrow": "Pourquoi Tiluu",
     "landing.features.titleA": "Le dating repensé pour la",
     "landing.features.titleB": "vraie vie",
     "landing.features.subtitle":
@@ -88,7 +88,7 @@ export const landing = defineDict(
     "landing.how.titleA": "3 vibrations pour passer du swipe au",
     "landing.how.titleB": "match réel",
     "landing.how.subtitle":
-      "Vivilov remplace le profil figé par une vidéo vivante. Trois étapes, c'est tout.",
+      "Tiluu remplace le profil figé par une vidéo vivante. Trois étapes, c'est tout.",
     "landing.how.s1.title": "Enregistre ta vidéo 15s",
     "landing.how.s1.body":
       "Présente-toi en mouvement, sans filtre ni photo retouchée. Une vidéo brute = zéro catfish.",
@@ -174,24 +174,24 @@ export const landing = defineDict(
     "landing.faq.titleB": "fréquentes",
     "landing.faq.subtitle":
       "Tout ce que tu veux savoir avant de vibrer. Reste une question ? Notre équipe répond en moins de 24 h.",
-    "landing.faq.q1": "Qu'est-ce que Vivilov ?",
+    "landing.faq.q1": "Qu'est-ce que Tiluu ?",
     "landing.faq.a1":
-      "Vivilov est une application mobile de rencontre PWA qui met la vidéo de 15 secondes au cœur du profil. Au lieu de photos retouchées, chaque membre présente sa vraie voix, son vrai visage, sa vraie énergie. La plateforme est gratuite, sans abonnement : tu achètes des Vibes optionnelles pour accélérer tes interactions et tu peux encaisser en € les cadeaux virtuels reçus.",
+      "Tiluu est une application mobile de rencontre PWA qui met la vidéo de 15 secondes au cœur du profil. Au lieu de photos retouchées, chaque membre présente sa vraie voix, son vrai visage, sa vraie énergie. La plateforme est gratuite, sans abonnement : tu achètes des Vibes optionnelles pour accélérer tes interactions et tu peux encaisser en € les cadeaux virtuels reçus.",
     "landing.faq.q2": "Comment fonctionne la rencontre par vidéo ?",
     "landing.faq.a2":
       "Tu enregistres une vidéo verticale de 15 secondes dans l'app. Elle remplace la photo de profil et passe par notre IA de modération (rejet auto des contenus inappropriés). Les autres membres te découvrent en swipe, voient ta vidéo en mouvement, puis passent le Vibe Check — une question légère à réponse mutuelle. Si tu matchs, la messagerie s'ouvre, et vous pouvez vous envoyer des cadeaux.",
-    "landing.faq.q3": "Vivilov est-il payant ?",
+    "landing.faq.q3": "Tiluu est-il payant ?",
     "landing.faq.a3":
-      "Non, Vivilov ne fonctionne pas par abonnement. Le swipe, le match, le Vibe Check et la messagerie de base sont gratuits. Tu peux acheter des Vibes pour des actions optionnelles : Super-Like (5), Boost de profil (50), Voir les likes reçus (20), Passport (30), Icebreaker IA (3), Boost de message (10), Rewind (2) ou des cadeaux virtuels de 10 à 500 Vibes. Les Vibes ne sont jamais perdues : elles dorment dans ton wallet.",
+      "Non, Tiluu ne fonctionne pas par abonnement. Le swipe, le match, le Vibe Check et la messagerie de base sont gratuits. Tu peux acheter des Vibes pour des actions optionnelles : Super-Like (5), Boost de profil (50), Voir les likes reçus (20), Passport (30), Icebreaker IA (3), Boost de message (10), Rewind (2) ou des cadeaux virtuels de 10 à 500 Vibes. Les Vibes ne sont jamais perdues : elles dorment dans ton wallet.",
     "landing.faq.q4": "Comment monétise-t-on les cadeaux reçus ?",
     "landing.faq.a4":
-      "Quand un autre membre t'envoie un cadeau virtuel (Rose, Dîner Romantique, Weekend…), sa valeur en € est créditée sur ton wallet Vivilov. La plateforme prélève une commission de 30 %, le reste t'appartient. Tu peux retirer tes gains via Stripe Connect dès que tu atteins 20 € de solde. Le taux de change appliqué à l'affichage correspond à ta devise locale, mais le crédit est comptabilisé en euros.",
-    "landing.faq.q5": "Vivilov est-il disponible dans mon pays / ma devise ?",
+      "Quand un autre membre t'envoie un cadeau virtuel (Rose, Dîner Romantique, Weekend…), sa valeur en € est créditée sur ton wallet Tiluu. La plateforme prélève une commission de 30 %, le reste t'appartient. Tu peux retirer tes gains via Stripe Connect dès que tu atteins 20 € de solde. Le taux de change appliqué à l'affichage correspond à ta devise locale, mais le crédit est comptabilisé en euros.",
+    "landing.faq.q5": "Tiluu est-il disponible dans mon pays / ma devise ?",
     "landing.faq.a5":
-      "Oui. Vivilov détecte automatiquement ton pays via l'en-tête x-vercel-ip-country et préselectionne ta devise parmi EUR, USD, GBP, CAD, XAF et JPY. Les prix des Vibes sont fixes par région (style App Store) pour éviter les surprises de change, tandis que la valeur des cadeaux reçus est convertie dynamiquement au taux du jour pour l'affichage. Tu peux à tout moment changer de devise depuis le sélecteur en haut de page.",
+      "Oui. Tiluu détecte automatiquement ton pays via l'en-tête x-vercel-ip-country et préselectionne ta devise parmi EUR, USD, GBP, CAD, XAF et JPY. Les prix des Vibes sont fixes par région (style App Store) pour éviter les surprises de change, tandis que la valeur des cadeaux reçus est convertie dynamiquement au taux du jour pour l'affichage. Tu peux à tout moment changer de devise depuis le sélecteur en haut de page.",
     "landing.faq.q6": "Mes données et ma vidéo sont-elles protégées (RGPD) ?",
     "landing.faq.a6":
-      "Vivilov est conforme au RGPD. Tes données personnelles (téléphone, profil, vidéo) sont stockées chiffrées dans l'Union européenne. Tu peux exporter, modifier ou supprimer ton compte à tout moment depuis l'app. Les vidéos sont automatiquement supprimées des serveurs si tu désactives ton profil. Notre IA de modération analyse les vidéos en flux sans conservation supplémentaire. Nous ne revendons jamais tes données à des tiers.",
+      "Tiluu est conforme au RGPD. Tes données personnelles (téléphone, profil, vidéo) sont stockées chiffrées dans l'Union européenne. Tu peux exporter, modifier ou supprimer ton compte à tout moment depuis l'app. Les vidéos sont automatiquement supprimées des serveurs si tu désactives ton profil. Notre IA de modération analyse les vidéos en flux sans conservation supplémentaire. Nous ne revendons jamais tes données à des tiers.",
 
     // ── CTA final ───────────────────────────────────────────────────────────
     "landing.final.badge": "Prêt·e à vibrer ?",
@@ -214,7 +214,7 @@ export const landing = defineDict(
     "landing.footer.cookies": "Cookies",
     "landing.footer.tagline":
       "Rencontre authentique par vidéo de 15s. Zéro abonnement, juste des Vibes. Vibrer sur la bonne fréquence, partout dans le monde.",
-    "landing.footer.rights": "© {{year}} Vivilov. Tous droits réservés.",
+    "landing.footer.rights": "© {{year}} Tiluu. Tous droits réservés.",
     "landing.footer.madeWith": "Fait avec",
     "landing.footer.andCoffee": "et du bon café",
 
@@ -239,7 +239,7 @@ export const landing = defineDict(
     "landing.auth.invalidPhone": "Numéro invalide",
     "landing.auth.pinMismatch": "Les codes ne correspondent pas",
     "landing.auth.error": "Erreur",
-    "landing.auth.welcome": "Bienvenue sur Vivilov ! +25 Vibes offertes 🎁",
+    "landing.auth.welcome": "Bienvenue sur Tiluu ! +25 Vibes offertes 🎁",
     "landing.auth.welcomeBack": "Content de te revoir 👋",
   },
   {
@@ -294,7 +294,7 @@ export const landing = defineDict(
     "landing.demo.superlike": "Super-Like",
 
     // ── Features ────────────────────────────────────────────────────────────
-    "landing.features.eyebrow": "Why Vivilov",
+    "landing.features.eyebrow": "Why Tiluu",
     "landing.features.titleA": "Dating reimagined for",
     "landing.features.titleB": "real life",
     "landing.features.subtitle":
@@ -323,7 +323,7 @@ export const landing = defineDict(
     "landing.how.titleA": "3 vibrations from swipe to",
     "landing.how.titleB": "real match",
     "landing.how.subtitle":
-      "Vivilov replaces the frozen profile with a living video. Three steps, that's it.",
+      "Tiluu replaces the frozen profile with a living video. Three steps, that's it.",
     "landing.how.s1.title": "Record your 15s video",
     "landing.how.s1.body":
       "Show yourself in motion, no filters, no retouched photos. A raw video = zero catfish.",
@@ -409,24 +409,24 @@ export const landing = defineDict(
     "landing.faq.titleB": "asked questions",
     "landing.faq.subtitle":
       "Everything you want to know before you start vibing. Still have a question? Our team replies within 24 hours.",
-    "landing.faq.q1": "What is Vivilov?",
+    "landing.faq.q1": "What is Tiluu?",
     "landing.faq.a1":
-      "Vivilov is a PWA mobile dating app that puts the 15-second video at the heart of your profile. Instead of retouched photos, every member shows their real voice, real face, real energy. The platform is free, with no subscription: you buy optional Vibes to speed up your interactions and you can cash out the virtual gifts you receive in €.",
+      "Tiluu is a PWA mobile dating app that puts the 15-second video at the heart of your profile. Instead of retouched photos, every member shows their real voice, real face, real energy. The platform is free, with no subscription: you buy optional Vibes to speed up your interactions and you can cash out the virtual gifts you receive in €.",
     "landing.faq.q2": "How does video dating work?",
     "landing.faq.a2":
       "You record a 15-second vertical video in the app. It replaces your profile photo and goes through our moderation AI (auto-rejection of inappropriate content). Other members discover you by swiping, watch your video in motion, then take the Vibe Check — a light question with a mutual answer. If you match, messaging opens and you can send each other gifts.",
-    "landing.faq.q3": "Does Vivilov cost anything?",
+    "landing.faq.q3": "Does Tiluu cost anything?",
     "landing.faq.a3":
-      "No, Vivilov doesn't work on a subscription basis. Swiping, matching, the Vibe Check and basic messaging are free. You can buy Vibes for optional actions: Super-Like (5), Profile Boost (50), See your likes (20), Passport (30), AI Icebreaker (3), Message Boost (10), Rewind (2) or virtual gifts from 10 to 500 Vibes. Vibes are never lost: they sleep in your wallet.",
+      "No, Tiluu doesn't work on a subscription basis. Swiping, matching, the Vibe Check and basic messaging are free. You can buy Vibes for optional actions: Super-Like (5), Profile Boost (50), See your likes (20), Passport (30), AI Icebreaker (3), Message Boost (10), Rewind (2) or virtual gifts from 10 to 500 Vibes. Vibes are never lost: they sleep in your wallet.",
     "landing.faq.q4": "How do you monetize received gifts?",
     "landing.faq.a4":
-      "When another member sends you a virtual gift (Rose, Romantic Dinner, Weekend…), its € value is credited to your Vivilov wallet. The platform takes a 30% commission, the rest is yours. You can withdraw your earnings via Stripe Connect once your balance reaches €20. The exchange rate used for display matches your local currency, but the credit is recorded in euros.",
-    "landing.faq.q5": "Is Vivilov available in my country / currency?",
+      "When another member sends you a virtual gift (Rose, Romantic Dinner, Weekend…), its € value is credited to your Tiluu wallet. The platform takes a 30% commission, the rest is yours. You can withdraw your earnings via Stripe Connect once your balance reaches €20. The exchange rate used for display matches your local currency, but the credit is recorded in euros.",
+    "landing.faq.q5": "Is Tiluu available in my country / currency?",
     "landing.faq.a5":
-      "Yes. Vivilov automatically detects your country via the x-vercel-ip-country header and preselects your currency from EUR, USD, GBP, CAD, XAF and JPY. Vibes prices are fixed per region (App Store style) to avoid exchange-rate surprises, while the value of received gifts is converted dynamically at the daily rate for display. You can change your currency at any time from the selector at the top of the page.",
+      "Yes. Tiluu automatically detects your country via the x-vercel-ip-country header and preselects your currency from EUR, USD, GBP, CAD, XAF and JPY. Vibes prices are fixed per region (App Store style) to avoid exchange-rate surprises, while the value of received gifts is converted dynamically at the daily rate for display. You can change your currency at any time from the selector at the top of the page.",
     "landing.faq.q6": "Are my data and my video protected (GDPR)?",
     "landing.faq.a6":
-      "Vivilov is GDPR-compliant. Your personal data (phone, profile, video) is stored encrypted in the European Union. You can export, edit or delete your account at any time from the app. Videos are automatically removed from the servers if you deactivate your profile. Our moderation AI analyzes videos on the fly with no extra retention. We never resell your data to third parties.",
+      "Tiluu is GDPR-compliant. Your personal data (phone, profile, video) is stored encrypted in the European Union. You can export, edit or delete your account at any time from the app. Videos are automatically removed from the servers if you deactivate your profile. Our moderation AI analyzes videos on the fly with no extra retention. We never resell your data to third parties.",
 
     // ── Final CTA ───────────────────────────────────────────────────────────
     "landing.final.badge": "Ready to vibe?",
@@ -449,7 +449,7 @@ export const landing = defineDict(
     "landing.footer.cookies": "Cookies",
     "landing.footer.tagline":
       "Authentic dating through 15-second video. No subscription, just Vibes. Vibe on the right frequency, anywhere in the world.",
-    "landing.footer.rights": "© {{year}} Vivilov. All rights reserved.",
+    "landing.footer.rights": "© {{year}} Tiluu. All rights reserved.",
     "landing.footer.madeWith": "Made with",
     "landing.footer.andCoffee": "and good coffee",
 
@@ -474,7 +474,7 @@ export const landing = defineDict(
     "landing.auth.invalidPhone": "Invalid number",
     "landing.auth.pinMismatch": "The codes don't match",
     "landing.auth.error": "Error",
-    "landing.auth.welcome": "Welcome to Vivilov! +25 free Vibes 🎁",
+    "landing.auth.welcome": "Welcome to Tiluu! +25 free Vibes 🎁",
     "landing.auth.welcomeBack": "Great to have you back 👋",
   },
 );

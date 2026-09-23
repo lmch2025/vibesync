@@ -43,7 +43,7 @@ export const auth = defineDict(
     // ── Transverse ────────────────────────────────────────────────────────
     "auth.back": "Retour",
     "auth.error": "Erreur",
-    "auth.welcomeToast": "Bienvenue sur Vivilov ! +25 Vibes offertes 🎁",
+    "auth.welcomeToast": "Bienvenue sur Tiluu ! +25 Vibes offertes 🎁",
     "auth.welcomeBackToast": "Content de te revoir 👋",
   },
   {
@@ -81,7 +81,7 @@ export const auth = defineDict(
     // ── Cross-step ────────────────────────────────────────────────────────
     "auth.back": "Back",
     "auth.error": "Error",
-    "auth.welcomeToast": "Welcome to Vivilov! +25 free Vibes 🎁",
+    "auth.welcomeToast": "Welcome to Tiluu! +25 free Vibes 🎁",
     "auth.welcomeBackToast": "Great to have you back 👋",
   },
 );

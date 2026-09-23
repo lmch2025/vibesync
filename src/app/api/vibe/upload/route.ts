@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const folder = type === "video" ? "vibesync/profiles/videos" : "vibesync/profiles/posters";
+    const folder = type === "video" ? "tiluu/profiles/videos" : "tiluu/profiles/posters";
     const resourceType = type === "video" ? "video" : "image";
 
     const result = await cloudinary.uploader.upload(dataUrl, {

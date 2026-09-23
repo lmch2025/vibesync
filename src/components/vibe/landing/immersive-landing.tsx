@@ -153,7 +153,7 @@ export function ImmersiveLanding({
             }}
           >
             <span className="text-white drop-shadow-lg">
-              Vivilov
+              Tiluu
             </span>
           </h1>
         </div>

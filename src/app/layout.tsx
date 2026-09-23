@@ -24,15 +24,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
   if (lang === "en") {
     return {
-      metadataBase: new URL("https://vivilov.app"),
+      metadataBase: new URL("https://tiluu.com"),
       title: {
-        default: "Vivilov — Authentic Video Dating | Mobile-First PWA",
-        template: "%s · Vivilov",
+        default: "Tiluu — Authentic Video Dating | Mobile-First PWA",
+        template: "%s · Tiluu",
       },
       description:
-        "Vivilov revolutionizes dating by replacing photos with 15s videos. Smooth swiping, anti-spam messaging, monetizable virtual gifts and the Vibes economy. Zero subscription.",
+        "Tiluu revolutionizes dating by replacing photos with 15s videos. Smooth swiping, anti-spam messaging, monetizable virtual gifts and the Vibes economy. Zero subscription.",
       keywords: [
-        "Vivilov",
+        "Tiluu",
         "video dating",
         "dating app",
         "PWA",
@@ -43,14 +43,14 @@ export async function generateMetadata(): Promise<Metadata> {
         "authentic dating",
         "mobile first",
       ],
-      authors: [{ name: "Vivilov" }],
-      creator: "Vivilov",
-      applicationName: "Vivilov",
+      authors: [{ name: "Tiluu" }],
+      creator: "Tiluu",
+      applicationName: "Tiluu",
       manifest: "/manifest.json",
       appleWebApp: {
         capable: true,
         statusBarStyle: "black-translucent",
-        title: "Vivilov",
+        title: "Tiluu",
       },
       icons: {
         icon: [
@@ -63,17 +63,17 @@ export async function generateMetadata(): Promise<Metadata> {
         shortcut: "/icon-192.png",
       },
       openGraph: {
-        title: "Vivilov — Authentic Video Dating",
+        title: "Tiluu — Authentic Video Dating",
         description:
           "The 15s video dating PWA. Authentic, smooth, subscription-free. Vibes economy and virtual gifts.",
-        url: "https://vivilov.app",
-        siteName: "Vivilov",
+        url: "https://tiluu.com",
+        siteName: "Tiluu",
         type: "website",
         locale: "en_US",
       },
       twitter: {
         card: "summary_large_image",
-        title: "Vivilov — Authentic Video Dating",
+        title: "Tiluu — Authentic Video Dating",
         description:
           "The 15s video dating PWA. Authentic, smooth, subscription-free.",
       },
@@ -86,15 +86,15 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    metadataBase: new URL("https://vivilov.app"),
+    metadataBase: new URL("https://tiluu.com"),
     title: {
-      default: "Vivilov — Rencontre Vidéo Authentique | PWA Mobile-First",
-      template: "%s · Vivilov",
+      default: "Tiluu — Rencontre Vidéo Authentique | PWA Mobile-First",
+      template: "%s · Tiluu",
     },
     description:
-      "Vivilov révolutionne la rencontre en remplaçant les photos par des vidéos de 15s. Swype fluide, messagerie anti-spam, cadeaux virtuels monétisables et économie de Vibes. Zéro abonnement.",
+      "Tiluu révolutionne la rencontre en remplaçant les photos par des vidéos de 15s. Swype fluide, messagerie anti-spam, cadeaux virtuels monétisables et économie de Vibes. Zéro abonnement.",
     keywords: [
-      "Vivilov",
+      "Tiluu",
       "rencontre vidéo",
       "dating app",
       "PWA",
@@ -105,14 +105,14 @@ export async function generateMetadata(): Promise<Metadata> {
       "rencontre authentique",
       "mobile first",
     ],
-    authors: [{ name: "Vivilov" }],
-    creator: "Vivilov",
-    applicationName: "Vivilov",
+    authors: [{ name: "Tiluu" }],
+    creator: "Tiluu",
+    applicationName: "Tiluu",
     manifest: "/manifest.json",
     appleWebApp: {
       capable: true,
       statusBarStyle: "black-translucent",
-      title: "Vivilov",
+      title: "Tiluu",
     },
     icons: {
       icon: [
@@ -125,17 +125,17 @@ export async function generateMetadata(): Promise<Metadata> {
       shortcut: "/icon-192.png",
     },
     openGraph: {
-      title: "Vivilov — Rencontre Vidéo Authentique",
+      title: "Tiluu — Rencontre Vidéo Authentique",
       description:
         "La PWA de rencontre par vidéo de 15s. Authentique, fluide, sans abonnement. Économie de Vibes et cadeaux virtuels.",
-      url: "https://vivilov.app",
-      siteName: "Vivilov",
+      url: "https://tiluu.com",
+      siteName: "Tiluu",
       type: "website",
       locale: "fr_FR",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Vivilov — Rencontre Vidéo Authentique",
+      title: "Tiluu — Rencontre Vidéo Authentique",
       description:
         "La PWA de rencontre par vidéo de 15s. Authentique, fluide, sans abonnement.",
     },
@@ -165,7 +165,7 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      name: "Vivilov",
+      name: "Tiluu",
       applicationCategory: "LifestyleApplication",
       operatingSystem: "iOS, Android, Web",
       description:
@@ -176,16 +176,16 @@ const jsonLd = {
         ratingValue: "4.8",
         ratingCount: "12840",
       },
-      url: "https://vivilov.app",
+      url: "https://tiluu.com",
     },
     {
       "@type": "Organization",
-      name: "Vivilov",
-      url: "https://vivilov.app",
-      logo: "https://vivilov.app/icon-512.png",
+      name: "Tiluu",
+      url: "https://tiluu.com",
+      logo: "https://tiluu.com/icon-512.png",
       sameAs: [
-        "https://twitter.com/vivilov",
-        "https://instagram.com/vivilov",
+        "https://twitter.com/tiluu",
+        "https://instagram.com/tiluu",
       ],
     },
     {
@@ -193,10 +193,10 @@ const jsonLd = {
       mainEntity: [
         {
           "@type": "Question",
-          name: "Qu'est-ce que Vivilov ?",
+          name: "Qu'est-ce que Tiluu ?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Vivilov est une PWA mobile-first de rencontre qui remplace les photos de profil statiques par des vidéos de présentation de 15 secondes pour une authenticité immédiate.",
+            text: "Tiluu est une PWA mobile-first de rencontre qui remplace les photos de profil statiques par des vidéos de présentation de 15 secondes pour une authenticité immédiate.",
           },
         },
         {
@@ -209,10 +209,10 @@ const jsonLd = {
         },
         {
           "@type": "Question",
-          name: "Vivilov est-il payant ?",
+          name: "Tiluu est-il payant ?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Vivilov ne propose aucun abonnement. L'app repose sur l'achat de packs de Vibes pour des actions premium : super-like, boost, cadeaux virtuels, rewind, passport, icebreaker IA, etc.",
+            text: "Tiluu ne propose aucun abonnement. L'app repose sur l'achat de packs de Vibes pour des actions premium : super-like, boost, cadeaux virtuels, rewind, passport, icebreaker IA, etc.",
           },
         },
         {

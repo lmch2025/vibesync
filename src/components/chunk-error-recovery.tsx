@@ -18,7 +18,7 @@
 //    les recompilations (faux positifs).
 import { useEffect } from "react";
 
-const KEY = "vivilov:chunk-reloads";
+const KEY = "tiluu:chunk-reloads";
 const MAX_RELOADS_PER_WINDOW = 2;
 const STABLE_RESET_MS = 20000;
 

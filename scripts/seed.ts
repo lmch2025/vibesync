@@ -1,4 +1,4 @@
-// Vivilov seed — populates demo profiles, gifts, exchange rates, admin.
+// Tiluu seed — populates demo profiles, gifts, exchange rates, admin.
 // Run with: bun run scripts/seed.ts
 import { PrismaClient } from "@prisma/client";
 import { GIFTS, FALLBACK_RATES, WELCOME_GEMS } from "../src/lib/vibe/constants";
@@ -93,7 +93,7 @@ const PROFILES = [
 ];
 
 async function main() {
-  console.log("Seeding Vivilov...");
+  console.log("Seeding Tiluu...");
 
   // 1. Gifts catalog
   for (const g of GIFTS) {
@@ -194,7 +194,7 @@ async function main() {
     create: {
       phone: adminPhone,
       role: "admin",
-      name: "Admin Vivilov",
+      name: "Admin Tiluu",
       currency: "EUR",
       country: "FR",
       gems: 99999,

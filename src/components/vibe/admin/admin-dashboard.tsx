@@ -24,7 +24,7 @@ import type { AdminSectionId, AdminStats } from "./types";
 const SECTION_TITLES: Record<AdminSectionId, { title: string; subtitle: string }> = {
   overview: {
     title: "Vue d'ensemble",
-    subtitle: "Pilotage temps réel de l'économie Vivilov",
+    subtitle: "Pilotage temps réel de l'économie Tiluu",
   },
   users: {
     title: "Utilisateurs",
@@ -280,11 +280,11 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             </span>
             <Separator />
             <span>
-              {ADMIN_NAV.length} modules · Vivilov Console
+              {ADMIN_NAV.length} modules · Tiluu Console
             </span>
             <Separator />
             <span className="ml-auto">
-              © {year} Vivilov — Démo admin
+              © {year} Tiluu — Démo admin
             </span>
           </div>
         </footer>

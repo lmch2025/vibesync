@@ -1,4 +1,4 @@
-// Vivilov "Vibes" economy (the convivial name for the in-app currency),
+// Tiluu "Vibes" economy (the convivial name for the in-app currency),
 // gift catalog, Vibes packs, price tiers, vibe questions.
 // Source of truth for both server (API routes) and client (UI display).
 

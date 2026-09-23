@@ -11,7 +11,7 @@
 //     so the user sees the buff's duration ticking down
 //   - Auto-dismiss after 4s for non-buff actions (icebreaker, seeLikes,
 //     etc.); buff actions stay open until the user taps "Continuer"
-//   - Dispatches `vivilov:buff-activated` custom event so the
+//   - Dispatches `tiluu:buff-activated` custom event so the
 //     ActiveBuffsSection refreshes instantly
 //
 // Controlled component: parent owns `open` state.
@@ -23,7 +23,7 @@ import { CountdownRing } from "./countdown-ring";
 import { ConfettiBurst, haptic } from "./interactive-animations";
 import type { BuffType } from "@/lib/vibe/use-active-buffs";
 
-const BUFF_ACTIVATED_EVENT = "vivilov:buff-activated";
+const BUFF_ACTIVATED_EVENT = "tiluu:buff-activated";
 
 const BUFF_TYPES: BuffType[] = [
   "boost",

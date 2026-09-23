@@ -12,8 +12,8 @@
 
 export type NudgeScope = "session" | "day";
 
-const SESSION_KEY = "vivilov:nudges:session";
-const DAY_KEY = "vivilov:nudges:day";
+const SESSION_KEY = "tiluu:nudges:session";
+const DAY_KEY = "tiluu:nudges:day";
 
 function readSet(store: Storage | null, key: string): Set<string> {
   if (!store) return new Set();

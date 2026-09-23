@@ -140,8 +140,8 @@ export function SwipeScreen({
   // superRewind, passport, boost — dispatched by the premium sheet).
   useEffect(() => {
     const onRefresh = () => loadDeck();
-    window.addEventListener("vivilov:deck-refresh", onRefresh);
-    return () => window.removeEventListener("vivilov:deck-refresh", onRefresh);
+    window.addEventListener("tiluu:deck-refresh", onRefresh);
+    return () => window.removeEventListener("tiluu:deck-refresh", onRefresh);
   }, [loadDeck]);
 
   // When a premium action / gift redirects to the purchase page
@@ -149,8 +149,8 @@ export function SwipeScreen({
   // automatically after a successful pack purchase.
   useEffect(() => {
     const closeGiftTray = () => setGiftTarget(null);
-    window.addEventListener("vivilov:go-buy-vibes", closeGiftTray);
-    return () => window.removeEventListener("vivilov:go-buy-vibes", closeGiftTray);
+    window.addEventListener("tiluu:go-buy-vibes", closeGiftTray);
+    return () => window.removeEventListener("tiluu:go-buy-vibes", closeGiftTray);
   }, []);
 
   // The header 👑 Premium button (and this screen's nudges) open the
@@ -169,8 +169,8 @@ export function SwipeScreen({
         setPassportSheet(true);
       }
     };
-    window.addEventListener("vivilov:open-premium-contextual", openContextual);
-    return () => window.removeEventListener("vivilov:open-premium-contextual", openContextual);
+    window.addEventListener("tiluu:open-premium-contextual", openContextual);
+    return () => window.removeEventListener("tiluu:open-premium-contextual", openContextual);
   }, [deck]);
 
   /// Circumstantial recommendations — the deck loaded is the best moment to
@@ -183,7 +183,7 @@ export function SwipeScreen({
     const hour = new Date().getHours();
 
     const openPremium = () =>
-      window.dispatchEvent(new Event("vivilov:open-premium-contextual"));
+      window.dispatchEvent(new Event("tiluu:open-premium-contextual"));
 
     // Low balance → proactive (and gentle) recharge suggestion. Only when
     // the user can't even afford a Super-Like anymore — once/day max, and
@@ -314,7 +314,7 @@ export function SwipeScreen({
               emoji: "❄️",
               text: t("swipe.nudge.timeFreeze.text"),
               ctaLabel: t("swipe.nudge.timeFreeze.cta"),
-              onCta: () => window.dispatchEvent(new Event("vivilov:open-premium-contextual")),
+              onCta: () => window.dispatchEvent(new Event("tiluu:open-premium-contextual")),
               tone: "cool",
             },
             "session",
@@ -335,7 +335,7 @@ export function SwipeScreen({
             emoji: "🚀",
             text: t("swipe.nudge.boostStreak.text", { n: likeStreakRef.current }),
             ctaLabel: t("swipe.nudge.boostStreak.cta"),
-            onCta: () => window.dispatchEvent(new Event("vivilov:open-premium-contextual")),
+            onCta: () => window.dispatchEvent(new Event("tiluu:open-premium-contextual")),
             tone: "gold",
           },
           "session",
@@ -350,7 +350,7 @@ export function SwipeScreen({
             emoji: "🔦",
             text: t("swipe.nudge.spotlight.text"),
             ctaLabel: t("swipe.nudge.spotlight.cta"),
-            onCta: () => window.dispatchEvent(new Event("vivilov:open-premium-contextual")),
+            onCta: () => window.dispatchEvent(new Event("tiluu:open-premium-contextual")),
             tone: "gold",
           },
           "day",
