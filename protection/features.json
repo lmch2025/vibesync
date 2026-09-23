@@ -192,14 +192,19 @@
       "nom": "17 actions premium à effet réel (super-like, boost, passport, icebreaker IA…)",
       "statut": "implémentée (effets hétérogènes réels/simulés)",
       "fichiers": [
-        "src/components/vibe/app/premium-actions-sheet.tsx",
-        "src/components/vibe/app/swipe-screen.tsx",
+        "src/app/api/vibe/gems/spend/route.ts",
+        "src/app/api/vibe/me/likes/route.ts",
         "src/components/vibe/app/chat-screen.tsx",
+        "src/components/vibe/app/gift-tray-sheet.tsx",
+        "src/components/vibe/app/likes-viewer.tsx",
+        "src/components/vibe/app/premium-actions-sheet.tsx",
         "src/components/vibe/app/profile-screen.tsx",
+        "src/components/vibe/app/swipe-screen.tsx",
         "src/lib/vibe/constants.ts",
-        "src/app/api/vibe/gems/spend/route.ts"
+        "src/lib/vibe/likes.ts"
       ],
       "routes_api": [
+        "GET /api/vibe/me/likes",
         "POST /api/vibe/gems/spend"
       ]
     },
