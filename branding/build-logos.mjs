@@ -37,6 +37,28 @@ const heartAt = (cx, cy, s, attrs = "") =>
 const sparkAt = (cx, cy, s, attrs = "") =>
   `<path d="${SPARK}" transform="translate(${cx} ${cy}) scale(${s})" ${attrs}/>`;
 
+// Cœur optimisé pour le tracé en contour : creux élargi et plus ouvert
+// (le cœur canonique a un creux trop serré qui se bouche en stroke épais)
+const HEART_S =
+  "M256 404 C170 346 96 292 96 214 C96 146 138 108 186 108 C202 108 212 111 220 118 " +
+  "C234 130 246 150 256 166 C266 150 278 130 292 118 C300 111 310 108 326 108 " +
+  "C374 108 416 146 416 214 C416 292 342 346 256 404 Z";
+
+// Nº7 Infini — deux cœurs couchés (pointes vers l'extérieur, creux au centre)
+// formant le signe ∞, entrelacés dessus-dessous aux deux croisements
+const HS_L = 172.5, HS_R = 339.5, HS_S = 0.62;
+const heartS7 = (side, attrs) =>
+  `<path d="${HEART_S}" transform="translate(${side === "L" ? HS_L : HS_R} 256) rotate(${side === "L" ? 90 : -90}) scale(${HS_S}) translate(-256 -256)" ${attrs}/>`;
+const weave7 = (sL, sR) =>
+  `<g clip-path="url(#c7t)">` +
+  heartS7("L", `fill="none" stroke="${sL}" stroke-width="24" stroke-linejoin="round" mask="url(#m7l)"`) +
+  heartS7("R", `fill="none" stroke="${sR}" stroke-width="24" stroke-linejoin="round"`) +
+  `</g>` +
+  `<g clip-path="url(#c7b)">` +
+  heartS7("R", `fill="none" stroke="${sR}" stroke-width="24" stroke-linejoin="round" mask="url(#m7r)"`) +
+  heartS7("L", `fill="none" stroke="${sL}" stroke-width="24" stroke-linejoin="round"`) +
+  `</g>`;
+
 const lg = (id, x1, y1, x2, y2, stops) =>
   `<linearGradient id="${id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" gradientUnits="userSpaceOnUse">` +
   stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("") +
@@ -140,19 +162,26 @@ const LOGOS = [
     glyph: null,
   },
   {
-    num: 7, id: "infini", name: "Infini", tag: "Boucle",
-    desc: "Deux boucles, une trajectoire sans fin, un cœur au point de rencontre.",
-    chips: ["#FF8A5D", "#E0449C", "#FFB88A"],
+    num: 7, id: "infini", name: "Infini", tag: "Lien",
+    desc: "Deux cœurs entrelacés qui tracent le signe de l'infini : deux personnes, une seule trajectoire sans fin.",
+    chips: ["#FF8A5D", "#E0449C", "#A558E0"],
     bg: "url(#g7a)",
     defs:
       lg("g7a", 256, 16, 256, 496, [[0, "#FF8A5D"], [1, "#E0449C"]]) +
-      lg("g7b", 112, 256, 400, 256, [[0, "#FF5E93"], [1, "#A558E0"]]),
-    icon:
-      `<path d="M256 256 C210 186 112 186 112 256 C112 326 210 326 256 256 C302 186 400 186 400 256 C400 326 302 326 256 256" fill="none" stroke="${IVORY}" stroke-width="36" stroke-linecap="round"/>` +
-      heartAt(256, 256, 0.2, `fill="#FFB88A"`),
-    glyph:
-      `<path d="M256 256 C210 186 112 186 112 256 C112 326 210 326 256 256 C302 186 400 186 400 256 C400 326 302 326 256 256" fill="none" stroke="url(#g7b)" stroke-width="36" stroke-linecap="round"/>` +
-      heartAt(256, 256, 0.2, `fill="#E0449C"`),
+      lg("g7l", 72, 256, 273, 256, [[0, "#FF5E93"], [1, "#E0449C"]]) +
+      lg("g7r", 239, 256, 440, 256, [[0, "#E0449C"], [1, "#A558E0"]]) +
+      `<clipPath id="c7t"><rect x="0" y="0" width="512" height="256"/></clipPath>` +
+      `<clipPath id="c7b"><rect x="0" y="256" width="512" height="256"/></clipPath>` +
+      `<mask id="m7l" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">` +
+      `<rect width="512" height="512" fill="#fff"/>` +
+      heartS7("R", `fill="none" stroke="#000" stroke-width="30"`) +
+      `</mask>` +
+      `<mask id="m7r" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">` +
+      `<rect width="512" height="512" fill="#fff"/>` +
+      heartS7("L", `fill="none" stroke="#000" stroke-width="30"`) +
+      `</mask>`,
+    icon: weave7(IVORY, IVORY),
+    glyph: weave7("url(#g7l)", "url(#g7r)"),
   },
   {
     num: 8, id: "etincelle", name: "Étincelle", tag: "Lumière",
