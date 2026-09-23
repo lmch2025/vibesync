@@ -17,6 +17,8 @@ export type MeUser = {
   freeGems: number;
   walletEurCents: number;
   verified: boolean;
+  // « Voir mes Likes » — fin de la fenêtre d'accès payante (ISO), null = inactive
+  seeLikesUntil?: string | null;
   onboardingComplete: boolean;
   profile: {
     id: string;

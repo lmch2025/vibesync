@@ -16,6 +16,7 @@ import { WalletScreen } from "./wallet-screen";
 import { ProfileScreen } from "./profile-screen";
 import { MatchOverlay } from "./match-overlay";
 import { PremiumActionsSheet } from "./premium-actions-sheet";
+import { LikesAccessButton, LikesViewer } from "./likes-viewer";
 import { StreakReward } from "./streak-reward";
 import { NotificationBell } from "./notification-bell";
 import { PwaInstallPrompt } from "./pwa-install-prompt";
@@ -214,10 +215,24 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
         }}
       />
 
-      {/* Streak indicator + premium actions — only when not in chat */}
+      {/* « Voir mes Likes » — viewer plein écran auto-géré (événements
+          tiluu:open-likes / tiluu:seeLikes-granted) + pilule d'accès
+          persistante ❤️ mm:ss (LikesAccessButton, cluster haut-droit). */}
+      <LikesViewer
+        onMatch={(m) => setMatch(m)}
+        onOpenChat={(target) => {
+          setChatTarget(target);
+          selectTab("matches");
+        }}
+        onExtend={() => setPremiumOpen(true)}
+      />
+
+      {/* Streak indicator + premium actions + pilule d'accès « Voir mes Likes »
+          (rendue null hors fenêtre d'accès = zéro clutter) — only when not in chat */}
       {!chatTarget && (
         <>
           <div className="absolute top-3 right-3 z-40 flex items-center gap-2">
+            <LikesAccessButton />
             <StreakReward />
             <NotificationBell />
             {/* 👑 Premium — single, explicit, enticing entry point. On the

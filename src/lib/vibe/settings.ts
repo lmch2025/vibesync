@@ -14,6 +14,7 @@ export type AppSettings = {
   platformCommission: number; // fraction 0..1
   withdrawalThresholdEur: number;
   welcomeGems: number;
+  seeLikesWindowMin: number; // minutes — durée de la fenêtre d'accès « Voir mes Likes » (défaut 5)
   // Video configuration
   videoMaxDuration: number; // seconds (default 15)
   videoMaxCount: number; // max videos per profile (default 3)
@@ -42,6 +43,7 @@ const DEFAULTS: AppSettings = {
   platformCommission: PLATFORM_COMMISSION,
   withdrawalThresholdEur: WITHDRAWAL_THRESHOLD_EUR,
   welcomeGems: WELCOME_GEMS,
+  seeLikesWindowMin: 5,
   videoMaxDuration: 15,
   videoMaxCount: 3,
   videoMaxWidth: 480,
@@ -87,6 +89,7 @@ export async function getSettings(): Promise<AppSettings> {
       platformCommission: Number(map.platformCommission) || DEFAULTS.platformCommission,
       withdrawalThresholdEur: Number(map.withdrawalThresholdEur) || DEFAULTS.withdrawalThresholdEur,
       welcomeGems: Number(map.welcomeGems) || DEFAULTS.welcomeGems,
+      seeLikesWindowMin: Math.min(1440, Math.max(1, numOr(map.seeLikesWindowMin, DEFAULTS.seeLikesWindowMin))),
       videoMaxDuration: Number(map.videoMaxDuration) || DEFAULTS.videoMaxDuration,
       videoMaxCount: Number(map.videoMaxCount) || DEFAULTS.videoMaxCount,
       videoMaxWidth: Number(map.videoMaxWidth) || DEFAULTS.videoMaxWidth,

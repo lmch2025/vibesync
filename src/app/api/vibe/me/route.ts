@@ -23,6 +23,8 @@ export async function GET() {
       freeGems: user.freeGems,
       walletEurCents: user.walletEurCents,
       verified: user.verified,
+      // « Voir mes Likes » — fin de la fenêtre d'accès payante (ISO | null)
+      seeLikesUntil: user.seeLikesUntil ? user.seeLikesUntil.toISOString() : null,
       onboardingComplete: user.onboardingComplete,
       profile: user.profile
         ? {

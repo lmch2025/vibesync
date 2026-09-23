@@ -18,6 +18,7 @@ const DEFAULTS: Record<string, string> = {
   platformCommission: String(PLATFORM_COMMISSION),
   withdrawalThresholdEur: String(WITHDRAWAL_THRESHOLD_EUR),
   welcomeGems: String(WELCOME_GEMS),
+  seeLikesWindowMin: "5",
   videoMaxDuration: "15",
   videoMaxCount: "3",
   videoMaxWidth: "480",

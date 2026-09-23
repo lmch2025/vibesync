@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, MapPin, MessageSquare, Percent, Wallet, Gift, Video, Check, Loader2, Sparkles, Upload, Trash2, Film, Wand2 } from "lucide-react";
+import { Save, MapPin, MessageSquare, Percent, Wallet, Gift, Video, Check, Loader2, Sparkles, Upload, Trash2, Film, Wand2, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +58,8 @@ export function Settings() {
   const [commission, setCommission] = useState(Math.round(PLATFORM_COMMISSION * 100));
   const [withdrawal, setWithdrawal] = useState(WITHDRAWAL_THRESHOLD_EUR);
   const [welcomeGems, setWelcomeGems] = useState(WELCOME_GEMS);
+  // Durée de la fenêtre d'accès « Voir mes Likes » (minutes, défaut 5)
+  const [seeLikesWindowMin, setSeeLikesWindowMin] = useState(5);
   const [videoMaxDuration, setVideoMaxDuration] = useState(15);
   const [videoMaxCount, setVideoMaxCount] = useState(3);
   const [videoMaxWidth, setVideoMaxWidth] = useState(480);
@@ -113,6 +115,8 @@ export function Settings() {
           setWPopularity(nOr(s.recWeightPopularity, 10));
           setBoostMultiplier(nOr(s.recBoostMultiplier, 2));
           setDeckSize(nOr(s.deckSize, 12));
+          // « Voir mes Likes » — clamp 1..60 (slider bounds).
+          setSeeLikesWindowMin(Math.min(60, Math.max(1, nOr(s.seeLikesWindowMin, 5))));
         }
       } catch {
         /* ignore */
@@ -136,6 +140,7 @@ export function Settings() {
             platformCommission: String(commission / 100),
             withdrawalThresholdEur: String(withdrawal),
             welcomeGems: String(welcomeGems),
+            seeLikesWindowMin: String(seeLikesWindowMin),
             videoMaxDuration: String(videoMaxDuration),
             videoMaxCount: String(videoMaxCount),
             videoMaxWidth: String(videoMaxWidth),
@@ -288,6 +293,29 @@ export function Settings() {
               onChange={(e) => setWelcomeGems(Number(e.target.value))}
               className="rounded-xl"
             />
+          </FieldRow>
+        </div>
+
+        <div className="px-5">
+          <FieldRow
+            icon={<Timer className="h-4 w-4" />}
+            title="Durée d'accès « Voir mes Likes »"
+            description="Après l'achat (20 💎), l'utilisateur garde un accès persistant à la liste de ses likes pendant cette durée (minutes)."
+          >
+            <div className="space-y-3">
+              <Slider
+                value={[seeLikesWindowMin]}
+                onValueChange={(v) => setSeeLikesWindowMin(v[0] ?? 5)}
+                min={1}
+                max={60}
+                step={1}
+              />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>1 min</span>
+                <span className="font-semibold text-foreground tabular-nums">{seeLikesWindowMin} min</span>
+                <span>60 min</span>
+              </div>
+            </div>
           </FieldRow>
         </div>
       </div>

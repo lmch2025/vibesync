@@ -15,8 +15,7 @@ import { GEM_ACTIONS } from "@/lib/vibe/constants";
 import { toast } from "sonner";
 import { CompletionRing } from "./completion-ring";
 import { ActiveBuffsSection } from "./active-buffs-section";
-import { PremiumActionsSheet, EffectResult, type ActionResult } from "./premium-actions-sheet";
-import { ActionSuccessModal } from "./action-success-modal";
+import { PremiumActionsSheet } from "./premium-actions-sheet";
 import { canShowNudge, markNudgeShown } from "@/lib/vibe/nudges";
 import { Input } from "@/components/ui/input";
 import { ConfettiBurst, AnimatedNumber, haptic, sfx, useSfxEnabled } from "./interactive-animations";
@@ -72,8 +71,6 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
   // Ouvre le catalogue complet des actions premium (CTA de la section
   // « Actions actives » : état vide ou « Prolonger » d'une action active).
   const [premiumOpen, setPremiumOpen] = useState(false);
-  // Résultat « Voir les likes » — affiché dans le modal de succès partagé.
-  const [seeLikesResult, setSeeLikesResult] = useState<ActionResult | null>(null);
   // Carte de discrétion (Mode Fantôme) — suggérée une fois par jour.
   // Sémantique « vue » : visible tant qu'elle n'a pas été écartée aujourd'hui
   // (robuste au rechargement de page — elle ne disparaît jamais sans avoir
@@ -308,11 +305,23 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
         const res = await fetch("/api/vibe/gems/spend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        patchMe({ gems: data.gems, freeGems: data.freeGems });
+        patchMe({
+          gems: data.gems,
+          freeGems: data.freeGems,
+          // seeLikes — fin de la fenêtre d'accès persistante : la pilule
+          // discrète ❤️ mm:ss (LikesAccessButton) apparaît immédiatement.
+          ...(action === "seeLikes" && data.until ? { seeLikesUntil: data.until } : {}),
+        });
         if (action === "seeLikes") {
-          // Résultat complet (likers réels + visiteurs fantômes) via le
-          // modal de succès partagé — pas un simple toast.
-          setSeeLikesResult(data);
+          // La fenêtre d'accès persistante (Task 5) remplace l'ancien modal
+          // auto-fermé (4 s) : le payload riche du paiement est remis au
+          // LikesViewer (niveau app) qui s'ouvre instantanément — c'est lui
+          // la célébration (grille, like en retour = match, cadeau → chat).
+          window.dispatchEvent(
+            new CustomEvent("tiluu:seeLikes-granted", {
+              detail: { until: data.until, likers: data.likers, hiddenByGhost: data.hiddenByGhost },
+            }),
+          );
         }
         if (action === "passport") {
           vibeToast({
@@ -910,16 +919,6 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
       {/* Catalogue complet des actions premium — ouvert par la section
           « Actions actives » (état vide → « Découvrir », détail → « Prolonger »). */}
       <PremiumActionsSheet open={premiumOpen} onOpenChange={setPremiumOpen} startInPassportPick={false} />
-
-      {/* Résultat complet de « Voir les likes » — modal de succès partagé */}
-      <ActionSuccessModal
-        open={seeLikesResult !== null}
-        onOpenChange={(o) => { if (!o) setSeeLikesResult(null); }}
-        emoji="👁️"
-        title={t("profile.seeLikes.title")}
-        message={t("profile.seeLikes.message")}
-        result={seeLikesResult ? <EffectResult result={seeLikesResult} /> : undefined}
-      />
     </motion.div>
   );
 }

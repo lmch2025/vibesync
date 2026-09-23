@@ -36,7 +36,13 @@ export type ActionResult = {
   freeGems?: number;
   peek?: { id: string; displayName: string; age: number; city: string; posterUrl?: string }[];
   online?: { id: string; displayName: string; age: number; city: string; posterUrl?: string; distanceKm: number; lastActive: string }[];
-  likers?: { id: string; displayName: string; age: number; city: string; posterUrl?: string; direction: string }[];
+  /// seeLikes — likers en FORMAT RICHE (contrat gelé Task 5 : mêmes champs
+  /// que GET /api/vibe/me/likes — profil complet + état d'interaction) :
+  /// le LikesViewer consomme ce payload directement, sans refetch.
+  likers?: LikerResult[];
+  /// seeLikes — fin de la fenêtre d'accès persistante (ISO) + durée admin.
+  until?: string;
+  windowMin?: number;
   ghostTease?: number;
   hiddenByGhost?: number;
   score?: number;
@@ -52,6 +58,37 @@ export type ActionResult = {
   deckRefresh?: boolean;
   icebreaker?: string;
   error?: string;
+};
+
+/// Liker « riche » — sur-ensemble du format minimal historique (id, prénom,
+/// âge, ville, poster, direction). Les champs riches (bio, médias, statut
+/// d'interaction…) ne sont présents que pour seeLikes (paiement) — tous
+/// optionnels pour ne rien casser aux autres consommateurs du type
+/// (EffectResult, profile-screen). Miroir exact du RichLiker de
+/// likes-viewer.tsx (contrat gelé avec lib/vibe/likes.ts côté serveur).
+export type LikerResult = {
+  id: string;
+  displayName: string;
+  age: number;
+  city: string;
+  posterUrl?: string;
+  direction: string;
+  bio?: string;
+  videoUrl?: string;
+  videoDuration?: number;
+  gender?: string;
+  vibeQuestion?: string;
+  vibeAnswer?: string;
+  verified?: boolean;
+  likedAt?: string;
+  myDirection?: "like" | "superlike" | "pass" | null;
+  matched?: boolean;
+  matchId?: string | null;
+  videos?: { url: string; poster: string }[];
+  photos?: string[];
+  lookingFor?: string;
+  relationshipType?: string;
+  distanceKm?: number | null;
 };
 
 type ActiveEffect = {
@@ -297,6 +334,24 @@ export function PremiumActionsSheet({
         });
         const data: ActionResult = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Erreur");
+        // « Voir mes Likes » — la fenêtre d'accès persistante REMPLACE le
+        // modal de succès auto-fermé : le paiement pose seeLikesUntil sur le
+        // compte, on patche le store (solde + fin de fenêtre → la pilule
+        // discrète ❤️ mm:ss apparaît) et on remet le payload riche au
+        // LikesViewer (niveau app) qui s'ouvre instantanément — c'est LUI
+        // la célébration (grille, vue détaillée, like en retour = match
+        // instantané, cadeau → conversation). Pas de setActiveEffect ici.
+        if (action.key === "seeLikes" && data.until) {
+          patchMe({ gems: data.gems, freeGems: data.freeGems, seeLikesUntil: data.until });
+          window.dispatchEvent(
+            new CustomEvent("tiluu:seeLikes-granted", {
+              detail: { until: data.until, likers: data.likers, hiddenByGhost: data.hiddenByGhost },
+            }),
+          );
+          setPassportPick(false);
+          onOpenChange(false);
+          return; // le viewer EST la célébration — pas de modal de succès
+        }
         patchMe({ gems: data.gems, freeGems: data.freeGems });
         // No toast here — the shared ActionSuccessModal below IS the
         // celebration (emoji, label, buff countdown + combo tip). A stacked

@@ -41,6 +41,7 @@ model User {
   dailyDoubleUntil DateTime?
   crushAlertUntil DateTime?
   goldenHeartUntil DateTime?
+  seeLikesUntil DateTime? // « Voir mes Likes » access window (paid reveal, duration admin-configurable)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

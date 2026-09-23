@@ -19,7 +19,10 @@
 //   superRewind  → deletes the last 5 swipes (profiles return to the deck)
 //   rewind       → deletes the last swipe
 //   vibeRadar    → real distances, excludes swiped + ghost-mode profiles
-//   seeLikes     → real likers (ghost-mode likers stay hidden)
+//   seeLikes     → real likers (ghost-mode likers stay hidden) + persistent
+//                  access window User.seeLikesUntil (duration admin-
+//                  configurable via settings.seeLikesWindowMin, default 5 min)
+//                  — the list stays reachable via GET /api/vibe/me/likes
 //   moodRing     → deterministic daily mood derived from the target profile
 //   crushAlert   → real 💘 notification to the target + sender buff (1 h)
 //   goldenHeart  → super-like on the target + 💛 notification + priority
@@ -34,6 +37,8 @@ import { GEM_ACTIONS, GemActionKey } from "@/lib/vibe/constants";
 import { notify, notifyMatch } from "@/lib/vibe/notify";
 import { getUserLang, tFor } from "@/lib/vibe/i18n/server";
 import { isValidLang, type Lang } from "@/lib/vibe/i18n/core";
+import { getSettings } from "@/lib/vibe/settings";
+import { getLikersWithStatus } from "@/lib/vibe/likes";
 
 /// Great-circle distance between two (lat, lng) points, in km.
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -106,6 +111,10 @@ export async function POST(req: Request) {
   const now = Date.now();
   const lang: Lang = isValidLang(user.lang) ? (user.lang as Lang) : "fr";
   const myName = user.profile?.displayName ?? tFor(lang, "premiumSrv.someone");
+
+  // « Voir mes Likes » — durée de la fenêtre d'accès persistante ouverte par
+  // l'achat (admin-configurable via settings.seeLikesWindowMin, défaut 5 min).
+  const seeLikesWindowMin = key === "seeLikes" ? (await getSettings()).seeLikesWindowMin : 5;
 
   // Execute the action-specific effect inside a transaction.
   const effect: Record<string, any> = {};
@@ -272,45 +281,36 @@ export async function POST(req: Request) {
         break;
       }
       case "seeLikes": {
-        // Reveal who liked me. Ghost-mode likers stay invisible (real effect).
+        // Reveal who liked me (ghost-mode likers stay invisible — real
+        // effect) AND open a persistent access window: seeLikesUntil is set
+        // on the user so the list stays reachable from the header pill via
+        // GET /api/vibe/me/likes until it expires.
         const myProfile = user.profile
           ? { id: user.profile.id }
           : await tx.profile.findUnique({ where: { userId: user.id }, select: { id: true } });
+        const until = new Date(now + seeLikesWindowMin * 60_000);
+        await tx.user.update({ where: { id: user.id }, data: { seeLikesUntil: until } });
+        effect.until = until.toISOString();
+        effect.windowMin = seeLikesWindowMin;
         if (myProfile) {
-          const likes = await tx.swipe.findMany({
-            where: {
-              toProfileId: myProfile.id,
-              direction: { in: ["like", "superlike"] },
-            },
-            include: {
-              fromUser: { include: { profile: true } },
-            },
-            take: 8,
-            orderBy: { createdAt: "desc" },
-          });
-          const visible = likes.filter(
-            (l) => !l.fromUser.ghostModeUntil || l.fromUser.ghostModeUntil.getTime() <= now,
+          const { likers, hiddenByGhost } = await getLikersWithStatus(
+            tx,
+            { id: user.id, profileId: myProfile.id, lat: user.profile?.lat, lng: user.profile?.lng },
           );
-          effect.likers = visible.map((l) => ({
-            id: l.fromUser.profile?.id ?? "",
-            displayName: l.fromUser.profile?.displayName ?? "Anonyme",
-            age: l.fromUser.profile?.age ?? 0,
-            city: l.fromUser.profile?.city ?? "",
-            posterUrl: l.fromUser.profile?.posterUrl || "/profiles/lea.png",
-            direction: l.direction,
-          }));
-          effect.hiddenByGhost = likes.length - visible.length;
+          effect.likers = likers;
+          effect.hiddenByGhost = hiddenByGhost;
           // Honest tease: some likers browse in ghost mode — don't fake
           // profiles over them, tell the user they're hidden.
-          if (effect.likers.length === 0 && likes.length > 0) {
-            effect.likers = [];
-            effect.ghostTease = likes.length;
-          } else if (effect.likers.length === 0) {
+          if (likers.length === 0 && hiddenByGhost > 0) {
+            effect.ghostTease = hiddenByGhost;
+          } else if (likers.length === 0) {
             // PRODUCTION: never fabricate likers. An honest empty answer is
             // the real product truth — no fake "Mystère/Secret" profiles.
-            effect.likers = [];
             effect.message = tFor(lang, "premiumSrv.seeLikesEmpty");
           }
+        } else {
+          effect.likers = [];
+          effect.hiddenByGhost = 0;
         }
         break;
       }
