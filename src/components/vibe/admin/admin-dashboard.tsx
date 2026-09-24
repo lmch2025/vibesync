@@ -17,6 +17,7 @@ import { RevenueChart, RetentionChart, GiftsChart } from "./charts";
 import { UsersTable } from "./users-table";
 import { ModerationQueue } from "./moderation-queue";
 import { GiftCatalog } from "./gift-catalog";
+import { Payments } from "./payments";
 import { Analytics } from "./analytics";
 import { Settings } from "./settings";
 import type { AdminSectionId, AdminStats } from "./types";
@@ -37,6 +38,10 @@ const SECTION_TITLES: Record<AdminSectionId, { title: string; subtitle: string }
   gifts: {
     title: "Cadeaux",
     subtitle: "Catalogue des cadeaux virtuels et tarification",
+  },
+  payments: {
+    title: "Paiements",
+    subtitle: "Agrégateur My-CoolPay — achats de Vibes et retraits Mobile Money",
   },
   analytics: {
     title: "Analytics",
@@ -256,6 +261,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             {section === "moderation" && <ModerationQueue />}
 
             {section === "gifts" && <GiftCatalog />}
+
+            {section === "payments" && <Payments />}
 
             {section === "analytics" && (
               <Analytics

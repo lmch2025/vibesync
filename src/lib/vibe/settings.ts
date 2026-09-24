@@ -35,6 +35,14 @@ export type AppSettings = {
   deckSize: number; // profiles returned per deck fetch
   // ── Apparence — page d'accueil ──
   landingVideoUrl: string; // vidéo de fond (Vercel Blob), "" ⇒ vidéo locale par défaut
+  // ── Paiements — agrégateur My-CoolPay (achats Vibes + payouts Mobile Money) ──
+  payMode: "sandbox" | "live" | "off"; // sandbox (clé test) | live (clés réelles) | off (démo, crédit immédiat)
+  payPublicKey: string; // clé publique marchand (env fallback MYCOOLPAY_PUBLIC_KEY)
+  payPrivateKey: string; // clé privée (env fallback MYCOOLPAY_PRIVATE_KEY) — jamais exposée au client
+  payCurrency: "XAF" | "EUR"; // devise de facturation des packs
+  payIpCheck: boolean; // vérifier l'IP source du callback (15.236.140.89)
+  payAutoPayout: boolean; // exécuter automatiquement les payouts Mobile Money via l'API
+  payCallbackSecret: string; // segment secret de l'URL de callback
 };
 
 const DEFAULTS: AppSettings = {
@@ -59,6 +67,15 @@ const DEFAULTS: AppSettings = {
   recBoostMultiplier: 2,
   deckSize: 12,
   landingVideoUrl: "",
+  // ── Paiements My-CoolPay ──
+  payMode: (process.env.MYCOOLPAY_MODE as "sandbox" | "live") === "live" ? "live" : "sandbox",
+  // NOTE : payMode peut aussi valoir "off" via la Setting admin (démo sans paiement réel).
+  payPublicKey: process.env.MYCOOLPAY_PUBLIC_KEY || "",
+  payPrivateKey: process.env.MYCOOLPAY_PRIVATE_KEY || "",
+  payCurrency: "XAF",
+  payIpCheck: false,
+  payAutoPayout: true,
+  payCallbackSecret: "",
 };
 
 /// Cache settings in-memory with a SHORT TTL (15s). A process-lifetime cache
@@ -107,6 +124,17 @@ export async function getSettings(): Promise<AppSettings> {
       recBoostMultiplier: numOr(map.recBoostMultiplier, DEFAULTS.recBoostMultiplier),
       deckSize: Math.min(50, Math.max(4, numOr(map.deckSize, DEFAULTS.deckSize))),
       landingVideoUrl: typeof map.landingVideoUrl === "string" ? map.landingVideoUrl : "",
+      // ── Paiements My-CoolPay — les clés Setting ont priorité sur l'env ──
+      payMode: map.payMode === "live" ? "live" : map.payMode === "off" ? "off" : map.payMode === "sandbox" ? "sandbox" : DEFAULTS.payMode,
+      payPublicKey: map.payPublicKey || DEFAULTS.payPublicKey,
+      payPrivateKey: map.payPrivateKey || DEFAULTS.payPrivateKey,
+      payCurrency: map.payCurrency === "EUR" ? "EUR" : "XAF",
+      payIpCheck: map.payIpCheck === "on",
+      // NOTE : bug fix (agent A, task 4-a) — la clé Setting documentée est
+      // "payAutoPayout" (worklog task 1) mais on lisait "payAutoP" (clé jamais
+      // écrite) → le réglage admin "auto-payout OFF" était sans effet.
+      payAutoPayout: map.payAutoPayout !== "off",
+      payCallbackSecret: map.payCallbackSecret || "",
     };
     cachedAt = Date.now();
     return cached;

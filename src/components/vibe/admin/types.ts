@@ -64,6 +64,7 @@ export type AdminSectionId =
   | "users"
   | "moderation"
   | "gifts"
+  | "payments"
   | "analytics"
   | "settings";
 

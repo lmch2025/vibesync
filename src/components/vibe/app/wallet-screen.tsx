@@ -20,6 +20,8 @@ import { useCurrency } from "@/lib/vibe/use-currency";
 import { formatIn } from "@/lib/vibe/currency";
 import { GEM_PACKS, GEM_ACTIONS, WITHDRAWAL_THRESHOLD_EUR, PLATFORM_COMMISSION } from "@/lib/vibe/constants";
 import { WithdrawModal } from "./withdraw-modal";
+import { PAY_RETURN_STORAGE_KEY } from "./payment-return-overlay";
+import { resumePendingVibes } from "./pending-vibes-resume";
 import { AnimatedNumber, SuccessBounce, TabIndicator, celebrate, sfx } from "./interactive-animations";
 import { vibeToast } from "./center-feedback";
 import { toast } from "sonner";
@@ -142,13 +144,39 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
 
   async function buy(packId: string) {
     setBuying(packId);
+    // My-CoolPay redirect unloads the page — don't clear the spinner then.
+    let redirecting = false;
     try {
-      const res = await fetch("/api/vibe/gems/purchase", {
+      const res = await fetch("/api/vibe/pay/initiate", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ packId, currency }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
+      // Real hosted checkout (My-CoolPay) — brief redirect state, remember
+      // the return context for the payment-return overlay, then leave for
+      // the payment page (Orange Money, MTN MoMo, VISA/MC).
+      if (data.mode === "mycoolpay" && data.paymentUrl) {
+        redirecting = true;
+        try {
+          sessionStorage.setItem(
+            PAY_RETURN_STORAGE_KEY,
+            JSON.stringify({ appRef: data.appRef, packId }),
+          );
+        } catch {
+          /* private mode — the ?ref= return param still carries the ref */
+        }
+        vibeToast({ emoji: "💳", title: t("pay.redirecting"), sub: t("pay.redirectingSub") });
+        // Let the spinner breathe (~600 ms) so the tap doesn't feel dropped.
+        await new Promise((r) => setTimeout(r, 600));
+        // Leave for the hosted checkout (assign → browser Back returns to the app).
+        window.location.assign(data.paymentUrl);
+        return;
+      }
+
+      // mode "mock" — instant credit (demo / provider off): the exact
+      // legacy /gems/purchase success flow.
       patchMe({ gems: data.gems, freeGems: data.freeGems });
       vibeToast({ emoji: "💎", title: t("wallet.bonus", { n: data.added }), sub: t("wallet.recharged") });
       // Immersive purchase feedback: coin sound, haptic pulse, confetti shower.
@@ -163,17 +191,9 @@ export function WalletScreen({ onBack }: { onBack: () => void }) {
       // redirect (premium action or gift), re-run the pending action now
       // that the balance is topped up. The action shows its own success
       // feedback (modal / toast / confetti).
-      const resume = useVibe.getState().takePendingVibes();
-      if (resume) {
-        vibeToast({
-          emoji: "✨",
-          title: t("wallet.resumeTitle"),
-          sub: t("wallet.resumeSub"),
-        });
-        window.setTimeout(resume, 700);
-      }
+      resumePendingVibes(t);
     } catch (e: any) { toast.error(apiErr(e.message) || t("wallet.error")); }
-    finally { setBuying(null); }
+    finally { if (!redirecting) setBuying(null); }
   }
 
   const loadTxs = useCallback(async (silent = false) => {

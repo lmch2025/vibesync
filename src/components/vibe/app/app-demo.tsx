@@ -21,6 +21,7 @@ import { StreakReward } from "./streak-reward";
 import { NotificationBell } from "./notification-bell";
 import { PwaInstallPrompt } from "./pwa-install-prompt";
 import { NotificationPermissionPrompt } from "./notification-permission-prompt";
+import { PaymentReturnOverlay } from "./payment-return-overlay";
 import { GemBadge } from "@/components/vibe/gem-badge";
 import { sfx, haptic } from "@/components/vibe/app/interactive-animations";
 import { CenterFeedbackLayer, vibeToast } from "./center-feedback";
@@ -279,6 +280,19 @@ export function AppDemo({ onExit }: { onExit: () => void }) {
 
       {/* Retours d'action élégants — carte glass centrée (jamais sur le header) */}
       <CenterFeedbackLayer />
+
+      {/* Retour de paiement My-CoolPay — monte en veille : ne s'active que si
+          un retour de checkout est détecté (?ref=tiluu_… / contexte persisté
+          avant la redirection). Rend null sinon (et rien du tout si non
+          connecté — il n'est monté que dans la branche authentifiée). */}
+      <PaymentReturnOverlay
+        onGoWallet={() => {
+          setChatTarget(null);
+          setMatch(null);
+          setPremiumOpen(false);
+          setTab("wallet");
+        }}
+      />
     </Shell>
   );
 }

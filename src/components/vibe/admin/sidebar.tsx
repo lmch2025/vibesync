@@ -6,6 +6,7 @@ import {
   Users,
   ShieldCheck,
   Gift,
+  CreditCard,
   BarChart3,
   Settings,
   ArrowLeft,
@@ -26,6 +27,7 @@ const NAV: NavItem[] = [
   { id: "users", label: "Utilisateurs", icon: Users },
   { id: "moderation", label: "Modération", icon: ShieldCheck },
   { id: "gifts", label: "Cadeaux", icon: Gift },
+  { id: "payments", label: "Paiements", icon: CreditCard },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "settings", label: "Paramètres", icon: Settings },
 ];

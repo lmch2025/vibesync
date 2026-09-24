@@ -62,6 +62,14 @@ const entries = defineDict(
     "api.invalidLang": "Langue invalide",
     "api.minWithdrawal": "Montant minimum: {{amount}}€",
     "api.maxPhotos": "Maximum {{n}} photos",
+    // ── Paiements My-CoolPay (messages du namespace pay., mappés ici pour
+    // que apiErr() retrouve la clé à partir du message FR exact du serveur) ──
+    "api.payProviderUnavailable": "Le prestataire de paiement est indisponible. Réessaie dans un instant.",
+    "api.payNotFound": "Paiement introuvable",
+    "api.payInProgress": "Un paiement est déjà en cours",
+    "api.payOperatorMissing": "Choisis ton opérateur Mobile Money",
+    "api.payPhoneInvalid": "Numéro Mobile Money invalide (6XXXXXXXX)",
+    "api.payPayoutFailed": "Le transfert Mobile Money a échoué. Tes gains restent sur ton portefeuille.",
     // Messages générés par les libs de compression côté client (repli FR si
     // non enveloppés par apiErr à l'appel).
     "api.compressLoadVideo": "Impossible de charger la vidéo",
@@ -127,6 +135,12 @@ const entries = defineDict(
     "api.invalidLang": "Invalid language",
     "api.minWithdrawal": "Minimum amount: {{amount}}€",
     "api.maxPhotos": "Maximum {{n}} photos",
+    "api.payProviderUnavailable": "The payment provider is unavailable. Try again in a moment.",
+    "api.payNotFound": "Payment not found",
+    "api.payInProgress": "A payment is already in progress",
+    "api.payOperatorMissing": "Choose your Mobile Money operator",
+    "api.payPhoneInvalid": "Invalid Mobile Money number (6XXXXXXXX)",
+    "api.payPayoutFailed": "The Mobile Money transfer failed. Your earnings stay in your wallet.",
     "api.compressLoadVideo": "Could not load the video",
     "api.compressReadImage": "Could not read this image",
     "api.compressFailPhoto": "Compression failed — try another photo.",

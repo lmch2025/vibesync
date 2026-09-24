@@ -57,6 +57,7 @@ model User {
   reportsFiled  VideoReport[] @relation("ReportReporter")
   withdrawals   Withdrawal[]
   notifications Notification[]
+  payments      PaymentTx[]
 }
 
 /// Public dating profile with a 15s video. `videoUrl` stores the compressed
@@ -235,8 +236,11 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
-/// Withdrawal request: user asks to cash out their gift wallet (€) via
-/// Stripe Connect. Status flows: pending → processing → completed | rejected.
+/// Withdrawal request: user asks to cash out their gift wallet (€).
+/// Status flows: pending → processing → completed | rejected.
+/// Mobile Money withdrawals with My-CoolPay auto-payout go straight to
+/// "processing" (provider mycoolpay) and complete on provider callback or
+/// admin sync. Manual methods (stripe) stay "pending" until admin acts.
 model Withdrawal {
   id           String   @id @default(cuid())
   userId       String
@@ -245,8 +249,53 @@ model Withdrawal {
   status       String   @default("pending") // "pending" | "processing" | "completed" | "rejected"
   method       String   @default("stripe") // "stripe" | "mobile_money"
   accountInfo  String?  // Stripe Connect account ID or mobile money number
+  operator    String?  // My-CoolPay payout operator: "CM_OM" (Orange) | "CM_MOMO" (MTN)
+  provider     String   @default("manual") // "manual" | "mycoolpay"
+  appRef       String?  @unique // our app_transaction_ref sent to the provider
+  providerRef  String?  // My-CoolPay transaction_ref
+  fees         Float?   // fees taken by the provider (XAF)
+  failureReason String? // why a payout was rejected/failed
   processedAt  DateTime?
   createdAt    DateTime @default(now())
+}
+
+/// Real-money purchase via the My-CoolPay aggregator (Paylink web flow).
+/// One row per initiated checkout. Gems are credited ONCE (idempotency guard
+/// `credited`) either by the provider callback or by the status-check poll —
+/// whichever confirms SUCCESS first. The credit itself writes a GemTx
+/// (reason "purchase") so wallet history stays unified.
+model PaymentTx {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind        String   @default("gem_pack") // "gem_pack" (future: "premium", ...)
+  packId      String?  // GEM_PACKS id when kind = gem_pack
+  gems        Int      @default(0) // Vibes to credit on success (pack + bonus)
+  bonus       Int      @default(0)
+  packTitle   String?  // snapshot of the pack title at purchase time
+  // ── amounts ──
+  amount      Float    // transaction_amount sent to My-CoolPay
+  currency    String   @default("XAF") // "XAF" | "EUR"
+  eurPaidCents Int     @default(0) // normalized EUR price (pack base EUR tier)
+  // ── provider refs ──
+  provider    String   @default("mycoolpay")
+  appRef      String   @unique // app_transaction_ref (ours, tiluu_*)
+  providerRef String?  @unique // My-CoolPay transaction_ref
+  paymentUrl  String?  // hosted checkout URL (paylink)
+  status      String   @default("pending") // "pending" | "success" | "canceled" | "failed"
+  operator    String?  // "CM_OM" | "CM_MOMO" | "CARD" | "MCP"
+  fees        Float?   // fees taken by the provider
+  phone       String?  // customer phone used
+  reason      String   @default("") // transaction_reason
+  callbackAt  DateTime? // provider webhook received at
+  lastCheckedAt DateTime? // last status-check poll
+  credited    Boolean  @default(false) // idempotency: gems already credited
+  raw         Json?    // last provider payload (checkStatus / callback)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status])
 }
 
 /// In-app notifications for all events: matches, gifts, messages, likes,

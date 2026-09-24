@@ -9,11 +9,12 @@ import { onboarding } from "./onboarding";
 import { swipe } from "./swipe";
 import { chat } from "./chat";
 import { wallet } from "./wallet";
+import { pay } from "./pay";
 import { profile } from "./profile";
 import { misc } from "./misc";
 import type { Lang } from "../core";
 
-const ALL = [api, common, landing, auth, onboarding, swipe, chat, wallet, profile, misc];
+const ALL = [api, common, landing, auth, onboarding, swipe, chat, wallet, pay, profile, misc];
 
 export const DICTS: Record<Lang, Record<string, string>> = {
   fr: Object.assign({}, ...ALL.map((d) => d.fr)),
